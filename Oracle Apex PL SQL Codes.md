@@ -1,5 +1,3 @@
-hi how are you 
-j nbbmb,  n     
 
 /* Inserts distinct translations from apex_application_trans_repos into T_TRANSLATION_TABLE where German and English texts 
 differ for application_id 112 and ensures no duplicate German entries in the T_TRANSLATION_TABLE. */
@@ -17,9 +15,7 @@ INSERT INTO t_translation_table (text_german, text_english)
 /* Updates the English text in T_TRANSLATION_TABLE by fetching distinct translations from apex_application_trans_repos for application_id 112 
 where German and English texts differ and match with the table's German text. */
                                                   
--- # Updating t_translation_table with new translations from apex_application_trans_repos
-
-# Oracle Apex 
+-- Updating t_translation_table with new translations from apex_application_trans_repos
 UPDATE t_translation_table ttt
 SET (text_english) = (
     SELECT DISTINCT dbms_lob.substr(src.to_string,2000) 
@@ -418,12 +414,68 @@ LISTAGG(distinct tl.b_nummer,',') within group (order by tl.b_nummer) as b_numme
 listagg(distinct ak.kurz,',') within group (order by ak.kurz) AK_Kurz,
 listagg(distinct tl.land_eng,',') within group(order by b_nummer) as land_eng
 
+
 from cte1 t1
 left outer join t_vorschrift_ref_thema_ref_land tvrtl on (t1.vorschriftid= tvrtl.vorschriftid and tvrtl.geloescht =0)
 left outer join t_land tl on (tvrtl.landid = tl.landid)
 left outer join t_thema_ref_et_b_ak ttrak on (tvrtl.themaid = ttrak.themaid)
 left outer join t_et_b_ak ak on (ttrak.et_b_akid = ak.et_b_akid)
 group by t1.local_vorschrift,equal_vorschrift,Permalink,t1.vorschriftid,Permalink_equal,vorschriftid_equal;
+
+
+
+
+/* LIST AGG with separator ; semicolon and how we can use that in select statement and underline */
+
+
+-- two or many records
+
+r as (
+  select v.vorschriftid vorschriftid, vrv.ist_Hauptverantwortlicher, listagg(vv.nachname || ', ' || vv.vorname, '; ') within group (order by vv.nachname) as verantwortlicher  
+    from t_vorschrift v
+    join t_vorschrift_ref_verantwortlicher vrv on (vrv.vorschriftid = v.vorschriftid)
+    join t_verantwortlicher vv on (vv.verantwortlicherid = vrv.verantwortlicherid)
+    group by v.vorschriftid, vrv.ist_Hauptverantwortlicher
+),
+select 
+-- r.verantwortlicher,
+CASE
+    WHEN r.ist_Hauptverantwortlicher = 10 THEN '<span style="text-decoration: underline;">' || r.verantwortlicher || '</span>'
+    ELSE r.verantwortlicher
+END as verantwortlicher,
+
+from t_vorschrift v
+    join t_vorschrift_ref_verantwortlicher vrv on (vrv.vorschriftid = v.vorschriftid)
+    join t_verantwortlicher vv on (vv.verantwortlicherid = vrv.verantwortlicherid)
+--group by v.vorschriftid, vrv.ist_Hauptverantwortlicher
+
+
+-- only one record
+
+r as (
+  select v.vorschriftid vorschriftid, 
+  listagg(CASE WHEN vrv.IST_HAUPTVERANTWORTLICHER = 10 THEN 
+  '<span style="text-decoration: underline;">' || vv.nachname || ', ' || vv.vorname || '</span>'
+  ELSE vv.nachname || ', ' || vv.vorname END, '; ') WITHIN GROUP (ORDER BY vv.nachname) as verantwortlicher  
+from 
+t_vorschrift v
+join 
+t_vorschrift_ref_verantwortlicher vrv on vrv.vorschriftid = v.vorschriftid
+join 
+t_verantwortlicher vv on vv.verantwortlicherid = vrv.verantwortlicherid
+group by 
+v.vorschriftid
+
+select 
+r.verantwortlicher
+
+from t_vorschrift v
+    join t_vorschrift_ref_verantwortlicher vrv on (vrv.vorschriftid = v.vorschriftid)
+    join t_verantwortlicher vv on (vv.verantwortlicherid = vrv.verantwortlicherid)
+--group by v.vorschriftid, vrv.ist_Hauptverantwortlicher
+
+
+
 
 
 
