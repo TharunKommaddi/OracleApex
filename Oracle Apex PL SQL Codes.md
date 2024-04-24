@@ -1,5 +1,5 @@
 hi how are you 
-
+j nbbmb,  n     
 
 /* Inserts distinct translations from apex_application_trans_repos into T_TRANSLATION_TABLE where German and English texts 
 differ for application_id 112 and ensures no duplicate German entries in the T_TRANSLATION_TABLE. */
