@@ -1,5 +1,5 @@
 
-# /* Inserts distinct translations from apex_application_trans_repos into T_TRANSLATION_TABLE where German and English texts differ for application_id 112 and ensures no duplicate German entries in the T_TRANSLATION_TABLE. */
+# Inserts distinct translations from apex_application_trans_repos into T_TRANSLATION_TABLE where German and English texts differ for application_id 112 and ensures no duplicate German entries in the T_TRANSLATION_TABLE.
 
 ```
 INSERT INTO t_translation_table (text_german, text_english)
@@ -14,9 +14,9 @@ INSERT INTO t_translation_table (text_german, text_english)
                                                     
                                                     
                             
-# /* Updates the English text in T_TRANSLATION_TABLE by fetching distinct translations from apex_application_trans_repos for application_id 112 where German and English texts differ and match with the table's German text. */
+# Updates the English text in T_TRANSLATION_TABLE by fetching distinct translations from apex_application_trans_repos for application_id 112 where German and English texts differ and match with the table's German text.
                                                   
-## -- Updating t_translation_table with new translations from apex_application_trans_repos
+## Updating t_translation_table with new translations from apex_application_trans_repos
 
 ```
 UPDATE t_translation_table ttt
@@ -37,7 +37,7 @@ WHERE EXISTS (
 ```
 
 
-# /* Sets the APEX security group to the associated workspace, then updates English translations in APEX_APPLICATION_TRANS_REPOS  
+# Sets the APEX security group to the associated workspace, then updates English translations in APEX_APPLICATION_TRANS_REPOS  
 
 ```
 BEGIN
@@ -83,7 +83,7 @@ END;
 
 
 
-# /* Fetches translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. */
+# Fetches translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240.
 
 ```
 SELECT
@@ -104,7 +104,7 @@ WHERE
 ```    
 
 
-# /* Counts the number of translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. */
+# Counts the number of translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240.
 
 ```
 SELECT
@@ -119,7 +119,7 @@ WHERE
 
 
 
-# /* Updates a specific English translation string using the APEX_LANG package */
+# Updates a specific English translation string using the APEX_LANG package 
 
 ```
 BEGIN
@@ -132,7 +132,9 @@ END;
 ```
 
 
-# Retrieves records from APEX_APPLICATION_TRANS_REPOS where APPLICATION_ID is 240 and the original and translated strings are identical. */
+# Retrieves records from APEX_APPLICATION_TRANS_REPOS where APPLICATION_ID is 240 and the original and translated strings are identical.
+
+```
 SELECT
     APPLICATION_ID,
     APPLICATION_NAME,
@@ -146,13 +148,13 @@ FROM
 WHERE
     APPLICATION_ID = 118
     AND  DBMS_LOB.COMPARE(FROM_STRING, TO_STRING) = 0
+```	
 	
 	
-	
-/* Help Table t_hilfe*/
+# Help Table t_hilfe
 
 
-
+```
 describe t_hilfe
 
 
@@ -183,11 +185,12 @@ ALTER TABLE t_hilfe RENAME COLUMN HILFETEXT_ENG TO HILFETEXT_ENGLISCH;
 
 
 desc t_hilfe
-
-
-/* Page 25, titel table t_vorschrift */
-
+``
+`
+# Page 25, titel table t_vorschrift 
+```
 ALTER TABLE t_vorschrift ADD Titel_German VARCHAR2(500 CHAR);
+
 
 ALTER TABLE t_vorschrift ADD Comment_English VARCHAR2(4000 CHAR);
 
@@ -199,7 +202,7 @@ ALTER TABLE t_vorschrift RENAME COLUMN COMMENT_ENGLISH TO BEMERKUNG_ENGLISCH;
 
 
 desc t_vorschrift 
-
+```
 
 
 /* Page 25 table t_vorschrift_ref_einsatzdatum_typ */
