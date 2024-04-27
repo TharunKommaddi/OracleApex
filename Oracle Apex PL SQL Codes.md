@@ -1,7 +1,7 @@
 
-# Inserts distinct translations from apex_application_trans_repos into T_TRANSLATION_TABLE where German and English texts differ for application_id 112 and ensures no duplicate German entries in the T_TRANSLATION_TABLE. */
+# Inserts distinct translations from apex_application_trans_repos into T_TRANSLATION_TABLE where German and English texts differ for application_id 112 and ensures no duplicate German entries in the T_TRANSLATION_TABLE.
 
-
+```
 INSERT INTO t_translation_table (text_german, text_english)
     SELECT DISTINCT dbms_lob.substr(from_string,2000) as from_string, dbms_lob.substr(to_string,2000) as to_string
     FROM apex_application_trans_repos
@@ -10,14 +10,14 @@ INSERT INTO t_translation_table (text_german, text_english)
     AND NOT EXISTS (SELECT 1 
                     FROM t_translation_table WHERE application_id = 112
                     AND dbms_lob.substr(from_string,2000) = dbms_lob.substr(text_german, 2000));
+```                                                    
                                                     
                                                     
-                                                    
-# Updates the English text in T_TRANSLATION_TABLE by fetching distinct translations from apex_application_trans_repos for application_id 112 where German and English texts differ and match with the table's German text. */
+# Updates the English text in T_TRANSLATION_TABLE by fetching distinct translations from apex_application_trans_repos for application_id 112 where German and English texts differ and match with the table's German text.
                                                   
 -- Updating t_translation_table with new translations from apex_application_trans_repos
 
-
+```
 UPDATE t_translation_table ttt
 SET (text_english) = (
     SELECT DISTINCT dbms_lob.substr(src.to_string,2000) 
@@ -33,11 +33,11 @@ WHERE EXISTS (
     AND src.application_id = 112
     AND dbms_lob.substr(src.from_string,2000) != dbms_lob.substr(src.to_string,2000)
 )
-
+```
 
 
 # Sets the APEX security group to the associated workspace, then updates English translations in APEX_APPLICATION_TRANS_REPOS 
-based on matches with T_TRANSLATION_TABLE for a specific target application = 240. */
+based on matches with T_TRANSLATION_TABLE for a specific target application = 240. 
 
 
 BEGIN
@@ -83,7 +83,7 @@ END;
 
 
 
-# Fetches translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. */
+# Fetches translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. 
 
 
 SELECT
@@ -104,7 +104,7 @@ WHERE
     
 
 
-# Counts the number of translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. */
+# Counts the number of translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. 
 
 
 SELECT
@@ -119,7 +119,7 @@ WHERE
 
 
 
-# Updates a specific English translation string using the APEX_LANG package */
+# Updates a specific English translation string using the APEX_LANG package 
 
 
 BEGIN
@@ -134,7 +134,7 @@ END;
 
 #
 Retrieves records from APEX_APPLICATION_TRANS_REPOS where APPLICATION_ID is 240 and the original and translated strings are identical.
-*/
+
 
 
 SELECT
@@ -153,7 +153,7 @@ WHERE
 	
 	
 	
-# Help Table t_hilfe*/
+# Help Table t_hilfe
 
 
 
@@ -189,7 +189,7 @@ ALTER TABLE t_hilfe RENAME COLUMN HILFETEXT_ENG TO HILFETEXT_ENGLISCH;
 desc t_hilfe
 
 
-# Page 25, titel table t_vorschrift */
+# Page 25, titel table t_vorschrift 
 
 
 ALTER TABLE t_vorschrift ADD Titel_German VARCHAR2(500 CHAR);
@@ -207,7 +207,7 @@ desc t_vorschrift
 
 
 
-# Page 25 table t_vorschrift_ref_einsatzdatum_typ */
+# Page 25 table t_vorschrift_ref_einsatzdatum_typ 
 
 
 ALTER TABLE t_vorschrift_ref_einsatzdatum_typ ADD EINSATZDATUM_TEXT_Englisch VARCHAR2(4000 CHAR);
@@ -238,21 +238,21 @@ desc t_vorschrift_ref_einsatzdatum_typ
 
 
 
-# Page 25 tabel T_VORSCHRIFT_REF_VORSCHRIFT */
+# Page 25 tabel T_VORSCHRIFT_REF_VORSCHRIFT 
 
 
 ALTER TABLE T_VORSCHRIFT_REF_VORSCHRIFT ADD Kommentar_Englisch VARCHAR2(1000 CHAR);
 
 
 
-# Page 25 tabel T_VORSCHRIFT_REF_LAND */
+# Page 25 tabel T_VORSCHRIFT_REF_LAND 
 
 
 ALTER TABLE T_VORSCHRIFT_REF_LAND ADD Bemerkung_Englisch VARCHAR2(4000 CHAR);
 
 
 
-# Page 25 tabel T_VORSCHRIFT_REF_THEMA */
+# Page 25 tabel T_VORSCHRIFT_REF_THEMA 
 
 
 ALTER TABLE T_VORSCHRIFT_REF_THEMA ADD Bemerkung_Englisch VARCHAR2(4000 CHAR);
@@ -260,7 +260,7 @@ ALTER TABLE T_VORSCHRIFT_REF_THEMA ADD Bemerkung_Englisch VARCHAR2(4000 CHAR);
 
 
 
-# Page 25 tabel T_THEMA */
+# Page 25 tabel T_THEMA 
 
 
 ALTER TABLE t_thema RENAME COLUMN name_eng TO name_englisch;
@@ -275,14 +275,14 @@ ALTER TABLE t_thema RENAME COLUMN name_englisch TO BEZEICHNUNG_ENGLISCH;
 desc t_thema
 
 
-# Page 25 table T_LAND */
+# Page 25 table T_LAND 
 
 
 ALTER TABLE T_LAND ADD BesonderheitenMarkt_Englisch VARCHAR2(400 CHAR);
 
 
 
-# view V_VORSCHRIFT_EQUAL*/
+# view V_VORSCHRIFT_EQUAL
 
 
 desc V_VORSCHRIFT_EQUAL
@@ -297,7 +297,7 @@ ALTER VIEW V_VORSCHRIFT_EQUAL ADD COLUMN land_eng VARCHAR2(4000);
 
 
 
-#T_LAND Continent*/
+#T_LAND Continent
 
 
 
@@ -334,7 +334,7 @@ WHERE KONTINENT <> continent_eng OR
 SELECT LANDID, LAND, LAND_ENG, KONTINENT, CONTINENT_ENG FROM T_LAND;
 
 
-#t_thema bezeichnung*/
+#t_thema bezeichnung
 
 
 select BEZEICHNUNG from t_thema;
@@ -349,7 +349,7 @@ WHERE BEZEICHNUNG <> name_eng OR
 
 #
 Retrieves records from APEX_APPLICATION_TRANS_REPOS where APPLICATION_ID is 240 and the original and translated strings are identical.
-*/
+
 
 
 
@@ -365,7 +365,7 @@ WHERE
 
 
 
-# T_ET_B_AK */
+# T_ET_B_AK 
 
 
 ALTER TABLE T_ET_B_AK ADD name_eng VARCHAR2(250);
@@ -421,7 +421,7 @@ SELECT T1.name_eng, t2.name_eng, t1.bezeichnung, t2.bezeichnung from t_thema t1,
 
    
    
-# View V_VORSCHRIFT_EQUAL added land_eng*/
+# View V_VORSCHRIFT_EQUAL added land_eng
 
 
 
@@ -452,7 +452,7 @@ group by t1.local_vorschrift,equal_vorschrift,Permalink,t1.vorschriftid,Permalin
 
 
 
-# LIST AGG with separator ; semicolon and how we can use that in select statement and underline */
+# LIST AGG with separator ; semicolon and how we can use that in select statement and underline 
 
 
 
@@ -508,7 +508,7 @@ from t_vorschrift v
 
 
 
-#T_ANTRIEBSART */
+#T_ANTRIEBSART 
 
 
 desc T_ANTRIEBSART
@@ -516,7 +516,7 @@ desc T_ANTRIEBSART
 ALTER TABLE T_ANTRIEBSART ADD NAME_ENG VARCHAR2(30 CHAR);
 
 
-#T_SCHULUNG_TYP */
+#T_SCHULUNG_TYP 
 
 
 
@@ -525,7 +525,7 @@ desc T_SCHULUNG_TYP
 ALTER TABLE T_SCHULUNG_TYP ADD NAME_ENG VARCHAR2(100 CHAR);
 
 
-#T_AUDIT_TYP */
+#T_AUDIT_TYP 
 
 
 
@@ -535,7 +535,7 @@ ALTER TABLE T_AUDIT_TYP ADD NAME_ENG VARCHAR2(100 CHAR);
 
 
 
-#T_VORSCHRIFT_TYP */
+#T_VORSCHRIFT_TYP 
 
 
 
@@ -546,7 +546,7 @@ ALTER TABLE T_VORSCHRIFT_TYP ADD NAME_ENG VARCHAR2(100 CHAR);
 
 
 
-# T_EINSATZDATUM_MODELL*/
+# T_EINSATZDATUM_MODELL
 
 
 
@@ -556,7 +556,7 @@ ALTER TABLE T_EINSATZDATUM_MODELL ADD Modell_ENG VARCHAR2(300 CHAR);
 
 
 
-# T_KSU*/
+# T_KSU
 
 
 
@@ -569,7 +569,7 @@ select * from t_KSU
 
 
 
-# V_TABLEAU_BASE */
+# V_TABLEAU_BASE 
 
 
 
@@ -715,7 +715,7 @@ FROM
 
 
 
-# V_VORSCHRIFT_DEMANDS */
+# V_VORSCHRIFT_DEMANDS 
 
 
 
@@ -726,7 +726,7 @@ ALTER VIEW "VORSCHRIFTEN_ADMIN"."V_VORSCHRIFT_DEMANDS" COMPILE;
 
 
 # -- This SQL creates a CTE to aggregate country numbers and names based on language preference, then joins with the T_NORM table to display Norm IDs, designations, and associated country details while excluding Norm ID 1016.
-*/
+
 
 
 
@@ -755,7 +755,7 @@ order by n.BEZEICHNUNG asc;
 
 
 
-# CSS inside SQL for colors */
+# CSS inside SQL for colors 
 
 
 
@@ -1013,7 +1013,7 @@ CREATE TABLE "VORSCHRIFTEN_ADMIN"."T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE"
 --delete from T_X_MS_PARAMETER_MODEL_YEAR;
 
 
-# T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE */
+# T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE 
 
 
 
@@ -1274,7 +1274,7 @@ ALLE_FAHRZEUGE_RELEVANT_EOP = DECODE(trim(upper(ALLE_FAHRZEUGE_RELEVANT_EOP)),
 
 
 
-# T_X_MS_PARAMETER_MODEL_YEAR */
+# T_X_MS_PARAMETER_MODEL_YEAR 
 
 --delete from T_X_MS_PARAMETER_MODEL_YEAR;
 
@@ -1655,7 +1655,7 @@ SOP__IST_GLEICH_ODER_NACH_IN_KRAFT_ = DECODE(TRIM(UPPER(SOP__IST_GLEICH_ODER_NAC
 
 
 
-# MERGE WITH INSERT AND UPDATE*/
+# MERGE WITH INSERT AND UPDATE
 
 MERGE INTO T_MS_PARAMETER t
 USING (
@@ -2009,7 +2009,7 @@ SET datum_mj_status =
 
 
 
-# This code dynamically updates For each specified column in T_MS_PARAMETER, update any NULL values to 30 */
+# This code dynamically updates For each specified column in T_MS_PARAMETER, update any NULL values to 30 
 /*
 DECLARE
     v_sql VARCHAR2(4000);
@@ -2087,7 +2087,7 @@ END;
 */
 
 
-# This script updates specific columns in the T_MS_PARAMETER table to predefined values if they are NULL.*/
+# This script updates specific columns in the T_MS_PARAMETER table to predefined values if they are NULL.
 
 DECLARE
     v_sql VARCHAR2(4000);
@@ -2922,7 +2922,7 @@ FROM T_MS_PARAMETER_167_BACKUP pold
 WHERE NUMMER NOT IN (SELECT NUMMER FROM T_MS_PARAMETER);
 
 
-# 18.03.2024 */
+# 18.03.2024 
 
 UPDATE T_MS_PARAMETER
 SET NUMMER = NUMMER
@@ -2954,7 +2954,7 @@ WHERE NOT EXISTS (
 
 
 
-# all column names in a table */
+# all column names in a table 
 
 SELECT column_name 
 FROM all_tab_columns 
@@ -2969,7 +2969,7 @@ select * from T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE
 
 select * from T_X_MS_PARAMETER_MODEL_YEAR
 
-# Distinct Count */
+# Distinct Count 
 -- SELECT COUNT(DISTINCT IN_KRAFT_RELEVANT)
 -- FROM T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE;
 
@@ -2983,7 +2983,7 @@ SELECT DISTINCT AUSSER_KRAFT_IST_LEER
 FROM T_MS_PARAMETER;    
 
 
-# Replacing one value with another */
+# Replacing one value with another 
 UPDATE T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE
 SET ALLE_FAHRZEUGE_RELEVANT_EOP = 'fehlt'
 WHERE ALLE_FAHRZEUGE_RELEVANT_EOP = 'nicht relevant';
@@ -3273,7 +3273,7 @@ end;
  * 
  * Overall, the block maintains data integrity and ensures the correct associations
  * between users and their respective themes and roles.
- */
+ 
 
 declare
     l_co number:=0;
@@ -11892,7 +11892,7 @@ END KOALA_UTIL;
 
 -- BODY
 
-
+```
 create or replace PACKAGE BODY KOALA_UTIL AS
 -- Daten sind Zugangsdaten für Schulungsumgebung!!!
     cLdapHost constant varchar2(250) := 'koala.in.audi.vwg';
@@ -12172,8 +12172,7 @@ is
   end;
 
 END KOALA_UTIL;
-
-
+```
 
 
 
@@ -12183,7 +12182,7 @@ END KOALA_UTIL;
 
 -- SPECIFICATION
 
-
+```
 create or replace PACKAGE "LDAP_UTIL" 
 AS
 
@@ -12197,11 +12196,11 @@ AS
 
      procedure syncronizeUserDatawithLDAP;
 END LDAP_UTIL;
-
-
+```
 
 -- BODY
 
+```
 create or replace PACKAGE BODY "LDAP_UTIL" AS
 
  --******************************************************************************
@@ -12358,7 +12357,7 @@ procedure syncronizeUserDatawithLDAP is
 END syncronizeUserDatawithLDAP;
 
 END LDAP_UTIL;
-
+```
 
 
 
@@ -12367,19 +12366,19 @@ END LDAP_UTIL;
 
 -- SPECIFICATION
 
-
+```
 create or replace PACKAGE PCK_AK AS 
 
     function fValidateDeleteVKO(aETB_AK_REF_BENUTZERID in number) return varchar2;
 
 
 END PCK_AK;
-
+```
 
 
 -- BODY 
 
-
+```
 create or replace PACKAGE BODY PCK_AK AS
 
     function fValidateDeleteVKO(aETB_AK_REF_BENUTZERID in number) return varchar2 AS
@@ -12426,14 +12425,14 @@ create or replace PACKAGE BODY PCK_AK AS
     END fValidateDeleteVKO;
 
 END PCK_AK;
-
+```
 
 
 /* PCK RI*/
 
 -- SPECIFICATION
 
-
+```
 create or replace PACKAGE                      "PCK_RI" AS 
 
     -- PK der Rolle 'Admin'
@@ -12628,13 +12627,13 @@ PROCEDURE proc_equivalent_vorschrift_thema(aVorschriftID in number);
 PROCEDURE PREFRESH_MV_FREE_VKO_REPORT;
 
 END PCK_RI;
-
+```
 
 
 -- BODY
 
 
-
+```
 create or replace PACKAGE BODY                      "PCK_RI" AS
  
   g_jira_base_url CONSTANT VARCHAR2(60 CHAR) := 'https://cicd.cloud.audi/jira/browse/';
@@ -14445,7 +14444,7 @@ PROCEDURE PREFRESH_MV_FREE_VKO_REPORT
 END PREFRESH_MV_FREE_VKO_REPORT;
  
 END PCK_RI;
-
+```
 
 
 
@@ -14478,11 +14477,12 @@ create or replace PACKAGE PCK_RI_BENACHRICHTIGUNG AS
 --        aGrund70_bereich IN NUMBER
     ) ;
 END PCK_RI_BENACHRICHTIGUNG;
-
+```
 
 
 -- BODY
 
+```
 create or replace PACKAGE BODY PCK_RI_BENACHRICHTIGUNG AS
 
     PROCEDURE pBenachrichtigung( aVorschriftid in number,  aArbeitskreise varchar2, aText in varchar2, 
@@ -15138,7 +15138,7 @@ end;
 
   
 END PCK_RI_BENACHRICHTIGUNG;
-
+```
 
 
 
@@ -15146,6 +15146,7 @@ END PCK_RI_BENACHRICHTIGUNG;
 
 -- SPECIFICATION
 
+```
 create or replace PACKAGE                      "PCK_RI_COCKPIT" AS 
 
     type tConfig is record (
@@ -15272,10 +15273,11 @@ create or replace PACKAGE                      "PCK_RI_COCKPIT" AS
     procedure pInhalt;
 
 END PCK_RI_COCKPIT;
-
+```
 
 -- BODY
 
+```
 create or replace PACKAGE BODY                      "PCK_RI_COCKPIT" AS
 
     procedure pMain(aLaenderListe varchar2, aThemenListe varchar2) is
@@ -15529,7 +15531,7 @@ create or replace PACKAGE BODY                      "PCK_RI_COCKPIT" AS
     end pInhalt;
 
 END PCK_RI_COCKPIT;
-
+```
 
 
 
@@ -15537,6 +15539,7 @@ END PCK_RI_COCKPIT;
 
 -- SPECIFICATION
 
+```
 create or replace PACKAGE "PCK_RI_COCKPIT2" AS 
 
     gMaxSpaltenIndex number;
@@ -15615,13 +15618,14 @@ create or replace PACKAGE "PCK_RI_COCKPIT2" AS
     procedure pDrawThemen;    
 
 END PCK_RI_COCKPIT2;
+```
 
 
 -- BODY
 
 
-
-create or replace PACKAGE BODY                      "PCK_RI_COCKPIT2" AS
+```
+create or replace PACKAGE BODY "PCK_RI_COCKPIT2" AS
 
 
     procedure pAufbereitungDaten(aLandID in number) is
@@ -16588,7 +16592,7 @@ create or replace PACKAGE BODY                      "PCK_RI_COCKPIT2" AS
 
 
 END PCK_RI_COCKPIT2;
-
+```
 
 
 
@@ -16598,6 +16602,7 @@ END PCK_RI_COCKPIT2;
 
 -- SPECIFICATION
 
+```
 create or replace PACKAGE PCK_RI_COCKPIT_REFRESH AS 
     
     /* Gibt eine Aktualisierung der Cockpit-Daten in Auftrag. Kann direkt aufgerufen werden. */
@@ -16607,10 +16612,11 @@ create or replace PACKAGE PCK_RI_COCKPIT_REFRESH AS
     procedure pRefresh;    
 
 END PCK_RI_COCKPIT_REFRESH;
+```
 
 -- BODY
 
-
+```
 create or replace PACKAGE BODY PCK_RI_COCKPIT_REFRESH AS
 
     procedure pRefresh is
@@ -16669,7 +16675,7 @@ create or replace PACKAGE BODY PCK_RI_COCKPIT_REFRESH AS
         end pTriggerRefresh;        
 
 END PCK_RI_COCKPIT_REFRESH;
-
+```
 
 
 
@@ -16678,15 +16684,17 @@ END PCK_RI_COCKPIT_REFRESH;
 
 -- SPECIFICATION
 
+```
 create or replace PACKAGE PCK_RI_EXPORT AS 
     -- Combined function for both current and future data
     function fGetSQLExportCombined return clob;
 END PCK_RI_EXPORT;
-
+```
 
 
 -- BODY
 
+```
 create or replace PACKAGE BODY PCK_RI_EXPORT AS
   FUNCTION fGetSQLExportCombined RETURN CLOB AS
     lSQL CLOB;
@@ -16843,7 +16851,7 @@ order by thema_sortorder, nvl(current_rowindex, future_row_index)
     RETURN lSQL;
   END fGetSQLExportCombined;
 END PCK_RI_EXPORT;
-
+```
 
 
 
@@ -16852,15 +16860,17 @@ END PCK_RI_EXPORT;
 
 -- SPECIFICATION
 
+```
 create or replace PACKAGE PCK_RI_EXPORT_1 AS 
     function fGetSQLExportCurrent return clob;
     function fGetSQLExportFuture return clob;
     --function fGetSQLExport return clob;
 END PCK_RI_EXPORT_1;
+```
 
 -- BODY
 
-
+```
 create or replace PACKAGE BODY PCK_RI_EXPORT_1 AS
   function fGetSQLExportCurrent return clob AS
     lSQL clob;  
@@ -17008,7 +17018,7 @@ create or replace PACKAGE BODY PCK_RI_EXPORT_1 AS
     return lSQL;
   END fGetSQLExportFuture;
 END PCK_RI_EXPORT_1;
-
+```
 
 
 
