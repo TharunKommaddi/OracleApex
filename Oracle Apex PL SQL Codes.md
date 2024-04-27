@@ -1,7 +1,7 @@
 
-# Inserts distinct translations from apex_application_trans_repos into T_TRANSLATION_TABLE where German and English texts differ for application_id 112 and ensures no duplicate German entries in the T_TRANSLATION_TABLE.
+# Inserts distinct translations from apex_application_trans_repos into T_TRANSLATION_TABLE where German and English texts differ for application_id 112 and ensures no duplicate German entries in the T_TRANSLATION_TABLE. */
 
-```
+
 INSERT INTO t_translation_table (text_german, text_english)
     SELECT DISTINCT dbms_lob.substr(from_string,2000) as from_string, dbms_lob.substr(to_string,2000) as to_string
     FROM apex_application_trans_repos
@@ -10,15 +10,14 @@ INSERT INTO t_translation_table (text_german, text_english)
     AND NOT EXISTS (SELECT 1 
                     FROM t_translation_table WHERE application_id = 112
                     AND dbms_lob.substr(from_string,2000) = dbms_lob.substr(text_german, 2000));
-```
                                                     
                                                     
-                            
-# Updates the English text in T_TRANSLATION_TABLE by fetching distinct translations from apex_application_trans_repos for application_id 112 where German and English texts differ and match with the table's German text.
+                                                    
+# Updates the English text in T_TRANSLATION_TABLE by fetching distinct translations from apex_application_trans_repos for application_id 112 where German and English texts differ and match with the table's German text. */
                                                   
-## Updating t_translation_table with new translations from apex_application_trans_repos
+-- Updating t_translation_table with new translations from apex_application_trans_repos
 
-```
+
 UPDATE t_translation_table ttt
 SET (text_english) = (
     SELECT DISTINCT dbms_lob.substr(src.to_string,2000) 
@@ -34,12 +33,13 @@ WHERE EXISTS (
     AND src.application_id = 112
     AND dbms_lob.substr(src.from_string,2000) != dbms_lob.substr(src.to_string,2000)
 )
-```
 
 
-# Sets the APEX security group to the associated workspace, then updates English translations in APEX_APPLICATION_TRANS_REPOS  
 
-```
+# Sets the APEX security group to the associated workspace, then updates English translations in APEX_APPLICATION_TRANS_REPOS 
+based on matches with T_TRANSLATION_TABLE for a specific target application = 240. */
+
+
 BEGIN
  -- The strings can be imported into the target application via the APEX_LANG package
  -- If running from SQL*Plus, we need to set the environment
@@ -79,13 +79,13 @@ BEGIN
     END LOOP;
     COMMIT;
 END;
-```
 
 
 
-# Fetches translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240.
 
-```
+# Fetches translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. */
+
+
 SELECT
     APPLICATION_ID,
     APPLICATION_NAME,
@@ -101,12 +101,12 @@ WHERE
     AND  DBMS_LOB.COMPARE(FROM_STRING, TO_STRING) = 0
     
     --dbms_lob.substr(from_string,2000) = dbms_lob.substr(to_string,2000);
-```    
+    
 
 
-# Counts the number of translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240.
+# Counts the number of translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. */
 
-```
+
 SELECT
     COUNT(*) AS IDENTICAL_RECORD_COUNT
 FROM
@@ -114,14 +114,14 @@ FROM
 WHERE
     APPLICATION_ID = 112
     AND DBMS_LOB.COMPARE(FROM_STRING, TO_STRING) != 0;
-```
+
     
 
 
 
-# Updates a specific English translation string using the APEX_LANG package 
+# Updates a specific English translation string using the APEX_LANG package */
 
-```
+
 BEGIN
  APEX_LANG.UPDATE_TRANSLATED_STRING(
             P_ID => 730032710308662664,
@@ -129,12 +129,14 @@ BEGIN
             P_STRING => 'Start profile'
         );
 END;
-```
 
 
-# Retrieves records from APEX_APPLICATION_TRANS_REPOS where APPLICATION_ID is 240 and the original and translated strings are identical.
 
-```
+#
+Retrieves records from APEX_APPLICATION_TRANS_REPOS where APPLICATION_ID is 240 and the original and translated strings are identical.
+*/
+
+
 SELECT
     APPLICATION_ID,
     APPLICATION_NAME,
@@ -148,18 +150,21 @@ FROM
 WHERE
     APPLICATION_ID = 118
     AND  DBMS_LOB.COMPARE(FROM_STRING, TO_STRING) = 0
-```	
 	
 	
-# Help Table t_hilfe
+	
+# Help Table t_hilfe*/
 
 
-```
+
 describe t_hilfe
+
+
 
 SELECT COUNT(*) 
 FROM t_hilfe 
 WHERE TITEL IS NULL;
+
 
 
 SELECT COUNT(*)
@@ -167,24 +172,27 @@ FROM t_hilfe
 WHERE TITEL_ENG IS NULL;
 
 
+
 ALTER TABLE t_hilfe ADD TITEL_ENG VARCHAR2(40 CHAR);
 ALTER TABLE t_hilfe ADD TOOLTIP_ENG VARCHAR2(1000 CHAR);
 ALTER TABLE t_hilfe ADD HILFETEXT_ENG CLOB;
 
+
 ALTER TABLE t_hilfe MODIFY TITEL_ENG VARCHAR2(50); 
+
 
 ALTER TABLE t_hilfe RENAME COLUMN TITEL_ENG TO TITEL_ENGLISCH;
 ALTER TABLE t_hilfe RENAME COLUMN TOOLTIP_ENG TO TOOLTIP_ENGLISCH;
 ALTER TABLE t_hilfe RENAME COLUMN HILFETEXT_ENG TO HILFETEXT_ENGLISCH;
 
+
 desc t_hilfe
-```
 
-# Page 25, titel table t_vorschrift 
 
-```
+# Page 25, titel table t_vorschrift */
+
+
 ALTER TABLE t_vorschrift ADD Titel_German VARCHAR2(500 CHAR);
-
 
 ALTER TABLE t_vorschrift ADD Comment_English VARCHAR2(4000 CHAR);
 
@@ -192,13 +200,16 @@ ALTER TABLE t_vorschrift RENAME COLUMN TITEL_GERMAN TO VORSCHRIFT_BEZEICHNUNG_DE
 
 ALTER TABLE t_vorschrift RENAME COLUMN COMMENT_ENGLISH TO BEMERKUNG_ENGLISCH;
 
+
+
+
 desc t_vorschrift 
-```
 
 
-# Page 25 table t_vorschrift_ref_einsatzdatum_typ
 
-```
+# Page 25 table t_vorschrift_ref_einsatzdatum_typ */
+
+
 ALTER TABLE t_vorschrift_ref_einsatzdatum_typ ADD EINSATZDATUM_TEXT_Englisch VARCHAR2(4000 CHAR);
 
 select * from t_vorschrift_ref_einsatzdatum_typ
@@ -207,46 +218,54 @@ SELEct einsatzdatum_text
 FROM t_vorschrift_ref_einsatzdatum_typ
 WHERE einsatzdatum_text IS NOT NULL;
 
+
+
 SELECT COUNT(einsatzdatum_text)
 FROM t_vorschrift_ref_einsatzdatum_typ
 WHERE einsatzdatum_text IS NULL;
+
 
 
 SELECT COUNT(einsatzdatum_text)
 FROM t_vorschrift_ref_einsatzdatum_typ
 WHERE einsatzdatum_text = '';
 
+
+
+
 desc t_vorschrift_ref_einsatzdatum_typ
-```
 
 
 
-# Page 25 tabel T_VORSCHRIFT_REF_VORSCHRIFT
 
-```
+# Page 25 tabel T_VORSCHRIFT_REF_VORSCHRIFT */
+
+
 ALTER TABLE T_VORSCHRIFT_REF_VORSCHRIFT ADD Kommentar_Englisch VARCHAR2(1000 CHAR);
-```
 
 
-# Page 25 tabel T_VORSCHRIFT_REF_LAND
 
-```
+# Page 25 tabel T_VORSCHRIFT_REF_LAND */
+
+
 ALTER TABLE T_VORSCHRIFT_REF_LAND ADD Bemerkung_Englisch VARCHAR2(4000 CHAR);
-```
 
 
-# Page 25 tabel T_VORSCHRIFT_REF_THEMA
 
-```
+# Page 25 tabel T_VORSCHRIFT_REF_THEMA */
+
+
 ALTER TABLE T_VORSCHRIFT_REF_THEMA ADD Bemerkung_Englisch VARCHAR2(4000 CHAR);
-```
 
 
 
-# Page 25 tabel T_THEMA 
 
-```
+# Page 25 tabel T_THEMA */
+
+
 ALTER TABLE t_thema RENAME COLUMN name_eng TO name_englisch;
+
+
 
 ALTER TABLE t_thema 
 MODIFY name_englisch VARCHAR2(256 CHAR);
@@ -255,18 +274,17 @@ ALTER TABLE t_thema RENAME COLUMN name_englisch TO BEZEICHNUNG_ENGLISCH;
 
 desc t_thema
 
-```
+
+# Page 25 table T_LAND */
 
 
-# Page 25 table T_LAND 
-
-```
 ALTER TABLE T_LAND ADD BesonderheitenMarkt_Englisch VARCHAR2(400 CHAR);
-```
 
 
-# view V_VORSCHRIFT_EQUAL
-```
+
+# view V_VORSCHRIFT_EQUAL*/
+
+
 desc V_VORSCHRIFT_EQUAL
 
 
@@ -275,14 +293,14 @@ FROM ALL_VIEWS
 WHERE VIEW_NAME = 'V_VORSCHRIFT_EQUAL';
 
 ALTER VIEW V_VORSCHRIFT_EQUAL ADD COLUMN land_eng VARCHAR2(4000);
-```
 
 
 
-#T_LAND Continent
+
+#T_LAND Continent*/
 
 
-```
+
 desc t_land
 
 
@@ -314,11 +332,11 @@ WHERE KONTINENT <> continent_eng OR
 
 
 SELECT LANDID, LAND, LAND_ENG, KONTINENT, CONTINENT_ENG FROM T_LAND;
-```
 
-# t_thema bezeichnung
 
-```
+#t_thema bezeichnung*/
+
+
 select BEZEICHNUNG from t_thema;
 
 
@@ -327,11 +345,14 @@ FROM t_thema
 WHERE BEZEICHNUNG <> name_eng OR 
       (BEZEICHNUNG IS NULL AND name_eng IS NOT NULL) OR 
       (BEZEICHNUNG IS NOT NULL AND name_eng IS NULL);
-```
 
-# Retrieves records from APEX_APPLICATION_TRANS_REPOS where APPLICATION_ID is 240 and the original and translated strings are identical.
 
-```
+#
+Retrieves records from APEX_APPLICATION_TRANS_REPOS where APPLICATION_ID is 240 and the original and translated strings are identical.
+*/
+
+
+
 SELECT
     FROM_STRING,
     TO_STRING
@@ -340,13 +361,13 @@ FROM
 WHERE
     APPLICATION_ID = 118
     AND  DBMS_LOB.COMPARE(FROM_STRING, TO_STRING) = 0
-```
 
 
 
-# T_ET_B_AK 
 
-```
+# T_ET_B_AK */
+
+
 ALTER TABLE T_ET_B_AK ADD name_eng VARCHAR2(250);
 
 
@@ -391,7 +412,7 @@ select count(*) from t_thema
 SELECT T1.name_eng, t2.name_eng, t1.bezeichnung, t2.bezeichnung from t_thema t1, prod_t_thema t2 where t1.bezeichnung = t2.bezeichnung
 
 
-```
+
 
 
 
@@ -400,9 +421,10 @@ SELECT T1.name_eng, t2.name_eng, t1.bezeichnung, t2.bezeichnung from t_thema t1,
 
    
    
-# View V_VORSCHRIFT_EQUAL added land_eng
+# View V_VORSCHRIFT_EQUAL added land_eng*/
 
-```
+
+
 CREATE OR REPLACE FORCE EDITIONABLE VIEW "VORSCHRIFTEN_ADMIN"."V_VORSCHRIFT_EQUAL" ("LOCAL_VORSCHRIFT", "PERMALINK", "VORSCHRIFTID", "EQUAL_VORSCHRIFT", "PERMALINK_EQUAL", "VORSCHRIFTID_EQUAL", "LAND", "B_NUMMER", "AK_KURZ", "LAND_ENG") AS 
   with cte1 as(  Select  tv.vorschrift_nummer local_vorschrift,'https://apps1.web.audi.vwg/apexaudi-sp/apex-sp/f?p=REGINDEX:VORSCHRIFT::::25:P25_VORSCHRIFTID:'|| tv.vorschriftid as Permalink,tv.vorschriftid,
  tvl.vorschrift_nummer equal_vorschrift, 'https://apps1.web.audi.vwg/apexaudi-sp/apex-sp/f?p=REGINDEX:VORSCHRIFT::::25:P25_VORSCHRIFTID:'|| tvl.vorschriftid as Permalink_equal, tvl.vorschriftid vorschriftid_equal
@@ -427,12 +449,13 @@ left outer join t_thema_ref_et_b_ak ttrak on (tvrtl.themaid = ttrak.themaid)
 left outer join t_et_b_ak ak on (ttrak.et_b_akid = ak.et_b_akid)
 group by t1.local_vorschrift,equal_vorschrift,Permalink,t1.vorschriftid,Permalink_equal,vorschriftid_equal;
 
-```
 
 
-# LIST AGG with separator ; semicolon and how we can use that in select statement and underline 
 
-```
+# LIST AGG with separator ; semicolon and how we can use that in select statement and underline */
+
+
+
 -- two or many records
 
 r as (
@@ -478,65 +501,79 @@ from t_vorschrift v
     join t_vorschrift_ref_verantwortlicher vrv on (vrv.vorschriftid = v.vorschriftid)
     join t_verantwortlicher vv on (vv.verantwortlicherid = vrv.verantwortlicherid)
 --group by v.vorschriftid, vrv.ist_Hauptverantwortlicher
-```
 
 
 
-#T_ANTRIEBSART 
 
-```
+
+
+
+#T_ANTRIEBSART */
+
+
 desc T_ANTRIEBSART
 
 ALTER TABLE T_ANTRIEBSART ADD NAME_ENG VARCHAR2(30 CHAR);
-```
 
-#T_SCHULUNG_TYP 
 
-```
+#T_SCHULUNG_TYP */
+
+
+
 desc T_SCHULUNG_TYP
 
 ALTER TABLE T_SCHULUNG_TYP ADD NAME_ENG VARCHAR2(100 CHAR);
-```
 
-#T_AUDIT_TYP 
 
-```
+#T_AUDIT_TYP */
+
+
+
 desc T_AUDIT_TYP
 
 ALTER TABLE T_AUDIT_TYP ADD NAME_ENG VARCHAR2(100 CHAR);
-```
 
-#T_VORSCHRIFT_TYP 
 
-```
+
+#T_VORSCHRIFT_TYP */
+
+
+
+
 desc T_VORSCHRIFT_TYP
 
 ALTER TABLE T_VORSCHRIFT_TYP ADD NAME_ENG VARCHAR2(100 CHAR);
-```
 
 
-# T_EINSATZDATUM_MODELL
 
-```
+# T_EINSATZDATUM_MODELL*/
+
+
+
 desc T_EINSATZDATUM_MODELL
 
 ALTER TABLE T_EINSATZDATUM_MODELL ADD Modell_ENG VARCHAR2(300 CHAR);
-```
 
-# T_KSU
 
-```
+
+# T_KSU*/
+
+
+
 desc T_KSU
 
 ALTER TABLE T_KSU ADD name_eng VARCHAR2(250 CHAR);
 
 
 select * from t_KSU
-```
 
-# V_TABLEAU_BASE 
 
-```
+
+# V_TABLEAU_BASE */
+
+
+
+
   CREATE OR REPLACE FORCE EDITIONABLE VIEW "VORSCHRIFTEN_ADMIN"."V_TABLEAU_BASE" ("VORSCHRIFTNUMMER", "VORSCHRIFTTITEL", "VORSCHRIFTID", "VORSCHRIFTTYP", "LANDID", "IN_KRAFT", "NEUE_TYPEN", "NEUE_TYPEN_CKD", "NEUE_TYPEN_FBU", "ALLE_FZG", "ALLE_FZG_CKD", "ALLE_FZG_FBU", "ERSTELLUNG_DATUM", "AENDERUNGEN", "LAND", "LAND_ENG", "MFV_ID", "MFV_TYP", "AK_KURZ") AS 
   WITH vorschrift AS (
     SELECT
@@ -674,22 +711,25 @@ SELECT
 FROM
     cte_datumsangaben;
 
-```
 
 
 
-# V_VORSCHRIFT_DEMANDS 
 
-```
+# V_VORSCHRIFT_DEMANDS */
+
+
+
 ALTER VIEW "VORSCHRIFTEN_ADMIN"."V_VORSCHRIFT_DEMANDS" COMPILE;
-```
+
 
 
 
 
 # -- This SQL creates a CTE to aggregate country numbers and names based on language preference, then joins with the T_NORM table to display Norm IDs, designations, and associated country details while excluding Norm ID 1016.
+*/
 
-```
+
+
 with cte_la as (
     select 
         normid,
@@ -709,26 +749,24 @@ left outer join cte_la on cte_la.normid = n.normid
 where n.normid not in (1016)
 order by n.BEZEICHNUNG asc;
 
-```
 
 
 
 
 
-# CSS inside SQL for colors 
+
+# CSS inside SQL for colors */
 
 
-```
+
 case when FIRST_NAME_OLD <> FIRST_NAME_NEW 
                  OR(FIRST_NAME_OLD IS NOT NULL AND FIRST_NAME_NEW IS NULL)
                  OR(FIRST_NAME_OLD IS  NULL AND FIRST_NAME_NEW IS not NULL)
                      then 
        '<div class="green-background no-parent-padding">'||FIRST_NAME_NEW||'</div>'
        else '<font background-color=none>'||FIRST_NAME_NEW||'</font>' end FIRST_NAME_NEW ,
-```
 
 
-```
 CREATE TABLE "VORSCHRIFTEN_ADMIN"."T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE" 
    (	"BILD_NUMMER_AUS_DOKU" VARCHAR2(26 BYTE), 
 	"NUMMER" NUMBER(38,0), 
@@ -953,7 +991,7 @@ CREATE TABLE "VORSCHRIFTEN_ADMIN"."T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE"
 	"SOP__IST_GLEICH_ODER_NACH_IN_KRAFT_" VARCHAR2(50 BYTE), 
 	"SOP_VOR_IN_KRAFT_ODER_IN_KRAFT_IST_LEER" VARCHAR2(50 BYTE));
 
-```
+
 
 
 
@@ -975,10 +1013,10 @@ CREATE TABLE "VORSCHRIFTEN_ADMIN"."T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE"
 --delete from T_X_MS_PARAMETER_MODEL_YEAR;
 
 
-# T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE 
+# T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE */
 
 
-```
+
 
 --select * from T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE;
 --select * from T_X_MS_PARAMETER_MODEL_YEAR;
@@ -1204,7 +1242,6 @@ ALLE_FAHRZEUGE_RELEVANT_EOP = DECODE(trim(upper(ALLE_FAHRZEUGE_RELEVANT_EOP)),
 --    trim(upper('true')), 1, 
 --    trim(upper('nicht relevant')), 2, 
 --    KLEINER_ODER_GLEICH_LETZTE_MÖGLICHE_VORSCHRIFT_ZUR_HOMOLOGATION) from T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE;
-```
 
 
 
@@ -1236,9 +1273,9 @@ ALLE_FAHRZEUGE_RELEVANT_EOP = DECODE(trim(upper(ALLE_FAHRZEUGE_RELEVANT_EOP)),
 
 
 
-# T_X_MS_PARAMETER_MODEL_YEAR 
 
-```
+# T_X_MS_PARAMETER_MODEL_YEAR */
+
 --delete from T_X_MS_PARAMETER_MODEL_YEAR;
 
 UPDATE T_X_MS_PARAMETER_MODEL_YEAR
@@ -1604,7 +1641,6 @@ SOP__IST_GLEICH_ODER_NACH_IN_KRAFT_ = DECODE(TRIM(UPPER(SOP__IST_GLEICH_ODER_NAC
 --    WHERE ROWNUM = 1 -- This condition is used to update only one row; adjust as needed
 --);
 --
-```
 
 
 
@@ -1618,9 +1654,9 @@ SOP__IST_GLEICH_ODER_NACH_IN_KRAFT_ = DECODE(TRIM(UPPER(SOP__IST_GLEICH_ODER_NAC
 
 
 
-# MERGE WITH INSERT AND UPDATE
 
-```
+# MERGE WITH INSERT AND UPDATE*/
+
 MERGE INTO T_MS_PARAMETER t
 USING (
     SELECT distinct
@@ -1933,15 +1969,15 @@ INSERT (
 
 
 
--- For each 'nummer' in the 'T_MS_PARAMETER' table, this query determines its 'datum_mj_status' as follows:
+/* -- For each 'nummer' in the 'T_MS_PARAMETER' table, this query determines its 'datum_mj_status' as follows:
 -- 1. If 'nummer' exists in both 'T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE' and 'T_X_MS_PARAMETER_MODEL_YEAR' tables, status is '3'.
 -- 2. If 'nummer' exists only in 'T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE', status is '1'.
 -- 3. If 'nummer' exists only in 'T_X_MS_PARAMETER_MODEL_YEAR', status is '2'.
 -- 4. If 'nummer' doesn't exist in any of the two tables, status is NULL.
--- The result is ordered by 'nummer' and then by 'datum_mj_status'. 
+-- The result is ordered by 'nummer' and then by 'datum_mj_status'. */
 
 
-
+/*
 SELECT p.nummer, 
        CASE 
            WHEN EXISTS (SELECT 1 FROM T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE d,T_X_MS_PARAMETER_MODEL_YEAR y WHERE d.nummer = p.nummer and y.nummer=d.nummer) THEN 3
@@ -1951,7 +1987,7 @@ SELECT p.nummer,
        END AS datum_mj_status
 FROM T_MS_PARAMETER p
 order by nummer, datum_mj_status;
-
+*/
 
 
 --select datum_mj_status from t_ms_parameter;
@@ -1964,7 +2000,6 @@ SET datum_mj_status =
         ELSE datum_mj_status
     END;
 
-```
 
 
 
@@ -1973,9 +2008,9 @@ SET datum_mj_status =
 
 
 
-# This code dynamically updates For each specified column in T_MS_PARAMETER, update any NULL values to 30 
 
-```
+# This code dynamically updates For each specified column in T_MS_PARAMETER, update any NULL values to 30 */
+/*
 DECLARE
     v_sql VARCHAR2(4000);
 BEGIN
@@ -2049,12 +2084,11 @@ EXCEPTION
         RAISE;
 END;
 /
+*/
 
-```
 
-# This script updates specific columns in the T_MS_PARAMETER table to predefined values if they are NULL.
+# This script updates specific columns in the T_MS_PARAMETER table to predefined values if they are NULL.*/
 
-```
 DECLARE
     v_sql VARCHAR2(4000);
     
@@ -2162,10 +2196,10 @@ EXCEPTION
         RAISE;
 END;
 /
-```
 
 
---#NULL -> 2
+
+--/*NULL -> 2*/
 --
 --DECLARE
 --    v_sql VARCHAR2(4000);
@@ -2238,7 +2272,7 @@ END;
 --/
 
 
---#NULL -> 0
+--/*NULL -> 0*/
 --DECLARE
 --    v_sql VARCHAR2(4000);
 --BEGIN
@@ -2278,7 +2312,7 @@ END;
 --/
 --
 --
---#NULL -> 30
+--/*NULL -> 30*/
 --
 --
 --DECLARE
@@ -2309,7 +2343,7 @@ END;
 --
 --
 --
---#NULL -> 50
+--/*NULL -> 50*/
 --
 --DECLARE
 --    v_sql VARCHAR2(4000);
@@ -2339,7 +2373,7 @@ END;
 --
 --
 --
---#NULL -> 40
+--/*NULL -> 40*/
 --
 --
 --DECLARE
@@ -2421,7 +2455,7 @@ END;
 --
 --
 --
---# Delete a record and child record 
+--/* Delete a record and child record */
 --
 --select * from T_MS_PARAMETER where nummer = 99;
 --
@@ -2766,7 +2800,7 @@ where olde.NUMMER not in (select NUMMER from t_ms_parameter);
 
 
      
---# Delete a record and child record 
+--# Delete a record and child record */
 --
 --select * from T_MS_PARAMETER where nummer = 99;
 --
@@ -2888,7 +2922,7 @@ FROM T_MS_PARAMETER_167_BACKUP pold
 WHERE NUMMER NOT IN (SELECT NUMMER FROM T_MS_PARAMETER);
 
 
-# 18.03.2024 
+# 18.03.2024 */
 
 UPDATE T_MS_PARAMETER
 SET NUMMER = NUMMER
@@ -2920,7 +2954,7 @@ WHERE NOT EXISTS (
 
 
 
-# all column names in a table 
+# all column names in a table */
 
 SELECT column_name 
 FROM all_tab_columns 
@@ -2935,7 +2969,7 @@ select * from T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE
 
 select * from T_X_MS_PARAMETER_MODEL_YEAR
 
-# Distinct Count 
+# Distinct Count */
 -- SELECT COUNT(DISTINCT IN_KRAFT_RELEVANT)
 -- FROM T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE;
 
@@ -2949,7 +2983,7 @@ SELECT DISTINCT AUSSER_KRAFT_IST_LEER
 FROM T_MS_PARAMETER;    
 
 
-# Replacing one value with another 
+# Replacing one value with another */
 UPDATE T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE
 SET ALLE_FAHRZEUGE_RELEVANT_EOP = 'fehlt'
 WHERE ALLE_FAHRZEUGE_RELEVANT_EOP = 'nicht relevant';
@@ -3082,7 +3116,7 @@ END;
 
 
 
-# 
+/* 
 Trigger: TR_HILFE (as an example, since the trigger name was not provided)
 
 Description:
@@ -3097,7 +3131,7 @@ Workflow:
 
 Dependency:
 - Uses the fDeleteMfv function for specific delete operations.
-
+*/
 
 
 create or replace TRIGGER TR_HILFE
@@ -3132,16 +3166,16 @@ BEGIN
       SYSDATE
     );
 END IF;
-#  ELSIF DELETING THEN
+/*  ELSIF DELETING THEN
     DELETE FROM T_H_HILFE
     WHERE HILFEID = :OLD.HILFEID;
   END IF;
-
+*/
 END;
 
 
 
-# 
+/* 
 Function: fDeleteMfv
 
 Description:
@@ -3160,12 +3194,12 @@ Workflow:
 
 Return:
 - Returns 'true' upon successful execution.
+*/
 
-
-# Loescht eine MfV mit allen Referenzen und Historie
+/* Loescht eine MfV mit allen Referenzen und Historie
     aMfvId: ID der MfV
     return: true bei Erfolg
-
+*/
 FUNCTION fDeleteMfv(aMfvId NUMBER) return BOOLEAN IS
   BEGIN
   
@@ -3184,7 +3218,7 @@ END fDeleteMfV;
 
 
 
-#
+/*
  * This PL/SQL block manages the user information in the 'T_ET_B_AK_REF_THEMA_BENUTZER' table:
  * 
  * 1. Initially, it checks the existence of a record with the specified 'ET_B_AK_REF_THEMA_BENUTZERID'.
@@ -3197,7 +3231,7 @@ END fDeleteMfV;
  * 
  * The use of the 'no_data_found' exception ensures that a count of 0 is assigned if the query 
  * does not return any matching rows. The following logic then decides between an update or insert operation.
- 
+ */
 declare
     l_count number;
 begin
@@ -3239,7 +3273,7 @@ end;
  * 
  * Overall, the block maintains data integrity and ensures the correct associations
  * between users and their respective themes and roles.
- 
+ */
 
 declare
     l_co number:=0;
@@ -3283,8 +3317,7 @@ end;
 
 
 
-#
-The provided SQL statement is attempting to retrieve a message in either German or English based on a function called fLang. This function appears to determine the user's preferred language and then returns the respective string. The essence of the message seems to revolve around a "regulation" the user has picked.
+# The provided SQL statement is attempting to retrieve a message in either German or English based on a function called fLang. This function appears to determine the user's preferred language and then returns the respective string. The essence of the message seems to revolve around a "regulation" the user has picked.
 
 1. Outer SELECT Statement:
    This fetches a singular column named 'message' using the fLang function. Depending on the output of the function, the column will contain the message in either German or English. The "dual" is a standard one-row, one-column table in Oracle, usually employed for select operations not actually linked to a specific table.
@@ -3656,19 +3689,19 @@ WHERE REGEXP_LIKE(nachname, '[0-9]')
 
 
 
-# all column names in a table 
+/* all column names in a table */
 
 SELECT column_name 
 FROM all_tab_columns 
 WHERE table_name = 'T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE';
 
-# Distinct Count 
+/* Distinct Count */
 
 SELECT COUNT(DISTINCT IN_KRAFT_RELEVANT)
 FROM T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE;
 
 
-# REplacing one value with aniother 
+/* REplacing one value with aniother */
 
 UPDATE T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE
 SET IN_KRAFT_RELEVANT = 'fehlt'
@@ -3676,7 +3709,7 @@ WHERE IN_KRAFT_RELEVANT = 'nicht relevant';
 
 			
 
-# ADD role to the user 
+/* ADD role to the user */
 
 INSERT INTO t_benutzer_ref_rolle (
     benutzerid, 
@@ -3692,7 +3725,7 @@ INSERT INTO t_benutzer_ref_rolle (
 			
 		
 		
-# Single Check box Color 
+/* Single Check box Color */
 
 .apex-item-single-checkbox input:checked+.u-checkbox, .apex-item-single-checkbox input:checked+label, .u-checkbox.is-checked {
     --a-checkbox-background-color: #bb0a31 !important; -- red
@@ -3702,7 +3735,7 @@ INSERT INTO t_benutzer_ref_rolle (
 
 
 
-# 2D to 3D any chart
+/* 2D to 3D any chart*/
 
 -- Chart - attributes
 -- Advanced
@@ -3717,9 +3750,9 @@ function (options) {
 
 
 
-# Regular Expression with interactive built in Filter 
+# Regular Expression with interactive built in Filter
 
--- Examples
+### Examples
 
 1. ^10$|^11$|^12$
 2. ^10$|^11$|^12$|^20$
@@ -3727,7 +3760,7 @@ function (options) {
 
 
 
-# Complete Oracle Text package in dynamic and also in lov ( list of value) 
+/* Complete Oracle Text package in dynamic and also in lov ( list of value) */
 
 -- Specification
 
@@ -3818,7 +3851,7 @@ create or replace package body pck_ri_vorschrift_oracle_text_pkg is
     end drop_text_index;
     
  -- commented
-    #procedure init_oracle_text is 
+    /*procedure init_oracle_text is 
     begin 
         if text_is_available then 
             -- Specific setup for T_VORSCHRIFT_SYNTHETIC
@@ -3831,7 +3864,7 @@ create or replace package body pck_ri_vorschrift_oracle_text_pkg is
             create_text_preferences('RI_VORSCHRIFT_DS_PREF_NORM', 'MULTI_COLUMN_DATASTORE', 'BEZEICHNUNG', 'RI_VORSCHRIFT_SG_PREF_NORM', 'BEZEICHNUNG', 'RI_VORSCHRIFT_LX_PREF_NORM', 'NO', 'YES', 'GENERIC');
             create_text_index('RI_VORSCHRIFT_TEXT_FTX_NORM', 'T_NORM', 'BEZEICHNUNG', 'RI_VORSCHRIFT_SG_PREF_NORM', 'RI_VORSCHRIFT_DS_PREF_NORM', 'RI_VORSCHRIFT_LX_PREF_NORM');
         end if; 
-    end init_oracle_text; 
+    end init_oracle_text; */
     function convert_text_query( p_enduser_query in varchar2 ) return varchar2  
 is  
     l_tokens       apex_t_varchar2 := apex_t_varchar2();
@@ -3963,7 +3996,7 @@ order by n.BEZEICHNUNG asc;
 
 
 
-# Complete Oracle Text package in static 
+/* Complete Oracle Text package in static */
 
 -- Specification
 
@@ -4293,7 +4326,7 @@ q'#create index ri_vorschrift_text_ftx_norm on T_norm (BEZEICHNUNG)
     end create_text_index_norm;
 
 
-#
+/*
 
 -- minus not working correctly in lov ( list of value ) also for this convert text query function
 
@@ -4409,7 +4442,7 @@ end if;
         return l_textquery; 
     end if; 
 end convert_text_query;
-
+*/
 
 
 
@@ -4600,7 +4633,7 @@ END;
 
 
 
-# ORACLE TEXT MULTIPLE TABLES AND MULTIPLE INDEXES FROM MULTIPLE TABLES USING MATERIALIZED VIEW
+/* ORACLE TEXT MULTIPLE TABLES AND MULTIPLE INDEXES FROM MULTIPLE TABLES USING MATERIALIZED VIEW*/
 
 
 
@@ -4647,7 +4680,7 @@ INSERT INTO addresses VALUES (2, 'Smith St.', 'Kommaddi Tharun', 'CA');
 INSERT INTO addresses VALUES (3, 'Redwood St.', 'RIVERSIDE', 'CA');
 
 
-#
+/*
 CREATE VIEW customer_addresses AS
 SELECT
     c.first_name,
@@ -4659,9 +4692,9 @@ FROM
     customers c
 JOIN
     addresses a ON c.customer_id = a.customer_id;
+*/
 
-
-#
+/*
 CREATE MATERIALIZED VIEW customer_addresses AS
   SELECT
     c.first_name,
@@ -4674,7 +4707,7 @@ CREATE MATERIALIZED VIEW customer_addresses AS
    customers c, addresses a
    WHERE c.customer_id = a.customer_id;
 
-
+*/
 
 
 CREATE MATERIALIZED VIEW customer_addresses
@@ -5278,7 +5311,7 @@ end pck_ri_vorschrift_oracle_text_pkg;
 
 
 
-# html and css for the alignment 
+/* html and css for the alignment */
 
 -- html to show while doing oracle text introduction
 
@@ -5340,8 +5373,8 @@ li b {
 
 
 
-# Icon will show instead of link in interactive Report but when we click on icon it will 
-redirect to link in new tab. for that we need to write that code in sql report using case statement
+/* Icon will show instead of link in interactive Report but when we click on icon it will 
+redirect to link in new tab. for that we need to write that code in sql report using case statement*/
 
 CASE WHEN v.url_getex_vorschrift IS NOT NULL 
             THEN '<a href="' || v.url_getex_vorschrift || '" title="' || v.url_getex_vorschrift || '"><span class="fa fa-link"></span></a>'
@@ -5350,7 +5383,7 @@ END AS getex_vorschrift_link
 
 
 
-# To empty the columsn name we will use nbsp; for the column to keep empty in interactive report
+/* To empty the columsn name we will use nbsp; for the column to keep empty in interactive report*/
 
 &nbsp;
 
@@ -5358,7 +5391,7 @@ END AS getex_vorschrift_link
 
 
 
-# Procedure with two parameters returning output like select statement 
+/* Procedure with two parameters returning output like select statement */
 
 CREATE OR REPLACE PROCEDURE FILTER_DATA (
     p_operator IN VARCHAR2,
@@ -5411,7 +5444,7 @@ END;
 
 
 
-# Procedure with two parameters returning output like only ids 
+/* Procedure with two parameters returning output like only ids */
 
 
 CREATE OR REPLACE PROCEDURE FILTER_DATA (
@@ -5460,7 +5493,7 @@ END;
 
 
 
-# Procedure with two parameters returning output like only ids 
+/* Procedure with two parameters returning output like only ids */
 
 
 -- PROCEDURE
@@ -5587,7 +5620,7 @@ END;
 
 
 
-# EMANO REPORT 
+/* EMANO REPORT */
 
 
 -- SPECIFICATION
@@ -5645,9 +5678,9 @@ end emano_report;
 -- BODY
 
 create or replace package body emano_report is
-    #
+    /*
     Konvertiert einen CLOB in einen BLOB
-    
+    */
     function fClobToBlob(aClob CLOB) RETURN BLOB IS
         tgt_blob BLOB;
         amount INTEGER := DBMS_LOB.lobmaxsize;
@@ -5664,9 +5697,9 @@ create or replace package body emano_report is
         DBMS_LOB.ConvertToBlob(tgt_blob, aClob, amount, dest_offset, src_offset, blob_csid, lang_context, warning);
         return tgt_blob;
     end fClobToBlob;
-    #
+    /*
     Parsed den übergebenen Query, bestimmt und speichert also die Datentypen und Spaltennamen
-    
+    */
     procedure pInit(aQuery in clob) is
         lCursor number;
         lDescribeTable dbms_sql.desc_tab2;
@@ -5690,16 +5723,16 @@ create or replace package body emano_report is
                   fColumns(i).fColumnWidth := -1;
             end loop;
         end pInit;
-    #
+    /*
     Gibt zurück, um welchen Spaltentyp es sich bei der übergebenen Spalte handelt.
-    
+    */
     function fGetColumnType(aColumnIndex in number) return number is
         begin
             return fColumns(aColumnIndex).fType;
         end fGetColumnType;
-    #
+    /*
     Gibt einen Wert als varchar2 zurück.
-    
+    */
     function fGetStringValue(aZeile in number, aSpalte in number) return varchar2 is
         begin
             case fGetColumnType(aSpalte)
@@ -5708,10 +5741,10 @@ create or replace package body emano_report is
                 else return fStringResults(aSpalte)(aZeile);
             end case;
         end fGetStringValue;
-    #
+    /*
     Gibt einen Wert als Number zurück.
     TODO: Behandlung, wenn es sich nicht um einen Zahlenwert handelt.
-    
+    */
     function fGetNumberValue(aZeile in number, aSpalte in number) return number is
         begin
             case fGetColumnType(aSpalte)
@@ -5726,10 +5759,10 @@ create or replace package body emano_report is
                 else raise runtime_exception;
             end case;
         end fGetDateValue;
-    #
+    /*
     Berechnet die maximale Zeichenlänge einer Spalte und wird für die Einstellung der
     Spaltenbreite im Excel-Ausgabeformat verwendet.
-    
+    */
     function fGetMaxStringLength(aSpalte in number) return varchar2 is
         lMaxLength number := length(fColumns(aSpalte).fDisplayName);
         begin
@@ -5739,10 +5772,10 @@ create or replace package body emano_report is
             end loop;
             return lMaxLength;
         end fGetMaxStringLength;
-    #
+    /*
     Führt die SQL-Abfrage aus und fetched die Resultate. Sie werden dabei je nach Datentyp in unterschiedliche
     Arrays gespeichert.
-    
+    */
     procedure pExecute is
         lCursor number;
         lUnusedResult number;
@@ -5776,18 +5809,18 @@ create or replace package body emano_report is
                 end case;
             end loop;
         end pExecute;
-    #
+    /*
     Wrapper-Funktion, die die Excel-Generierung in einer SELECT-Abfrage ermöglicht.
-    
+    */
     function fWrapperExcel(aSQL in varchar2) return blob is
         begin
             pInit(aSQL);
             pExecute;
             return fMakeExcel;
         end fWrapperExcel;
-    #
+    /*
     Wrapper-Funktion, die die CSV-Generierung in einer SELECT-Abfrage ermöglicht.
-    
+    */
     function fWrapperCSV(aSQL in varchar2) return blob is
         begin
             pInit(aSQL);
@@ -5821,17 +5854,17 @@ create or replace package body emano_report is
             return fMakeCSV;
 
         end fWrapperCSV2;
-    #
+    /*
     BrNi
     Funktion, die zum Escapen und Quoten fuer den CSV-Text dient.
-    
+    */
     function fEscapeAndQuoteCsv(aText varchar2) return varchar2 is
         begin
             return fQuoteTextCsv(fEscapeQuotesCsv(aText));
         end fEscapeAndQuoteCsv;
-    #
+    /*
     Generiert eine einfache CSV-Datei und gibt diese als BLOB zurück.
-    
+    */
     function fMakeCSV return blob is
         lClob clob := '';
         begin
@@ -5856,9 +5889,9 @@ create or replace package body emano_report is
             end loop;
             return fClobToBlob(UNISTR('\FEFF') || lClob);
         end fMakeCSV;
-    #
+    /*
     Generiert Rahmen so, dass der Excel-Report einen Medium-Außenrahmen und einen Thin-Innenrahmen hat.
-    
+    */
     function fMakeExcelCellBorder (aZeile in number, aSpalte in number) return number is
         lBorder number;
         begin
@@ -5870,11 +5903,11 @@ create or replace package body emano_report is
             );
             return lBorder;
         end fMakeExcelCellBorder;
-    #
+    /*
     Zeichnet eine Excel-Zelle. Bereits implementiert ist eine rudimentäre Unterscheidung zwischen
     Zeichenketten- und Zahlen-Werten. Für Datums/Zeit-Angaben muss wahrscheinlich noch eine Behandlung
     hinzugefügt werden.
-    
+    */
     procedure pMakeExcelCell(aZeile in number, aSpalte in number, aFontCell in number, aFillColor in Number, aBorder in Number) is
         lCellValue varchar2(2000);
         lFillColor number;
@@ -5901,9 +5934,9 @@ create or replace package body emano_report is
         end loop;
         return lSpaltenIndex;
     end;
-    #
+    /*
     Generiert eine Excel-Datei und gibt diese als BLOB zurück.
-    
+    */
     function fMakeExcel(aSheetName in varchar2 default null) return blob is
         lFillGray number;
         lNoFill number;
@@ -5981,10 +6014,10 @@ create or replace package body emano_report is
             return xlsx_builder_pkg.finish;
         end fMakeExcel;
         
-    #
+    /*
     Generiert eine Excel-Datei mit mehreren Arbeitsblättern und gibt diese als BLOB zurück.
-    
-   #
+    */
+   /*
     function fMakeExcelMultSheet(aSheetName in apex_t_varchar2, aTitleName in apex_t_varchar2, aQuery in tArrayOfClob, aVertraulich in number default null) return blob is
         lFillGray number;
         lNoFill number;
@@ -6105,8 +6138,8 @@ create or replace package body emano_report is
             
         end fMakeExcelMultSheet;
         
-     
- #
+   */  
+ /*
        function get_leaf_column RETURN number IS
             l_leaf_value number;
         BEGIN
@@ -6114,10 +6147,10 @@ create or replace package body emano_report is
             SELECT leaf INTO l_leaf_value FROM v_thema_baum;
             RETURN l_leaf_value;
         END get_leaf_column;
-
+*/
  
  
- #
+ /*
  
 -- Single
        
@@ -6327,13 +6360,13 @@ create or replace package body emano_report is
             return xlsx_builder_pkg.finish;    
             
         end fMakeExcelsingleSheet;
+ */
  
  
  
  
  
- 
-# Single 
+/* Single */
        
        function fMakeExcelsingleSheet(aSheetName in varchar2, aTitleName in varchar2, aQuery in clob, aVertraulich in number default null) return blob is
         lFillGray number;
@@ -6481,7 +6514,7 @@ create or replace package body emano_report is
                         end if;
                         
  
-                        #
+                        /*
                         -- Check 'Current' section: Fill 'Local Regulation', 'Correction', and 'Comments' with gray if 'Local Regulation' is empty
                         if fGetStringValue(lZeile, lCurrentLocalRegColumnIndex) is null then
                        
@@ -6497,7 +6530,7 @@ create or replace package body emano_report is
                                 lFillColor := lFillGray;
                             end if;
                         end if;
-                        
+                        */
  
  
                         if lSpalte in (lCurrentLocalRegColumnIndex, lFutureLocalRegColumnIndex, lFutureEnactDateColumnIndex, lFutureImpDateNewTypeColumnIndex, lFutureImpDateAllVehiclesColumnIndex) then
@@ -6525,7 +6558,7 @@ create or replace package body emano_report is
                     end loop;
                 end loop;
              
-            #
+            /*
                 -- Inside the loop where cells are formatted
                 for lZeile in 1..fRowCount loop
  
@@ -6542,8 +6575,8 @@ create or replace package body emano_report is
                         pMakeExcelCell(lZeile, lSpalte, lFontCell, lFillColor, lBorder);
                     end loop;
                 end loop;
-            
-#
+            */
+/*
 -- Inside the loop where cells are formatted
 for lZeile in 1..fRowCount loop
  
@@ -6576,7 +6609,7 @@ for lZeile in 1..fRowCount loop
     end loop;
 end loop;
  
-
+*/
  
                   -- momentan wird durch diese Zelle der Autofilter auch in diese erste Zeile gesetzt
                 if aVertraulich = 1 then
@@ -6633,7 +6666,7 @@ end emano_report;
 
 
 
-# EXCEL XLSX BUILDER PKG 
+/* EXCEL XLSX BUILDER PKG */
 
 
 -- SPECIFICATION
@@ -6641,7 +6674,7 @@ end emano_report;
 create or replace PACKAGE xlsx_builder_pkg
    AUTHID CURRENT_USER
 IS
-   #*********************************************
+   /**********************************************
    **
    ** Author: Anton Scheffer
    ** Date: 19-02-2011
@@ -6718,14 +6751,14 @@ IS
    ******************************************************************************
    ******************************************************************************
    * @headcom
-   
+   */
 
-   #*
+   /**
    * Record with data about column alignment.
    * @param vertical   Vertical alignment.
    * @param horizontal Horizontal alignment.
    * @param wrapText   Switch to allow or disallow word wrap.
-   
+   */
    TYPE t_alignment_rec IS RECORD
    (
       vc_vertical     VARCHAR2 (11),
@@ -6733,45 +6766,45 @@ IS
       bo_wraptext     BOOLEAN
    );
 
-   #*
+   /**
    * Clears the whole workbook to start fresh.
-   
+   */
    PROCEDURE clear_workbook;
 
-   #*
+   /**
    * Create a new sheet in the workbook.
    * @param p_sheetname Name Excel should display for the new worksheet.
    * @return ID of newly created worksheet.
-   
+   */
    FUNCTION new_sheet (p_sheetname VARCHAR2 := NULL)
       RETURN PLS_INTEGER;
 
-   #*
+   /**
    * Converts an Oracle date format to the corresponding Excel date format.
    * @param p_format The Oracle date format to convert.
    * @return Corresponding Excel date format.
-   
+   */
    FUNCTION orafmt2excel (p_format VARCHAR2 := NULL)
       RETURN VARCHAR2;
 
-   #*
+   /**
    * Converts an Oracle number format to the corresponding Excel number format.
    * @param The Oracle number format to convert.
    * @return Corresponding Excel number format.
-   
+   */
    FUNCTION oranumfmt2excel (p_format VARCHAR2)
       RETURN VARCHAR2;
 
-   #*
+   /**
    * Get ID for given number format.
    * @param p_format Wanted number formatting using Excle number format.
    *                 Use OraNumFmt2Excel to convert from Oracle to Excel.
    * @return ID for given number format.
-   
+   */
    FUNCTION get_numfmt (p_format VARCHAR2 := NULL)
       RETURN PLS_INTEGER;
 
-   #*
+   /**
    * Get ID for given font settings.
    * @param p_name
    * @param p_family
@@ -6782,7 +6815,7 @@ IS
    * @param p_bold
    * @param p_rgb
    * @return ID for given font definition
-   
+   */
    FUNCTION get_font (p_name         VARCHAR2,
                       p_family       PLS_INTEGER := 2,
                       p_fontsize     NUMBER := 8,
@@ -6794,16 +6827,16 @@ IS
                                                      )
       RETURN PLS_INTEGER;
 
-   #*
+   /**
    * Get ID for given cell fill
    * @param p_patternType Pattern for the fill.
    * @param p_fgRGB       Color using an ARGB or RGB hex value
    * @return ID for given cell fill.
-   
+   */
    FUNCTION get_fill (p_patterntype VARCHAR2, p_fgrgb VARCHAR2 := NULL)
       RETURN PLS_INTEGER;
 
-   #*
+   /**
    * Get ID for given border definition.
    * Possible values for all parameters:
    * none, thin, medium, dashed, dotted, thick, double, hair, mediumDashed,
@@ -6813,14 +6846,14 @@ IS
    * @param p_left   Style for left border
    * @param p_right  Style for right border
    * @return ID for given border definition
-   
+   */
    FUNCTION get_border (p_top       VARCHAR2 := 'thin',
                         p_bottom    VARCHAR2 := 'thin',
                         p_left      VARCHAR2 := 'thin',
                         p_right     VARCHAR2 := 'thin')
       RETURN PLS_INTEGER;
 
-   #*
+   /**
    * Function to get a record holding alignment data.
    * @param p_vertical   Vertical alignment.
    *                     (bottom, center, distributed, justify, top)
@@ -6828,11 +6861,11 @@ IS
    *                     (center, centerContinuous, distributed, fill, general, justify, left, right)
    * @param p_wraptext   Switch to allow or disallow text wrapping.
    * @return Record with alignment data.
-   
+   */
    FUNCTION get_alignment (p_vertical VARCHAR2 := NULL, p_horizontal VARCHAR2 := NULL, p_wraptext BOOLEAN := NULL)
       RETURN t_alignment_rec;
 
-   #*
+   /**
    * Puts a number value into a cell of the spreadsheet.
    * @param p_col       Column number where the cell is located
    * @param p_row       Row number where the cell is located
@@ -6843,7 +6876,7 @@ IS
    * @param p_borderId  ID of border definition
    * @param p_alignment The wanted alignment
    * @param p_sheet     Worksheet the cell is located, if omitted last worksheet is used
-   
+   */
    PROCEDURE cell (p_col          PLS_INTEGER,
                    p_row          PLS_INTEGER,
                    p_value        NUMBER,
@@ -6854,7 +6887,7 @@ IS
                    p_alignment    t_alignment_rec := NULL,
                    p_sheet        PLS_INTEGER := NULL);
 
-   #*
+   /**
    * Puts a character value into a cell of the spreadsheet.
    * @param p_col       Column number where the cell is located
    * @param p_row       Row number where the cell is located
@@ -6865,7 +6898,7 @@ IS
    * @param p_borderId  ID of border definition
    * @param p_alignment The wanted alignment
    * @param p_sheet     Worksheet the cell is located, if omitted last worksheet is used
-   
+   */
    PROCEDURE cell (p_col          PLS_INTEGER,
                    p_row          PLS_INTEGER,
                    p_value        VARCHAR2,
@@ -6876,7 +6909,7 @@ IS
                    p_alignment    t_alignment_rec := NULL,
                    p_sheet        PLS_INTEGER := NULL);
 
-   #*
+   /**
    * Puts a date value into a cell of the spreadsheet.
    * @param p_col       Column number where the cell is located
    * @param p_row       Row number where the cell is located
@@ -6887,7 +6920,7 @@ IS
    * @param p_borderId  ID of border definition
    * @param p_alignment The wanted alignment
    * @param p_sheet     Worksheet the cell is located, if omitted last worksheet is used
-   
+   */
    PROCEDURE cell (p_col          PLS_INTEGER,
                    p_row          PLS_INTEGER,
                    p_value        DATE,
@@ -7017,7 +7050,7 @@ END;
 
 create or replace PACKAGE BODY xlsx_builder_pkg
 IS
-   # Some Naming-conventions
+   /* Some Naming-conventions
    Prefixes for Datatypes in defined Records-Type-Elements
    vc   VARCHAR2
    nv   NVARCHAR2
@@ -7043,9 +7076,9 @@ IS
    Types-Suffixes
    ..._rec record
    ..._tab PL/SQL-Table
-   
+   */
  
-   # Types 
+   /* Types */
    TYPE t_xf_fmt_rec IS RECORD
    (
       pi_numfmtid     PLS_INTEGER,
@@ -7238,7 +7271,7 @@ IS
       defined_names_tab   t_defined_names_tab
    );
  
-   # Globals 
+   /* Globals */
    -- the only global variable (objekt) without prefix and suffix
    workbook                               t_book_rec;
  
@@ -7250,8 +7283,8 @@ IS
       RETURN workbook;
    END get_workbook;
  
-   # Private API 
-   #*
+   /* Private API */
+   /**
    * Procedure concatenates a VARCHAR2 to an CLOB.
    * It uses another VARCHAR2 as a buffer until it reaches 32767 characters.
    * Then it flushes the current buffer to the CLOB and resets the buffer using
@@ -7263,7 +7296,7 @@ IS
    * @param p_vc_buffer   The intermediate VARCHAR2 buffer. (must be VARCHAR2(32767))
    * @param p_vc_addition The VARCHAR2 value you want to append.
    * @param p_eof         Indicates if complete buffer should be flushed to CLOB.
-   
+   */
    PROCEDURE clob_vc_concat( p_clob IN OUT NOCOPY CLOB
                            , p_vc_buffer IN OUT NOCOPY VARCHAR2
                            , p_vc_addition IN VARCHAR2
@@ -8103,13 +8136,13 @@ IS
       workbook.sheets_tab (t_sheet).autofilters_tab (t_ind).pi_column_end := p_column_end;
       workbook.sheets_tab (t_sheet).autofilters_tab (t_ind).pi_row_start := p_row_start;
       workbook.sheets_tab (t_sheet).autofilters_tab (t_ind).pi_row_end := p_row_end;
-      #defined_name (p_column_start,
+      /*defined_name (p_column_start,
                     p_row_start,
                     p_column_end,
                     p_row_end,
                     '_xlnm._FilterDatabase',
                     t_sheet,
-                    t_sheet - 1);
+                    t_sheet - 1);*/
    END set_autofilter;
  
    FUNCTION finish
@@ -9848,7 +9881,7 @@ END;
 
 
 
-# ZIP UTIL PKG 
+/* ZIP UTIL PKG */
 
 
 
@@ -9859,7 +9892,7 @@ create or replace PACKAGE zip_util_pkg
   AUTHID CURRENT_USER
 AS
 
-#*
+/**
 * Purpose:      Package handles zipping and unzipping of files
 *
 * Remarks:      by Anton Scheffer, see http://forums.oracle.com/forums/thread.jspa?messageID=9289744#9289744
@@ -9874,9 +9907,9 @@ AS
 * MK      01.07.2014  Added get_file_clob to immediately retrieve file content as a CLOB
 *
 * @headcom
-*
+**/
 
-  #* List of all files within zipped file 
+  /** List of all files within zipped file */
   TYPE t_file_list IS TABLE OF CLOB;
 
 
@@ -9886,7 +9919,7 @@ AS
     RETURN RAW;
 
   FUNCTION get_file_list( p_zipped_blob IN BLOB
-                        , p_encoding IN VARCHAR2 := NULL # Use CP850 for zip files created with a German Winzip to see umlauts, etc 
+                        , p_encoding IN VARCHAR2 := NULL /* Use CP850 for zip files created with a German Winzip to see umlauts, etc */
                         )
     RETURN t_file_list;
 
@@ -9931,7 +9964,7 @@ END zip_util_pkg;
 create or replace package body zip_util_pkg
 is
 
-#*
+/**
 * Purpose:      Package handles zipping and unzipping of files
 *
 * Remarks:      by Anton Scheffer, see http://forums.oracle.com/forums/thread.jspa?messageID=9289744#9289744
@@ -9946,15 +9979,15 @@ is
 * MK      01.07.2014  Added get_file_clob to immediatly retrieve file content as a CLOB
 *
 * @headcom
+*/
 
-
-  # Constants 
+  /* Constants */
   c_max_length CONSTANT PLS_INTEGER := 32767;
   c_file_comment CONSTANT RAW(32767) := utl_raw.cast_to_raw('Implementation by Anton Scheffer');
 
-  #*
+  /**
   * Convert to little endian raw
-  
+  */
   FUNCTION little_endian( p_big IN NUMBER
                         , p_bytes IN pls_integer := 4
                         )
@@ -10327,7 +10360,7 @@ end zip_util_pkg;
 
 
 
-# APPLICATION PROCESS 
+/* APPLICATION PROCESS */
 
 
 
@@ -10401,7 +10434,7 @@ end;
 
 
 
-# INTERACTIVE GRID CUSTOM FILTER USING PROCEDURE 
+/* INTERACTIVE GRID CUSTOM FILTER USING PROCEDURE */
 
 
 
@@ -10582,10 +10615,10 @@ And the following strings would not match:
 
 
 
-# COMPLETE REGINDEX PACKAGES - AUDI 
+/* COMPLETE REGINDEX PACKAGES - AUDI */
 
 	
-# EMANO REPORT 
+/* EMANO REPORT */
 
 -- SPECIFICATION
 
@@ -10644,9 +10677,9 @@ end emano_report;
 -- BODY
 
 create or replace package body emano_report is
-    #
+    /*
     Konvertiert einen CLOB in einen BLOB
-    
+    */
     function fClobToBlob(aClob CLOB) RETURN BLOB IS
         tgt_blob BLOB;
         amount INTEGER := DBMS_LOB.lobmaxsize;
@@ -10663,9 +10696,9 @@ create or replace package body emano_report is
         DBMS_LOB.ConvertToBlob(tgt_blob, aClob, amount, dest_offset, src_offset, blob_csid, lang_context, warning);
         return tgt_blob;
     end fClobToBlob;
-    #
+    /*
     Parsed den übergebenen Query, bestimmt und speichert also die Datentypen und Spaltennamen
-    
+    */
     procedure pInit(aQuery in clob) is
         lCursor number;
         lDescribeTable dbms_sql.desc_tab2;
@@ -10689,16 +10722,16 @@ create or replace package body emano_report is
                   fColumns(i).fColumnWidth := -1;
             end loop;
         end pInit;
-    #
+    /*
     Gibt zurück, um welchen Spaltentyp es sich bei der übergebenen Spalte handelt.
-    
+    */
     function fGetColumnType(aColumnIndex in number) return number is
         begin
             return fColumns(aColumnIndex).fType;
         end fGetColumnType;
-    #
+    /*
     Gibt einen Wert als varchar2 zurück.
-    
+    */
     function fGetStringValue(aZeile in number, aSpalte in number) return varchar2 is
         begin
             case fGetColumnType(aSpalte)
@@ -10707,10 +10740,10 @@ create or replace package body emano_report is
                 else return fStringResults(aSpalte)(aZeile);
             end case;
         end fGetStringValue;
-    #
+    /*
     Gibt einen Wert als Number zurück.
     TODO: Behandlung, wenn es sich nicht um einen Zahlenwert handelt.
-    
+    */
     function fGetNumberValue(aZeile in number, aSpalte in number) return number is
         begin
             case fGetColumnType(aSpalte)
@@ -10725,10 +10758,10 @@ create or replace package body emano_report is
                 else raise runtime_exception;
             end case;
         end fGetDateValue;
-    #
+    /*
     Berechnet die maximale Zeichenlänge einer Spalte und wird für die Einstellung der
     Spaltenbreite im Excel-Ausgabeformat verwendet.
-    
+    */
     function fGetMaxStringLength(aSpalte in number) return varchar2 is
         lMaxLength number := length(fColumns(aSpalte).fDisplayName);
         begin
@@ -10738,10 +10771,10 @@ create or replace package body emano_report is
             end loop;
             return lMaxLength;
         end fGetMaxStringLength;
-    #
+    /*
     Führt die SQL-Abfrage aus und fetched die Resultate. Sie werden dabei je nach Datentyp in unterschiedliche
     Arrays gespeichert.
-    
+    */
     procedure pExecute is
         lCursor number;
         lUnusedResult number;
@@ -10775,18 +10808,18 @@ create or replace package body emano_report is
                 end case;
             end loop;
         end pExecute;
-    #
+    /*
     Wrapper-Funktion, die die Excel-Generierung in einer SELECT-Abfrage ermöglicht.
-    
+    */
     function fWrapperExcel(aSQL in varchar2) return blob is
         begin
             pInit(aSQL);
             pExecute;
             return fMakeExcel;
         end fWrapperExcel;
-    #
+    /*
     Wrapper-Funktion, die die CSV-Generierung in einer SELECT-Abfrage ermöglicht.
-    
+    */
     function fWrapperCSV(aSQL in varchar2) return blob is
         begin
             pInit(aSQL);
@@ -10820,17 +10853,17 @@ create or replace package body emano_report is
             return fMakeCSV;
 
         end fWrapperCSV2;
-    #
+    /*
     BrNi
     Funktion, die zum Escapen und Quoten fuer den CSV-Text dient.
-    
+    */
     function fEscapeAndQuoteCsv(aText varchar2) return varchar2 is
         begin
             return fQuoteTextCsv(fEscapeQuotesCsv(aText));
         end fEscapeAndQuoteCsv;
-    #
+    /*
     Generiert eine einfache CSV-Datei und gibt diese als BLOB zurück.
-    
+    */
     function fMakeCSV return blob is
         lClob clob := '';
         begin
@@ -10855,9 +10888,9 @@ create or replace package body emano_report is
             end loop;
             return fClobToBlob(UNISTR('\FEFF') || lClob);
         end fMakeCSV;
-    #
+    /*
     Generiert Rahmen so, dass der Excel-Report einen Medium-Außenrahmen und einen Thin-Innenrahmen hat.
-    
+    */
     function fMakeExcelCellBorder (aZeile in number, aSpalte in number) return number is
         lBorder number;
         begin
@@ -10869,11 +10902,11 @@ create or replace package body emano_report is
             );
             return lBorder;
         end fMakeExcelCellBorder;
-    #
+    /*
     Zeichnet eine Excel-Zelle. Bereits implementiert ist eine rudimentäre Unterscheidung zwischen
     Zeichenketten- und Zahlen-Werten. Für Datums/Zeit-Angaben muss wahrscheinlich noch eine Behandlung
     hinzugefügt werden.
-    
+    */
     procedure pMakeExcelCell(aZeile in number, aSpalte in number, aFontCell in number, aFillColor in Number, aBorder in Number) is
         lCellValue varchar2(2000);
         lFillColor number;
@@ -10900,9 +10933,9 @@ create or replace package body emano_report is
         end loop;
         return lSpaltenIndex;
     end;
-    #
+    /*
     Generiert eine Excel-Datei und gibt diese als BLOB zurück.
-    
+    */
     function fMakeExcel(aSheetName in varchar2 default null) return blob is
         lFillGray number;
         lNoFill number;
@@ -10980,10 +11013,10 @@ create or replace package body emano_report is
             return xlsx_builder_pkg.finish;
         end fMakeExcel;
         
-    #
+    /*
     Generiert eine Excel-Datei mit mehreren Arbeitsblättern und gibt diese als BLOB zurück.
-    
-   #
+    */
+   /*
     function fMakeExcelMultSheet(aSheetName in apex_t_varchar2, aTitleName in apex_t_varchar2, aQuery in tArrayOfClob, aVertraulich in number default null) return blob is
         lFillGray number;
         lNoFill number;
@@ -11104,8 +11137,8 @@ create or replace package body emano_report is
             
         end fMakeExcelMultSheet;
         
-     
- #
+   */  
+ /*
        function get_leaf_column RETURN number IS
             l_leaf_value number;
         BEGIN
@@ -11113,10 +11146,10 @@ create or replace package body emano_report is
             SELECT leaf INTO l_leaf_value FROM v_thema_baum;
             RETURN l_leaf_value;
         END get_leaf_column;
-
+*/
  
  
- #
+ /*
  
 -- Single
        
@@ -11326,13 +11359,13 @@ create or replace package body emano_report is
             return xlsx_builder_pkg.finish;    
             
         end fMakeExcelsingleSheet;
+ */
  
  
  
  
  
- 
-# Single 
+/* Single */
        
        function fMakeExcelsingleSheet(aSheetName in varchar2, aTitleName in varchar2, aQuery in clob, aVertraulich in number default null) return blob is
         lFillGray number;
@@ -11480,7 +11513,7 @@ create or replace package body emano_report is
                         end if;
                         
  
-                        #
+                        /*
                         -- Check 'Current' section: Fill 'Local Regulation', 'Correction', and 'Comments' with gray if 'Local Regulation' is empty
                         if fGetStringValue(lZeile, lCurrentLocalRegColumnIndex) is null then
                        
@@ -11496,7 +11529,7 @@ create or replace package body emano_report is
                                 lFillColor := lFillGray;
                             end if;
                         end if;
-                        
+                        */
  
  
                         if lSpalte in (lCurrentLocalRegColumnIndex, lFutureLocalRegColumnIndex, lFutureEnactDateColumnIndex, lFutureImpDateNewTypeColumnIndex, lFutureImpDateAllVehiclesColumnIndex) then
@@ -11524,7 +11557,7 @@ create or replace package body emano_report is
                     end loop;
                 end loop;
              
-            #
+            /*
                 -- Inside the loop where cells are formatted
                 for lZeile in 1..fRowCount loop
  
@@ -11541,8 +11574,8 @@ create or replace package body emano_report is
                         pMakeExcelCell(lZeile, lSpalte, lFontCell, lFillColor, lBorder);
                     end loop;
                 end loop;
-            
-#
+            */
+/*
 -- Inside the loop where cells are formatted
 for lZeile in 1..fRowCount loop
  
@@ -11575,7 +11608,7 @@ for lZeile in 1..fRowCount loop
     end loop;
 end loop;
  
-
+*/
  
                   -- momentan wird durch diese Zelle der Autofilter auch in diese erste Zeile gesetzt
                 if aVertraulich = 1 then
@@ -11633,7 +11666,7 @@ end emano_report;
 
 
 
-# EMANO UTIL 
+/* EMANO UTIL */
 
 -- SPECIFICATION
 
@@ -11659,8 +11692,8 @@ END EMANO_UTIL;
 
 create or replace PACKAGE BODY "EMANO_UTIL" AS
 
-    # Liefert die Sprache des angegebenen Benutzers zurück. Wird kein Benutzer angegeben, dann
-       vom aktuell angemeldeten Benutzer. 
+    /* Liefert die Sprache des angegebenen Benutzers zurück. Wird kein Benutzer angegeben, dann
+       vom aktuell angemeldeten Benutzer. */
     function fGetLang(aBenutzerid in number default null) return varchar2 AS
         lLang varchar2(20);
 
@@ -11771,7 +11804,7 @@ end fBlobToClob;
     
     end fPrintBitmask;
 
-    # Setzt ein einzelnes Bit mit dem Index aIndex auf den Wert aValue 
+    /* Setzt ein einzelnes Bit mit dem Index aIndex auf den Wert aValue */
     function fBitmaskSet(aBitmask in number, aIndex in number, aValue in number) return number deterministic AS
     BEGIN     
         if (aValue = 1) then
@@ -11783,7 +11816,7 @@ end fBlobToClob;
         end if;
     END fBitmaskSet;
     
-    # Holt ein einzelnes Bit aus einer Bitmaske mit dem Index aIndex 
+    /* Holt ein einzelnes Bit aus einer Bitmaske mit dem Index aIndex */
     function fBitmaskGet(aBitmask in number, aIndex in number) return number deterministic as
         lResult number;
     begin
@@ -11796,8 +11829,8 @@ end fBlobToClob;
             
     end fBitmaskGet;
     
-    # Wandelt eine Doppelpunkt-Liste in eine Bitmaske um
-       z.B. '1:2:3' --> 2^1 + 2^2 + 2^3 = 14 
+    /* Wandelt eine Doppelpunkt-Liste in eine Bitmaske um
+       z.B. '1:2:3' --> 2^1 + 2^2 + 2^3 = 14 */
     function fColonListToBitmask(aString in varchar2) return number deterministic is
         lReturn number;
     begin
@@ -11828,7 +11861,7 @@ END EMANO_UTIL;
 
 
 
-# KOALA UTIL 
+/* KOALA UTIL */
 
 -- SPECIFICATION
 
@@ -11841,15 +11874,15 @@ create or replace PACKAGE KOALA_UTIL AS
         aDN in varchar2
     ) return t_ldap_table;
 
-    #*
+    /**
      gets sra groups user and saves them into T_SRA_Benutzer table 
-    
+    */
     procedure pRefresh_SRABenutzer;
 
-   #*
+   /**
     aktualize t_benutzer_ref_role table according T_SRA_Benutzer 
       aRoleid used  1000 -'VKO'  1002 - 'VEX',  1006 - 'FBEX'
-    
+    */
     procedure pupdateUserRolesfromSRA(aRoleid number);
 
 END KOALA_UTIL;
@@ -12023,9 +12056,9 @@ create or replace PACKAGE BODY KOALA_UTIL AS
 
     end fSearchDN;
 
-    #*
+    /**
     *
-    
+    */
     procedure pRefresh_SRABenutzer is
      l_sqlcode varchar2(32);
      l_err_msg varchar2(200);
@@ -12035,25 +12068,25 @@ create or replace PACKAGE BODY KOALA_UTIL AS
       delete from T_SRA_BENUTZER;
       --insert VKO
       insert into T_SRA_BENUTZER (nachname,  vorname,  abteilung,  gid, email, telefon, SRA_GROUP )
-        with cte1 as ( select #+ materialize  column_value as dn from koala_util.fGetGroupmembers('AUDI_SRA_41384') 
+        with cte1 as ( select /*+ materialize */ column_value as dn from koala_util.fGetGroupmembers('AUDI_SRA_41384') 
                 UNION
-               select #+ materialize  column_value as dn from koala_util.fGetGroupmembers('AUDI_SRA_42067')),  
+               select /*+ materialize */ column_value as dn from koala_util.fGetGroupmembers('AUDI_SRA_42067')),  
          cte2 as (  select *  from cte1  where dn != 'cn=dummy'  
        )
        select  k.surname , k.givenname , k.subdepartment ,  k.gid , k.mail, k.phone, 'VKO' 
          from cte2, koala_util.fSearchDN(cte2.dn) k ;   
       --insert VEX
       insert into T_SRA_BENUTZER (nachname,  vorname,  abteilung,   gid,email, telefon, SRA_GROUP )
-        with cte1 as ( select #+ materialize  column_value as dn from koala_util.fGetGroupmembers('AUDI_SRA_45063') 
+        with cte1 as ( select /*+ materialize */ column_value as dn from koala_util.fGetGroupmembers('AUDI_SRA_45063') 
                 UNION
-               select #+ materialize  column_value as dn from koala_util.fGetGroupmembers('AUDI_SRA_44360')),  
+               select /*+ materialize */ column_value as dn from koala_util.fGetGroupmembers('AUDI_SRA_44360')),  
          cte2 as (  select *  from cte1  where dn != 'cn=dummy'  
        )
        select  k.surname , k.givenname , k.subdepartment ,  k.gid , k.mail, k.phone, 'VEX' 
          from cte2, koala_util.fSearchDN(cte2.dn) k ;  
        --insert FBEX
       insert into T_SRA_BENUTZER (nachname,  vorname,  abteilung,   gid, email, telefon, SRA_GROUP )
-        with cte1 as ( select #+ materialize  column_value as dn from koala_util.fGetGroupmembers('AUDI_SRA_44030') 
+        with cte1 as ( select /*+ materialize */ column_value as dn from koala_util.fGetGroupmembers('AUDI_SRA_44030') 
               ),  
          cte2 as (  select *  from cte1  where dn != 'cn=dummy'  
        )
@@ -12081,8 +12114,8 @@ create or replace PACKAGE BODY KOALA_UTIL AS
          rollback to sp_start_del;
    END;
 
-#*
-
+/**
+*/
  procedure pupdateUserRolesfromSRA(aRoleid number)
 is
      cou number :=0;
@@ -12114,7 +12147,7 @@ is
            end if;
       end loop;
       -- entziehe rollen  - die ref in T_ET_B_AK_REF_THEMA_BENUTZER werden gelöscht 
- #     if (aRoleid =1002 or aRoleid =1006) then
+ /*     if (aRoleid =1002 or aRoleid =1006) then
         FOR cu in (select Benutzer_ref_rolleid from T_Benutzer_ref_rolle  where rolleid = aRoleid and manuelle_zuweisung =0
                and benutzerid in (select benutzerid from t_Benutzer b where 
                           b.gid not in (select gid from T_SRA_Benutzer where sra_group =l_roleBezeicn)  )
@@ -12128,7 +12161,7 @@ is
                             b.gid not in (select gid from T_SRA_Benutzer where sra_group =l_roleBezeicn) 
                           );
       end if;
-
+*/
       commit;
    exception
          when others then
@@ -12146,7 +12179,7 @@ END KOALA_UTIL;
 
 
 
-# LDAP UTIL 
+/* LDAP UTIL */
 
 -- SPECIFICATION
 
@@ -12330,7 +12363,7 @@ END LDAP_UTIL;
 
 
 
-# PCK AK
+/* PCK AK*/
 
 -- SPECIFICATION
 
@@ -12396,7 +12429,7 @@ END PCK_AK;
 
 
 
-# PCK RI
+/* PCK RI*/
 
 -- SPECIFICATION
 
@@ -12408,23 +12441,23 @@ create or replace PACKAGE                      "PCK_RI" AS
 
 function fGetUserId return NUMBER;
 
-# Setzt alle vernetzten Informationen für eine Vorschrift zurück 
+/* Setzt alle vernetzten Informationen für eine Vorschrift zurück */
 procedure pResetVI(aVorschriftID in number);
 
-# Setzt die Arbeitskreise für eine Vorschrift zurück 
+/* Setzt die Arbeitskreise für eine Vorschrift zurück */
 procedure pResetAK(aVorschriftID in number);
 
-# Setzt die Antriebsarten für eine Vorschrift zurück 
+/* Setzt die Antriebsarten für eine Vorschrift zurück */
 procedure pResetAA(aVorschriftID in number);
 
-# Setzt die FUKA-Funktionen für eine Vorschrift zurück 
+/* Setzt die FUKA-Funktionen für eine Vorschrift zurück */
 procedure pResetFunktionen(aVorschriftID in number);
 
-# Entfernt Sonderzeichen 
+/* Entfernt Sonderzeichen */
 function fSanitizeForTree(aText in varchar2) return varchar2;
 
-# Liefert 1 zurück, wenn es sich um einen anonymen oder deaktivierten User handelt
-   --> nur freigegebene Vorschriften sichtbar 
+/* Liefert 1 zurück, wenn es sich um einen anonymen oder deaktivierten User handelt
+   --> nur freigegebene Vorschriften sichtbar */
 function fIsLimitedUser(userId number default fGetUserId) return number;
 
 -- Ermittlung ob der Benutzer auf die Seite lesend oder schreibend zugreifen darf
@@ -12433,9 +12466,9 @@ function fIsAuthorized(userId NUMBER default fGetUserId, pageId NUMBER, accessMo
 
 FUNCTION fIsAuthorized01(userId NUMBER default fGetUserId, pageId NUMBER, accessMode NUMBER) return number;
 
-# Ermittlung ob der Benutzer in der uebergebenen Liste von Rollen ist
+/* Ermittlung ob der Benutzer in der uebergebenen Liste von Rollen ist
     userid: zu pruefende Userid
-    listRolleId: String mit einer durch ':' getrennten Liste von rolleIDs 
+    listRolleId: String mit einer durch ':' getrennten Liste von rolleIDs */
 function fIsUserInRolle(userid NUMBER default fGetUSerId, listRolleId VARCHAR2) return NUMBER;
 
 -- Prüft ob der uebergebene Text eine Uri ist und gibt einen HTML-Link zurück, 
@@ -12457,62 +12490,62 @@ function fUserIsCreatable return number;
 -- Wandelt String in Datum um (entweder mm/dd/yyyy oder dd.mm.yyyy)
 function fMakeDate(aInput in varchar2) return date;
 
-# Ändert bestimmte Eigenschaften von Vorschriften
+/* Ändert bestimmte Eigenschaften von Vorschriften
    aListVorschriftId: Durch ':' getrennte Liste von Vorschriften-IDs, 
         bearbeitet werden sollen
         aBezeichnung, aBemerkung, aFreigabeStatusId, aVorschriftStatus,
         aHomologation, aRxsWin: Neuer Wert der jeweiligen
         Spalte; null = alten Wert behalten
-
+*/
 function fChangeVorschriftenAttribut(aListVorschriftId VARCHAR2, aBezeichnung VARCHAR2, 
         aBemerkung VARCHAR2, aFreigabeStatusId NUMBER, aEinsatzdatumModellId NUMBER,
         aPrognoseQualitaet NUMBER, aHomologation NUMBER, aVorschriftStatus NUMBER, 
         aRxsWin NUMBER) return BOOLEAN;
 
-# Ändert die Zuordnung der Fahrzeugklassen von Vorschriften
+/* Ändert die Zuordnung der Fahrzeugklassen von Vorschriften
    aListVorschriftId: Durch ':' getrennte Liste von Vorschriften-IDs, 
         bearbeitet werden sollen
    aListFahrzeugklasse: Durch ':' getrennte Liste von Fahrzeugklassen-IDs, 
         die gesetzt werden sollen;
         null = alten Wert behalten
-
+*/
 function fChangeVorschriftenAttributFahrzeugklasse(aListVorschriftId VARCHAR2, aListFahrzeugklasse VARCHAR2)
 return boolean;
 
-# Ändert bestimmte Links von Vorschriften, *wenn diese noch nicht gesetzt sind*
+/* Ändert bestimmte Links von Vorschriften, *wenn diese noch nicht gesetzt sind*
    aListVorschriftId: Durch ':' getrennte Liste von Vorschriften-IDs, 
         bearbeitet werden sollen
     aLinkGetex, aLinkDms, aWebsiteId, aLinkWebsite: Neuer Wert der jeweiligen
         Spalte; null = alten Wert behalten
-
+*/
 function fChangeVorschriftenLinks(aListVorschriftId VARCHAR2, aLinkGetex VARCHAR2, 
         aLinkDms VARCHAR2, aWebsiteId NUMBER, aLinkWebsite VARCHAR2) return BOOLEAN;
 
-# Kopiert de Zuordnungen zu den Themengebieten von einem Quellland 
+/* Kopiert de Zuordnungen zu den Themengebieten von einem Quellland 
     auf ein Zielland für die ausgewählten Vorschriften.
 
    aListVorschriftId: Durch ':' getrennte Liste von Vorschriften-IDs, 
         bearbeitet werden sollen
     aSourceLandId: Quell-Land
     aListTargetLandId: Durch ':' getrennte List von Ziel-Land-IDs
-
+*/
 function fCopyVorschriftenThemenByLand(aListVorschriftId VARCHAR2, 
         aSourceLandId NUMBER, aListTargetLandId VARCHAR2) return BOOLEAN;
 
-# Kopiert de Zuordnungen zu den Laendern von einem Quell-Themengebiet 
+/* Kopiert de Zuordnungen zu den Laendern von einem Quell-Themengebiet 
     auf ein Ziel-Themengebiet für die ausgewählten Vorschriften.
 
    aListVorschriftId: Durch ':' getrennte Liste von Vorschriften-IDs, 
         bearbeitet werden sollen
     aSourceThemaId: Quell-Thema
     aTargetThemaId: Durch ':' getrennte Liste von Ziel-Thema-IDs
-
+*/
 function fCopyVorschriftenLaenderByThema(aListVorschriftId VARCHAR2, 
         aSourceThemaId NUMBER, aListTargetThemaId VARCHAR2) return BOOLEAN;
 
 function fGetLinks(aVorschriftID in number) return apex_t_number;
 
-# Ändert bestimmte Eigenschaften von Vorschriften
+/* Ändert bestimmte Eigenschaften von Vorschriften
     aListVorschriftId: Durch ':' getrennte Liste von Vorschriften-IDs, 
         bearbeitet werden sollen
     aAttribut: Numerische Repräsentation der Tabellenspalte
@@ -12522,24 +12555,24 @@ function fGetLinks(aVorschriftID in number) return apex_t_number;
         Regulärem Ausdruck (1)
     aSearchText: Text der gesucht und ersetzt werden soll
     aReplaceText: Text der den alten Text ersetzen soll
-
+*/
 function fSearchAndReplaceVorschriftenAttribut(aListVorschriftId VARCHAR2, aAttribut NUMBER, 
         aPlainRegexReplace NUMBER, aSearchText VARCHAR2, aReplaceText VARCHAR2) return NUMBER;
 
 
-# Erstellt eine URL zum erstellen eines Jira-Tickets basierend auf
+/* Erstellt eine URL zum erstellen eines Jira-Tickets basierend auf
    der übergebenen Vorschrift
 
    aVorschriftId: PK der Vorschrift
    return: der erstellte JIRA-Link
- 
+*/ 
 function fCreateJiraUrl(aVorschriftId NUMBER) return VARCHAR2;
 
-# Erstellt einen Link zur externen Verlinkung der Vorschrift
+/* Erstellt einen Link zur externen Verlinkung der Vorschrift
 
     aVorschriftId PK der Vorschrift
     return: der erstellte Permalink
-
+*/
 
 function fCreateJiraUrlAssistent(aVorschriftId NUMBER, aMFV_TEILID NUMBER,aAKIDS VARCHAR2 default null,aSchlagwörter VARCHAR2 default null,  aZusVorschriften  VARCHAR2 default null, aMFVID VARCHAR2 default null) return clob;
 
@@ -12547,50 +12580,50 @@ function fCreateJiraUrlAssistent(aVorschriftId NUMBER, aMFV_TEILID NUMBER,aAKIDS
 function fCreatePermalinkUrl(aVorschriftId NUMBER) return VARCHAR2;
 
 
-# Loescht eine MfV mit allen Referenzen und Historie
+/* Loescht eine MfV mit allen Referenzen und Historie
     aMfvId: ID der MfV
     return: true bei Erfolg
-
+*/
 FUNCTION fDeleteMfv(aMfvId NUMBER) return BOOLEAN;
 
-#Erweitert die übergeben Themenliste um die Kinder der Themen 
+/*Erweitert die übergeben Themenliste um die Kinder der Themen */
 function  fgetFullTHemenListe(aThemenliste varchar2) return varchar2;
 
-#
+/*
 * set status of previous version of MFV (if any exist) to 30 
 * eg.  for aMfvname = 'E01 00013 101 V03' the DMS_Documentenstatus of
 *  'E01 00013 101 V02', 'E01 00013 101 V01' will be set to 30
-
+*/
 procedure pUpdateDocumentStatus(aMfvname in varchar2);
 
-# prüfft ob Benutzer is in Redaktionsteam
+/* prüfft ob Benutzer is in Redaktionsteam
     auserid: ID der Benutzer
     return: 1 wenn in Redaktionsteam, sonst 0
-
+*/
 function fisInRedaktionsteam( auserid number) return number;
 
- # sucht gemeinsame VKO-Benutzerids welche der liste der Vorschriften mit ids
+ /* sucht gemeinsame VKO-Benutzerids welche der liste der Vorschriften mit ids
    in ':'-separated aVorschriftenIds zugewiesen sind. 
    return   ':'-separated ids von  VKO-Benutzerids, die für alle Vorschriften
    aus der liste gelten.
- 
+ */
 function fgetCommonVKOUserIds(avorschriftenids varchar2) return varchar2;
 
-# fügt den Vorschriften aus der liste avorschriftids
+/* fügt den Vorschriften aus der liste avorschriftids
   die Länder aus der liste  alaenderids  hinzu
-
+*/
 function fAddLaenderToVorschriften(avorschriftids varchar2, alaenderids varchar2) return boolean;
-#
-
+/*
+*/
 function fAddThemenToVorschriften(avorschriftids varchar2, aThemenids varchar2) return boolean;
 
-#*
-
+/**
+*/
 
 PROCEDURE proc_equivalent_vorschrift_thema(aVorschriftID in number);
 
-#*
-
+/**
+*/
 -- JOB
 PROCEDURE PREFRESH_MV_FREE_VKO_REPORT;
 
@@ -12607,7 +12640,7 @@ create or replace PACKAGE BODY                      "PCK_RI" AS
   g_jira_base_url CONSTANT VARCHAR2(60 CHAR) := 'https://cicd.cloud.audi/jira/browse/';
  
  
-    # Setzt alle vernetzten Informationen für eine Vorschrift zurück 
+    /* Setzt alle vernetzten Informationen für eine Vorschrift zurück */
     procedure pResetVI(aVorschriftID in number) is
     begin
         pResetAK(aVorschriftID);
@@ -12615,7 +12648,7 @@ create or replace PACKAGE BODY                      "PCK_RI" AS
         pResetFunktionen(aVorschriftID);        
     end pResetVI;
  
-    # Setzt die Arbeitskreise für eine Vorschrift zurück 
+    /* Setzt die Arbeitskreise für eine Vorschrift zurück */
     procedure pResetAK(aVorschriftID in number) is
     begin
  
@@ -12658,7 +12691,7 @@ create or replace PACKAGE BODY                      "PCK_RI" AS
  
     end pResetAK;
  
-    # Setzt die Antriebsarten für eine Vorschrift zurück 
+    /* Setzt die Antriebsarten für eine Vorschrift zurück */
     procedure pResetAA(aVorschriftID in number) is
      l_co number :=0;
      l_aa_co number :=0;
@@ -12719,11 +12752,11 @@ create or replace PACKAGE BODY                      "PCK_RI" AS
         end if;
     end pResetAA;
  
-    # Setzt die FUKA-Funktionen für eine Vorschrift zurück 
+    /* Setzt die FUKA-Funktionen für eine Vorschrift zurück */
     procedure pResetFunktionen(aVorschriftID in number) is
     begin
-        # zugeordnete Funktionen, die als gelöscht markiert waren, wiederherstellen, wenn sie zum
-           Standardprogramm der zugeordneten Themen gehören 
+        /* zugeordnete Funktionen, die als gelöscht markiert waren, wiederherstellen, wenn sie zum
+           Standardprogramm der zugeordneten Themen gehören */
         update t_vorschrift_ref_funktion
         set geloescht = 0, letzte_aenderung_datum = sysdate, letzte_aenderung_benutzerid = fGetUserId
         where vorschriftid = aVorschriftID
@@ -12735,7 +12768,7 @@ create or replace PACKAGE BODY                      "PCK_RI" AS
             where vorschriftid = aVorschriftID and geloescht = 0
         );
  
-        # zugeordnete Funktionen als gelöscht markieren, wenn sie nicht zum Standardprogramm der
+        /* zugeordnete Funktionen als gelöscht markieren, wenn sie nicht zum Standardprogramm der
            zugeordneten Themen gehören 
            Änderung TsTh 18.01.: Zusätzlich zugeordnete Funktionen sollen nicht mehr als gelöscht markiert werden 
  
@@ -12750,9 +12783,9 @@ create or replace PACKAGE BODY                      "PCK_RI" AS
                 where vorschriftid = aVorschriftID and geloescht = 0
             );   
  
-        
+        */
  
-        # Funktionen aus dem Standardprogramm der Themen zuordnen, wenn noch nicht da 
+        /* Funktionen aus dem Standardprogramm der Themen zuordnen, wenn noch nicht da */
         insert into t_vorschrift_ref_funktion (
             vorschriftid, funktionid, letzte_aenderung_benutzerid, letzte_aenderung_datum
         )
@@ -12812,8 +12845,8 @@ create or replace PACKAGE BODY                      "PCK_RI" AS
  
     end fIsAuthorized01;
  
-    # Liefert 1 zurück, wenn es sich um einen anonymen oder deaktivierten User handelt
-       --> nur freigegebene Vorschriften sichtbar 
+    /* Liefert 1 zurück, wenn es sich um einen anonymen oder deaktivierten User handelt
+       --> nur freigegebene Vorschriften sichtbar */
     function fIsLimitedUser(userId number default fGetUserId) return number is
         lUserStatus number;
         lGruppenAusserSuche number;
@@ -12868,7 +12901,7 @@ create or replace PACKAGE BODY                      "PCK_RI" AS
     END IF;
  
     -- Shortcut fuer Admin User: Immer alle Rechte
-    #select count(*) INTO lIsAdmin from T_BENUTZER b
+    /*select count(*) INTO lIsAdmin from T_BENUTZER b
     join T_BENUTZER_REF_ROLLE brr on brr.benutzerid = b.benutzerid
     where brr.benutzerid = userId 
       AND brr.rolleid = g_rolleid_admin 
@@ -12876,7 +12909,7 @@ create or replace PACKAGE BODY                      "PCK_RI" AS
  
     IF lIsAdmin > 0 THEN
         return TRUE;
-    END IF;
+    END IF;*/
  
     -- Erstellt eine Tabelle access_rules mit Rollennamen (role_name), Benutzerrecht (userrigth)
     -- und den berechteten Seiten (page_id) 
@@ -13066,9 +13099,9 @@ create or replace PACKAGE BODY                      "PCK_RI" AS
  
  
  
-# Ermittlung ob der Benutzer in der uebergebenen Liste von Rollen ist
+/* Ermittlung ob der Benutzer in der uebergebenen Liste von Rollen ist
     userid: zu pruefende Userid
-    listRolleId: String mit einer durch ':' getrennten Liste von rolleIDs 
+    listRolleId: String mit einer durch ':' getrennten Liste von rolleIDs */
 function fIsUserInRolle(userid NUMBER default fGetUSerId, listRolleId VARCHAR2) return NUMBER IS
     lResult NUMBER := 0;
 BEGIN
@@ -13297,7 +13330,7 @@ BEGIN
         || ':' || aVorschriftId -- Values
         ;
  
-    # apex_page.get_url verziert die URL mit JavaScript, wenn
+    /* apex_page.get_url verziert die URL mit JavaScript, wenn
         man sich in einem modalen Dialog befindet, deshalb ist die
         Funktion hier unbrauchbar
     return apex_util.host_url('SCRIPT') || apex_page.get_url(
@@ -13307,7 +13340,7 @@ BEGIN
             , p_values => aVorschriftId
             , p_session => null
             , p_clear_cache => '25'
-        );
+        );*/
  
 END fCreatePermalinkUrl;
  
@@ -13383,10 +13416,10 @@ FUNCTION fDeleteVorschrift(aVorschriftId NUMBER) return BOOLEAN IS
     return lResult;
 END fDeleteVorschrift;
  
-# Loescht eine MfV mit allen Referenzen und Historie
+/* Loescht eine MfV mit allen Referenzen und Historie
     aMfvId: ID der MfV
     return: true bei Erfolg
-
+*/
 FUNCTION fDeleteMfv(aMfvId NUMBER) return BOOLEAN IS
   BEGIN
  
@@ -13461,7 +13494,7 @@ begin
             ) returning benutzerid into lBenutzerID;
         end if;
         -- comment it for   trennung Rollen von  VKo, VEX Register !!!
-        #insert into t_benutzer_ref_rolle (
+        /*insert into t_benutzer_ref_rolle (
             benutzerid, rolleid, letzte_aenderung_benutzerid,
             letzte_aenderung_datum
         ) values (
@@ -13469,7 +13502,7 @@ begin
             lBenutzerID, 1004, fGetUserid,
             sysdate 
         );
-        
+        */
         commit;
  
     end if;
@@ -13494,13 +13527,13 @@ exception
  
 end fMakeDate;
  
-# Ändert bestimmte Eigenschaften von Vorschriften
+/* Ändert bestimmte Eigenschaften von Vorschriften
    aListVorschriftId: Durch ':' getrennte Liste von Vorschriften-IDs, 
         bearbeitet werden sollen
     aBezeichnung, aBemerkung, aFreigabeStatusId, aVorschriftStatus,
     aHomologation, aRxsWin: Neuer Wert der jeweiligen
         Spalte; null = alten Wert behalten
-
+*/
 function fChangeVorschriftenAttribut(aListVorschriftId VARCHAR2, aBezeichnung VARCHAR2, 
     aBemerkung VARCHAR2, aFreigabeStatusId NUMBER, aEinsatzdatumModellId NUMBER,
     aPrognoseQualitaet NUMBER, aHomologation NUMBER, aVorschriftStatus NUMBER, 
@@ -13551,13 +13584,13 @@ BEGIN
     RETURN true;
 END fChangeVorschriftenAttribut;
  
-# Ändert die Zuordnung der Fahrzeugklassen von Vorschriften
+/* Ändert die Zuordnung der Fahrzeugklassen von Vorschriften
    aListVorschriftId: Durch ':' getrennte Liste von Vorschriften-IDs, 
         bearbeitet werden sollen
    aListFahrzeugklasse: Durch ':' getrennte Liste von Fahrzeugklassen-IDs, 
         die gesetzt werden sollen;
         null = alten Wert behalten
-
+*/
 function fChangeVorschriftenAttributFahrzeugklasse(aListVorschriftId VARCHAR2, aListFahrzeugklasse VARCHAR2)
 return boolean as
 begin
@@ -13592,12 +13625,12 @@ begin
 end fChangeVorschriftenAttributFahrzeugklasse;
  
  
-# Ändert bestimmte Links von Vorschriften, *wenn diese noch nicht gesetzt sind*
+/* Ändert bestimmte Links von Vorschriften, *wenn diese noch nicht gesetzt sind*
    aListVorschriftId: Durch ':' getrennte Liste von Vorschriften-IDs, 
         bearbeitet werden sollen
     aLinkGetex, aLinkDms, aWebsiteId, aLinkWebsite: Neuer Wert der jeweiligen
         Spalte; null = alten Wert behalten
-
+*/
 function fChangeVorschriftenLinks(aListVorschriftId VARCHAR2, aLinkGetex VARCHAR2, 
     aLinkDms VARCHAR2, aWebsiteId NUMBER, aLinkWebsite VARCHAR2) return BOOLEAN AS
 BEGIN
@@ -13627,14 +13660,14 @@ BEGIN
     return true;
 END fChangeVorschriftenLinks;
  
-# Kopiert de Zuordnungen zu den Themengebieten von einem Quellland 
+/* Kopiert de Zuordnungen zu den Themengebieten von einem Quellland 
     auf ein Zielland für die ausgewählten Vorschriften.
  
    aListVorschriftId: Durch ':' getrennte Liste von Vorschriften-IDs, 
         bearbeitet werden sollen
     aSourceLandId: Quell-Land
     aListTargetLandId: Durch ':' getrennte List von Ziel-Land-IDs
-
+*/
 function fCopyVorschriftenThemenByLand(aListVorschriftId VARCHAR2, 
     aSourceLandId NUMBER, aListTargetLandId VARCHAR2) return BOOLEAN AS
 BEGIN
@@ -13658,14 +13691,14 @@ BEGIN
     return true;
 END fCopyVorschriftenThemenByLand;
  
-# Kopiert de Zuordnungen zu den Laendern von einem Quell-Themengebiet 
+/* Kopiert de Zuordnungen zu den Laendern von einem Quell-Themengebiet 
     auf ein Ziel-Themengebiet für die ausgewählten Vorschriften.
  
    aListVorschriftId: Durch ':' getrennte Liste von Vorschriften-IDs, 
         bearbeitet werden sollen
     aSourceThemaId: Quell-Thema
     aTargetThemaId: Durch ':' getrennte Liste von Ziel-Thema-IDs
-
+*/
 function fCopyVorschriftenLaenderByThema(aListVorschriftId VARCHAR2, 
         aSourceThemaId NUMBER, aListTargetThemaId VARCHAR2) return BOOLEAN AS
 BEGIN
@@ -13779,13 +13812,13 @@ END fCopyVorschriftenLaenderByThema;
   END fSearchAndReplaceVorschriftenAttribut;
  
  
-# Erstellt eine URL zum erstellen eines Jira-Tickets basierend auf
+/* Erstellt eine URL zum erstellen eines Jira-Tickets basierend auf
    der übergebenen Vorschrift
  
    aVorschriftId: PK der Vorschrift
    return: der erstellte JIRA-Link
-  
- # function fCreateJiraUrl(aVorschriftId NUMBER) return VARCHAR2 as
+*/  
+ /* function fCreateJiraUrl(aVorschriftId NUMBER) return VARCHAR2 as
       l_vs_nummer varchar2(4096);
       l_vs_bezeichnung varchar2(4096);
       l_vs_status varchar2(4096);
@@ -13925,7 +13958,7 @@ END fCopyVorschriftenLaenderByThema;
  
      ;
  
-end fCreateJiraUrl; 
+end fCreateJiraUrl; */
 -- Fügt den Ausgewählten Themen noch die unterThemen hinzu
 function fgetFullTHemenListe (aThemenliste varchar2) return varchar2
 as
@@ -13971,8 +14004,8 @@ procedure pUpdateDocumentStatus(aMfvname in varchar2)
     null;
   END;
  
-#
-
+/*
+*/
  function fisInRedaktionsteam( auserid number)
  return number as
  l_co number :=0;
@@ -13983,8 +14016,8 @@ procedure pUpdateDocumentStatus(aMfvname in varchar2)
     return l_co;
  end;
  
- #
- 
+ /*
+ */
   function fgetCommonVKOUserIds(avorschriftenids varchar2)    
   return  varchar2 as
   l_ids_Table T_ListOfIds_Table;
@@ -14029,8 +14062,8 @@ BEGIN
    return l_user_ids;
   end;
  
-  #*
-  
+  /**
+  */
  function fAddLaenderToVorschriften(avorschriftids varchar2, alaenderids varchar2) return boolean
  as
   resu boolean :=true;
@@ -14055,8 +14088,8 @@ BEGIN
  return resu;
  end;
  
- #*
- 
+ /**
+ */
  function fAddThemenToVorschriften(avorschriftids varchar2, aThemenids varchar2) return boolean
 as
   resu boolean :=true;
@@ -14416,7 +14449,7 @@ END PCK_RI;
 
 
 
-# PCK RI BENACHRICHTIGUNG 
+/* PCK RI BENACHRICHTIGUNG */
 
 -- SPECIFICATION
 
@@ -14696,13 +14729,13 @@ begin
                'Themengebiet prüfen da Fremdarbeitskreisvergabe', 60, 0 , abenutzerId);
      end if;
 end;
-#
+/*
 * Procedure ist vorbehalten für Benachrichtigungen mit GRUND=70 
 * Parameter :
 *    aVorschriftid - id von voschrift
 *    aBereich      - geänderter Bereich im Vorschrift: ='Datum' oder ='Themen' oder ='Laender'
 *    benutzerId    - id von benutzer , der die Änderungen vornimmt
-
+*/
  PROCEDURE  pBenachricht_Mfv_Arbeitskreise(
    aVorschriftid in number, aBereich in varchar2, benutzerId in number)
      is                              
@@ -14822,10 +14855,10 @@ procedure pBenachrichtigung_MFV_Gueltigkeit
    END LOOP;
  end;
  
- #*
+ /**
  * soll 1 mal pro Quartal ausgeführt werden . Prüft Einsatzdaten für  für Vorschriften mit "in Kraft" in Vergangenheit.
  * Erzeugt Benachrichtigung (Grund 100) für Arbeitskreise des Vorschrifts
- 
+ */
  procedure pWarnungEinsatzdatum
  is
    l_arbeitskreise varchar2(3000);
@@ -15019,10 +15052,10 @@ begin
      end if;
 end;
 
-#*
+/**
   Wenn Nachfolger andere Themengebietszuordnungen hat als Vorgänger:
   Versendung an alle Arbeitskreise die entweder fehlen oder zusätzlich zugeordnet sind
- 
+ */
  procedure pThemenDiff_Vorgaenger(aVorschriftid in number, auserid in number ) is
 
   lst_vorgaengerIds Varchar2(2000);
@@ -15109,7 +15142,7 @@ END PCK_RI_BENACHRICHTIGUNG;
 
 
 
-# PCK RI COCKPIT 
+/* PCK RI COCKPIT */
 
 -- SPECIFICATION
 
@@ -15140,7 +15173,7 @@ create or replace PACKAGE                      "PCK_RI_COCKPIT" AS
             from cte_thema_filter tf
             join v_thema_baum tb on (tf.themaid = tb.themaid)
             order by tf.thema_sortorder
-#        ), cte_nachfolgerdaten as (
+/*        ), cte_nachfolgerdaten as (
             select vorgaenger_vorschriftid vorgaengerid, v.vorschriftid nf_vorschriftid, v.vorschrift_nummer nf_nummer,
             o.x as nf_datumsangaben
             from t_vorschrift_ref_vorschrift vrv
@@ -15150,7 +15183,7 @@ create or replace PACKAGE                      "PCK_RI_COCKPIT" AS
                 from t_vorschrift_ref_einsatzdatum_typ e
                 where e.vorschriftid = v.vorschriftid
             ) o
-            where vrv.beziehung_art = 10
+            where vrv.beziehung_art = 10*/
         ), cte_vorschriften as (
             select
                 lpad(' ',xlevel-1,' ') || t.bezeichnung as thema_bezeichnung, t.thema_sortorder,
@@ -15500,7 +15533,7 @@ END PCK_RI_COCKPIT;
 
 
 
-# PCK  RI COCKPIT2 
+/* PCK  RI COCKPIT2 */
 
 -- SPECIFICATION
 
@@ -16031,7 +16064,7 @@ create or replace PACKAGE BODY                      "PCK_RI_COCKPIT2" AS
                 lAnzeigeIn := 30; --> Vorschrift Zukunft
 
 
-            #elsif (lDatensatz.art = 10
+            /*elsif (lDatensatz.art = 10
                     and lDatensatz.orig_datum_in_kraft > sysdate   
                     and lDatensatz.orig_datum_neue_typen > sysdate
                     and lDatensatz.orig_datum_alle_fzg is null
@@ -16051,7 +16084,7 @@ create or replace PACKAGE BODY                      "PCK_RI_COCKPIT2" AS
                     and lDatensatz.orig_status_db_intern in (10, 20) -- Entwurf/Freigabe 
             ) then
                 lRegelNr := 422;
-                lAnzeigeIn := 30; --> Vorschrift Zukunft
+                lAnzeigeIn := 30; --> Vorschrift Zukunft*/
                 
             elsif (lDatensatz.art = 10
                     and lDatensatz.orig_datum_in_kraft > sysdate   
@@ -16181,7 +16214,7 @@ create or replace PACKAGE BODY                      "PCK_RI_COCKPIT2" AS
 
         end loop;
 
-        # Aussortierung von Duplikaten, wenn Land, Thema, Vorschrift, RR und Anzeige In übereinstimmen 
+        /* Aussortierung von Duplikaten, wenn Land, Thema, Vorschrift, RR und Anzeige In übereinstimmen */
         merge into t_cockpit_daten t
         using (
             select count(1) over (partition by landid, themaid, vorschriftid, rr_vorschriftid, anzeige_in) xcounter,
@@ -16219,10 +16252,10 @@ create or replace PACKAGE BODY                      "PCK_RI_COCKPIT2" AS
         if (aThemenListe is null) then
             select themaid,themaid bulk collect into lConfig.themenliste, lConfig.themenindexes from v_thema_baum order by thema_sortorder;
         else 
-            #select distinct themaid, themaid bulk collect into lConfig.themenliste, lConfig.themenindexes
+            /*select distinct themaid, themaid bulk collect into lConfig.themenliste, lConfig.themenindexes
             from t_thema
             connect by prior parentid = themaid
-            start with themaid in (select column_value from apex_string.split_numbers(aThemenListe,':'));   
+            start with themaid in (select column_value from apex_string.split_numbers(aThemenListe,':'));   */
 
             select themaid,themaid bulk collect into lConfig.themenliste, lConfig.themenindexes
             from v_thema_baum v
@@ -16373,7 +16406,7 @@ create or replace PACKAGE BODY                      "PCK_RI_COCKPIT2" AS
                 where et.spaltenindex_cockpit is not null
                 group by vorschriftid        
             )
-            select o.*, #nvl((select sum(thema_rows) from cte3 i where i.thema_sortorder < o.thema_sortorder),0) thema_zeile_start,
+            select o.*, /*nvl((select sum(thema_rows) from cte3 i where i.thema_sortorder < o.thema_sortorder),0) thema_zeile_start,*/
             v_rr.vorschrift_nummer rr_vorschrift_nummer, d.datumsangaben,
             rr_ursp_vk.datum_alle_typen as override_datum_alle_fzg, rr_ursp_vk.datum_neue_typen as override_datum_neue_typen
             from cte2 o
@@ -16560,17 +16593,17 @@ END PCK_RI_COCKPIT2;
 
 
 
-# PCK RI COCKPIT REFRESH 
+/* PCK RI COCKPIT REFRESH */
 
 
 -- SPECIFICATION
 
 create or replace PACKAGE PCK_RI_COCKPIT_REFRESH AS 
     
-    # Gibt eine Aktualisierung der Cockpit-Daten in Auftrag. Kann direkt aufgerufen werden. 
+    /* Gibt eine Aktualisierung der Cockpit-Daten in Auftrag. Kann direkt aufgerufen werden. */
     procedure pTriggerRefresh;
     
-    # Führt die Aktualisierung aus. Sollte nie direkt aufgerufen werden, sondern nur indirekt über pTriggerRefresh 
+    /* Führt die Aktualisierung aus. Sollte nie direkt aufgerufen werden, sondern nur indirekt über pTriggerRefresh */
     procedure pRefresh;    
 
 END PCK_RI_COCKPIT_REFRESH;
@@ -16641,7 +16674,7 @@ END PCK_RI_COCKPIT_REFRESH;
 
 
 
-# PCK RI EXPORT 
+/* PCK RI EXPORT */
 
 -- SPECIFICATION
 
@@ -16815,7 +16848,7 @@ END PCK_RI_EXPORT;
 
 
 
-# PCK RI EXPORT 1 
+/* PCK RI EXPORT 1 */
 
 -- SPECIFICATION
 
@@ -16981,7 +17014,7 @@ END PCK_RI_EXPORT_1;
 
 
 
-# EMANO UTIL 
+/* EMANO UTIL */
 
 -- SPECIFICATION
 
