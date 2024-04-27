@@ -84,7 +84,7 @@ END;
 
 # Fetches translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. 
 
-
+```
 SELECT
     APPLICATION_ID,
     APPLICATION_NAME,
@@ -100,7 +100,7 @@ WHERE
     AND  DBMS_LOB.COMPARE(FROM_STRING, TO_STRING) = 0
     
     --dbms_lob.substr(from_string,2000) = dbms_lob.substr(to_string,2000);
-    
+```    
 
 
 # Counts the number of translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. 
