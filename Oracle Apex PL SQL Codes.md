@@ -1,6 +1,5 @@
 
-/* Inserts distinct translations from apex_application_trans_repos into T_TRANSLATION_TABLE where German and English texts 
-differ for application_id 112 and ensures no duplicate German entries in the T_TRANSLATION_TABLE. */
+# /* Inserts distinct translations from apex_application_trans_repos into T_TRANSLATION_TABLE where German and English texts differ for application_id 112 and ensures no duplicate German entries in the T_TRANSLATION_TABLE. */
 INSERT INTO t_translation_table (text_german, text_english)
     SELECT DISTINCT dbms_lob.substr(from_string,2000) as from_string, dbms_lob.substr(to_string,2000) as to_string
     FROM apex_application_trans_repos
