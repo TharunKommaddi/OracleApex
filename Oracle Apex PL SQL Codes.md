@@ -36,8 +36,7 @@ WHERE EXISTS (
 ```
 
 
-# Sets the APEX security group to the associated workspace, then updates English translations in APEX_APPLICATION_TRANS_REPOS 
-based on matches with T_TRANSLATION_TABLE for a specific target application = 240. 
+# Sets the APEX security group to the associated workspace, then updates English translations in APEX_APPLICATION_TRANS_REPOS based on matches with T_TRANSLATION_TABLE for a specific target application = 240. 
 
 
 BEGIN
