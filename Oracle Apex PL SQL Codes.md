@@ -105,7 +105,7 @@ WHERE
 
 # Counts the number of translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. 
 
-
+```
 SELECT
     COUNT(*) AS IDENTICAL_RECORD_COUNT
 FROM
@@ -113,14 +113,14 @@ FROM
 WHERE
     APPLICATION_ID = 112
     AND DBMS_LOB.COMPARE(FROM_STRING, TO_STRING) != 0;
-
+```
     
 
 
 
 # Updates a specific English translation string using the APEX_LANG package 
 
-
+```
 BEGIN
  APEX_LANG.UPDATE_TRANSLATED_STRING(
             P_ID => 730032710308662664,
@@ -128,14 +128,13 @@ BEGIN
             P_STRING => 'Start profile'
         );
 END;
+```
 
 
-
-#
-Retrieves records from APEX_APPLICATION_TRANS_REPOS where APPLICATION_ID is 240 and the original and translated strings are identical.
+# Retrieves records from APEX_APPLICATION_TRANS_REPOS where APPLICATION_ID is 240 and the original and translated strings are identical.
 
 
-
+```
 SELECT
     APPLICATION_ID,
     APPLICATION_NAME,
@@ -149,13 +148,13 @@ FROM
 WHERE
     APPLICATION_ID = 118
     AND  DBMS_LOB.COMPARE(FROM_STRING, TO_STRING) = 0
-	
+```	
 	
 	
 # Help Table t_hilfe
 
 
-
+```
 describe t_hilfe
 
 
@@ -186,11 +185,11 @@ ALTER TABLE t_hilfe RENAME COLUMN HILFETEXT_ENG TO HILFETEXT_ENGLISCH;
 
 
 desc t_hilfe
-
+```
 
 # Page 25, titel table t_vorschrift 
 
-
+```
 ALTER TABLE t_vorschrift ADD Titel_German VARCHAR2(500 CHAR);
 
 ALTER TABLE t_vorschrift ADD Comment_English VARCHAR2(4000 CHAR);
@@ -203,12 +202,12 @@ ALTER TABLE t_vorschrift RENAME COLUMN COMMENT_ENGLISH TO BEMERKUNG_ENGLISCH;
 
 
 desc t_vorschrift 
-
+```
 
 
 # Page 25 table t_vorschrift_ref_einsatzdatum_typ 
 
-
+```
 ALTER TABLE t_vorschrift_ref_einsatzdatum_typ ADD EINSATZDATUM_TEXT_Englisch VARCHAR2(4000 CHAR);
 
 select * from t_vorschrift_ref_einsatzdatum_typ
@@ -233,37 +232,36 @@ WHERE einsatzdatum_text = '';
 
 
 desc t_vorschrift_ref_einsatzdatum_typ
-
+```
 
 
 
 # Page 25 tabel T_VORSCHRIFT_REF_VORSCHRIFT 
 
-
+```
 ALTER TABLE T_VORSCHRIFT_REF_VORSCHRIFT ADD Kommentar_Englisch VARCHAR2(1000 CHAR);
-
+```
 
 
 # Page 25 tabel T_VORSCHRIFT_REF_LAND 
 
-
+```
 ALTER TABLE T_VORSCHRIFT_REF_LAND ADD Bemerkung_Englisch VARCHAR2(4000 CHAR);
-
+```
 
 
 # Page 25 tabel T_VORSCHRIFT_REF_THEMA 
 
-
+```
 ALTER TABLE T_VORSCHRIFT_REF_THEMA ADD Bemerkung_Englisch VARCHAR2(4000 CHAR);
-
+```
 
 
 
 # Page 25 tabel T_THEMA 
 
-
+```
 ALTER TABLE t_thema RENAME COLUMN name_eng TO name_englisch;
-
 
 
 ALTER TABLE t_thema 
@@ -272,18 +270,18 @@ MODIFY name_englisch VARCHAR2(256 CHAR);
 ALTER TABLE t_thema RENAME COLUMN name_englisch TO BEZEICHNUNG_ENGLISCH;
 
 desc t_thema
-
+```
 
 # Page 25 table T_LAND 
 
-
+```
 ALTER TABLE T_LAND ADD BesonderheitenMarkt_Englisch VARCHAR2(400 CHAR);
-
+```
 
 
 # view V_VORSCHRIFT_EQUAL
 
-
+```
 desc V_VORSCHRIFT_EQUAL
 
 
