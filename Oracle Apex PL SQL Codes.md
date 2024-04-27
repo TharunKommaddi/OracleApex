@@ -15,7 +15,7 @@ INSERT INTO t_translation_table (text_german, text_english)
                                                     
 # Updates the English text in T_TRANSLATION_TABLE by fetching distinct translations from apex_application_trans_repos for application_id 112 where German and English texts differ and match with the table's German text.
                                                   
-#### Updating t_translation_table with new translations from apex_application_trans_repos
+### Updating t_translation_table with new translations from apex_application_trans_repos
 
 ```
 UPDATE t_translation_table ttt
