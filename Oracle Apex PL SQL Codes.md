@@ -1,21 +1,20 @@
 
 # /* Inserts distinct translations from apex_application_trans_repos into T_TRANSLATION_TABLE where German and English texts differ for application_id 112 and ensures no duplicate German entries in the T_TRANSLATION_TABLE. */
-INSERT INTO t_translation_table (text_german, text_english)
+`INSERT INTO t_translation_table (text_german, text_english)
     SELECT DISTINCT dbms_lob.substr(from_string,2000) as from_string, dbms_lob.substr(to_string,2000) as to_string
     FROM apex_application_trans_repos
     WHERE dbms_lob.substr(from_string,2000) != dbms_lob.substr(to_string,2000)
     AND application_id = 112    
     AND NOT EXISTS (SELECT 1 
                     FROM t_translation_table WHERE application_id = 112
-                    AND dbms_lob.substr(from_string,2000) = dbms_lob.substr(text_german, 2000));
+                    AND dbms_lob.substr(from_string,2000) = dbms_lob.substr(text_german, 2000));`
                                                     
                                                     
                                                     
-/* Updates the English text in T_TRANSLATION_TABLE by fetching distinct translations from apex_application_trans_repos for application_id 112 
-where German and English texts differ and match with the table's German text. */
+# /* Updates the English text in T_TRANSLATION_TABLE by fetching distinct translations from apex_application_trans_repos for application_id 112 where German and English texts differ and match with the table's German text. */
                                                   
--- Updating t_translation_table with new translations from apex_application_trans_repos
-UPDATE t_translation_table ttt
+## -- Updating t_translation_table with new translations from apex_application_trans_repos
+`UPDATE t_translation_table ttt
 SET (text_english) = (
     SELECT DISTINCT dbms_lob.substr(src.to_string,2000) 
     FROM apex_application_trans_repos src
@@ -30,7 +29,7 @@ WHERE EXISTS (
     AND src.application_id = 112
     AND dbms_lob.substr(src.from_string,2000) != dbms_lob.substr(src.to_string,2000)
 )
-
+`
 
 
 /* Sets the APEX security group to the associated workspace, then updates English translations in APEX_APPLICATION_TRANS_REPOS 
