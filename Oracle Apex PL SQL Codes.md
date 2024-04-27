@@ -38,7 +38,7 @@ WHERE EXISTS (
 
 # Sets the APEX security group to the associated workspace, then updates English translations in APEX_APPLICATION_TRANS_REPOS based on matches with T_TRANSLATION_TABLE for a specific target application = 240. 
 
-
+```
 BEGIN
  -- The strings can be imported into the target application via the APEX_LANG package
  -- If running from SQL*Plus, we need to set the environment
@@ -78,7 +78,7 @@ BEGIN
     END LOOP;
     COMMIT;
 END;
-
+```
 
 
 
