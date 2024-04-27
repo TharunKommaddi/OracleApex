@@ -1,20 +1,25 @@
 
 # /* Inserts distinct translations from apex_application_trans_repos into T_TRANSLATION_TABLE where German and English texts differ for application_id 112 and ensures no duplicate German entries in the T_TRANSLATION_TABLE. */
-`INSERT INTO t_translation_table (text_german, text_english)
+
+```
+INSERT INTO t_translation_table (text_german, text_english)
     SELECT DISTINCT dbms_lob.substr(from_string,2000) as from_string, dbms_lob.substr(to_string,2000) as to_string
     FROM apex_application_trans_repos
     WHERE dbms_lob.substr(from_string,2000) != dbms_lob.substr(to_string,2000)
     AND application_id = 112    
     AND NOT EXISTS (SELECT 1 
                     FROM t_translation_table WHERE application_id = 112
-                    AND dbms_lob.substr(from_string,2000) = dbms_lob.substr(text_german, 2000));`
+                    AND dbms_lob.substr(from_string,2000) = dbms_lob.substr(text_german, 2000));
+```
                                                     
                                                     
-                                                    
+                            
 # /* Updates the English text in T_TRANSLATION_TABLE by fetching distinct translations from apex_application_trans_repos for application_id 112 where German and English texts differ and match with the table's German text. */
                                                   
 ## -- Updating t_translation_table with new translations from apex_application_trans_repos
-`UPDATE t_translation_table ttt
+
+```
+UPDATE t_translation_table ttt
 SET (text_english) = (
     SELECT DISTINCT dbms_lob.substr(src.to_string,2000) 
     FROM apex_application_trans_repos src
@@ -29,11 +34,12 @@ WHERE EXISTS (
     AND src.application_id = 112
     AND dbms_lob.substr(src.from_string,2000) != dbms_lob.substr(src.to_string,2000)
 )
-`
+```
 
 
-/* Sets the APEX security group to the associated workspace, then updates English translations in APEX_APPLICATION_TRANS_REPOS 
-based on matches with T_TRANSLATION_TABLE for a specific target application = 240. */
+# /* Sets the APEX security group to the associated workspace, then updates English translations in APEX_APPLICATION_TRANS_REPOS  
+
+```
 BEGIN
  -- The strings can be imported into the target application via the APEX_LANG package
  -- If running from SQL*Plus, we need to set the environment
@@ -73,11 +79,13 @@ BEGIN
     END LOOP;
     COMMIT;
 END;
+```
 
 
 
+# /* Fetches translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. */
 
-/* Fetches translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. */
+```
 SELECT
     APPLICATION_ID,
     APPLICATION_NAME,
@@ -93,10 +101,12 @@ WHERE
     AND  DBMS_LOB.COMPARE(FROM_STRING, TO_STRING) = 0
     
     --dbms_lob.substr(from_string,2000) = dbms_lob.substr(to_string,2000);
-    
+```    
 
 
-/* Counts the number of translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. */
+# /* Counts the number of translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. */
+
+```
 SELECT
     COUNT(*) AS IDENTICAL_RECORD_COUNT
 FROM
@@ -104,12 +114,14 @@ FROM
 WHERE
     APPLICATION_ID = 112
     AND DBMS_LOB.COMPARE(FROM_STRING, TO_STRING) != 0;
-
+```
     
 
 
 
-/* Updates a specific English translation string using the APEX_LANG package */
+# /* Updates a specific English translation string using the APEX_LANG package */
+
+```
 BEGIN
  APEX_LANG.UPDATE_TRANSLATED_STRING(
             P_ID => 730032710308662664,
@@ -117,12 +129,10 @@ BEGIN
             P_STRING => 'Start profile'
         );
 END;
+```
 
 
-
-/*
-Retrieves records from APEX_APPLICATION_TRANS_REPOS where APPLICATION_ID is 240 and the original and translated strings are identical.
-*/
+# Retrieves records from APEX_APPLICATION_TRANS_REPOS where APPLICATION_ID is 240 and the original and translated strings are identical. */
 SELECT
     APPLICATION_ID,
     APPLICATION_NAME,
