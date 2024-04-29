@@ -5331,6 +5331,7 @@ end pck_ri_vorschrift_oracle_text_pkg;
 #  html and css for the alignment
 
 ### html to show while doing oracle text introduction
+
 ```
 <p>This page shows how Oracle Text can be used within an Interactive Report to perform full-text search using linguistic features.</p>
 <p>In this example, Oracle Text features are available to search the <b>VORSCHRIFT_NUMMER</b> and <b>VORSCHRIFT_BEZEICHNUNG_DEUTSCH</b> columns with the Interactive Report.</p>
@@ -5450,17 +5451,18 @@ END FILTER_DATA;
 
 
 # TEST CASES
+
 ```
 BEGIN
     FILTER_DATA('ungleich', 'AU310/6EU_B');
 END;
 /
+```
 
 
 
 
-
-/* Procedure with two parameters returning output like only ids */
+# Procedure with two parameters returning output like only ids
 
 
 CREATE OR REPLACE PROCEDURE FILTER_DATA (
@@ -5498,23 +5500,26 @@ BEGIN
     CLOSE c_cursor;
 END FILTER_DATA;
 /
+```
 
 
+
+```
 BEGIN
     FILTER_DATA('gleich', 'AU310/6EU_B');
 END;
 /
 
+```
 
 
 
-
-/* Procedure with two parameters returning output like only ids */
-
-
--- PROCEDURE
+# Procedure with two parameters returning output like only ids
 
 
+### PROCEDURE
+
+```
 CREATE OR REPLACE PROCEDURE FILTER_DATA (
     p_operator IN VARCHAR2,
     p_kpb IN VARCHAR2,
@@ -5571,12 +5576,12 @@ BEGIN
     END IF;
     
 END FILTER_DATA;
+```
 
+```
+# TEST CASES 
 
-
--- TEST CASES 
-
-
+```
 BEGIN
     FILTER_DATA('gleich', 'AU310/6EU_B');
 END;
@@ -5630,17 +5635,18 @@ END;
 BEGIN
     FILTER_DATA('entspricht regulärem Ausdruck', '^AU3.*B$'); -- This regex matches strings that start with 'AU3' and end with 'B'.
 END;
+```
 
 
 
 
 
+# EMANO REPORT
 
-/* EMANO REPORT */
 
+#### SPECIFICATION
 
--- SPECIFICATION
-
+```
 create or replace package emano_report is
     -- Die folgenden Konstanten sind vierstellig, da die Oracle-internen
     -- Entsprechungen 1-3-stellig sind
@@ -5689,10 +5695,11 @@ create or replace package emano_report is
     function fMakeExcelSingleSheet(aSheetName in varchar2, aTitleName in varchar2, aQuery in clob, aVertraulich in number default null) return blob;
     
 end emano_report;
+```
 
+### BODY
 
--- BODY
-
+```
 create or replace package body emano_report is
     /*
     Konvertiert einen CLOB in einen BLOB
@@ -6677,16 +6684,17 @@ end loop;
         
              
 end emano_report;
+```
 
 
 
 
+# EXCEL XLSX BUILDER PKG
 
-/* EXCEL XLSX BUILDER PKG */
 
+### SPECIFICATION
 
--- SPECIFICATION
-
+```
 create or replace PACKAGE xlsx_builder_pkg
    AUTHID CURRENT_USER
 IS
@@ -7058,12 +7066,13 @@ IS
                          p_XLSX_datetime_format VARCHAR2 := 'dd/mm/yyyy hh24:mi:ss')
       RETURN BLOB;
 END;
+```
 
 
 
+### BODY
 
--- BODY
-
+```
 create or replace PACKAGE BODY xlsx_builder_pkg
 IS
    /* Some Naming-conventions
@@ -9892,18 +9901,18 @@ IS
          raise_application_error(-20001, '|+|' || sqlerrm || ',' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE || '|+|');
    END query2sheet2;
 END;
+```
 
 
 
 
-
-/* ZIP UTIL PKG */
-
+# ZIP UTIL PKG
 
 
--- SPECIFICATION
 
+### SPECIFICATION
 
+```
 create or replace PACKAGE zip_util_pkg
   AUTHID CURRENT_USER
 AS
@@ -9966,6 +9975,7 @@ AS
   PROCEDURE finish_zip( p_zipped_blob IN OUT NOCOPY BLOB);
 
 END zip_util_pkg;
+```
 
 
 
@@ -9973,10 +9983,9 @@ END zip_util_pkg;
 
 
 
+### BODY
 
--- BODY
-
-
+```
 create or replace package body zip_util_pkg
 is
 
@@ -10372,17 +10381,17 @@ is
   END finish_zip;
 
 end zip_util_pkg;
+```
 
 
 
-
-/* APPLICATION PROCESS */
-
+# APPLICATION PROCESS */
 
 
--- exportStatmentOfCompletenes2
 
+### exportStatmentOfCompletenes2
 
+```
 declare
     lBlob blob;
     lQuery clob;
@@ -10443,18 +10452,18 @@ exception
     when others then
         htp.p(dbms_utility.format_error_backtrace);
 end;
+```
 
 
 
 
 
 
-
-/* INTERACTIVE GRID CUSTOM FILTER USING PROCEDURE */
-
+# INTERACTIVE GRID CUSTOM FILTER USING PROCEDURE
 
 
 
+```
 create or replace PROCEDURE FILTER_DATA (
     p_operator IN VARCHAR2,
     p_kpb IN VARCHAR2
@@ -10507,11 +10516,11 @@ BEGIN
 
     CLOSE c_cursor;
 END FILTER_DATA;
+```
 
+# TO check whether sql query and pl sql is returning correct or not we can check using 
 
--- TO check whether sql query and pl sql is returning correct or not we can check using 
-
-
+```
 SELECT KPB_ID, KPB FROM T_KPB WHERE REGEXP_LIKE(KPB, '^AU\d+/\d+[A-Z]+_[A-Z]$')
 
 
@@ -10522,16 +10531,15 @@ l_sql :='SELECT KPB_ID, KPB FROM T_KPB WHERE REGEXP_LIKE(UPPER(TRIM(KPB)), ''^'|
 
 dbms_output.put_line(l_sql);
 end;
+```
 
+### TEST CASES
 
-
-
-
+```
 BEGIN
   FILTER_DATA('entspricht regulärem Ausdruck', 'AU');
 END;
 
--- TEST CASES
 
 BEGIN
     FILTER_DATA('gleich', 'AU310/6Eu_B');
@@ -10586,12 +10594,13 @@ END;
 BEGIN
   FILTER_DATA('entspricht regulärem Ausdruck', '^AU\d+/\d+[A-Z]+_[A-Z]$');
 END;
+```
 
 
+# REGULAR EXPRESSION EXPLANATION
 
--- REG EXP EXPLANATION
 
-Sure, let me break down the regular expression `'^AU\d+/\d+[A-Z]+_[A-Z]$'` for you:
+### Sure, let me break down the regular expression `'^AU\d+/\d+[A-Z]+_[A-Z]$'` for you:
 
 1. `^`: This symbol represents the start of the string.
 2. `AU`: This matches the literal characters "AU".
@@ -10603,7 +10612,7 @@ Sure, let me break down the regular expression `'^AU\d+/\d+[A-Z]+_[A-Z]$'` for y
 8. `[A-Z]`: This matches a single uppercase letter (A-Z).
 9. `$`: This symbol represents the end of the string.
 
-So, the complete regular expression `'^AU\d+/\d+[A-Z]+_[A-Z]$'` matches a string that:
+### So, the complete regular expression `'^AU\d+/\d+[A-Z]+_[A-Z]$'` matches a string that:
 
 - Starts with "AU"
 - Followed by one or more digits
@@ -10614,13 +10623,13 @@ So, the complete regular expression `'^AU\d+/\d+[A-Z]+_[A-Z]$'` matches a string
 - And finally, a single uppercase letter
 - And the string must match the entire pattern (start to end)
 
-For example, the following strings would match this regular expression:
+### For example, the following strings would match this regular expression:
 
 - `AU123/456ABC_D`
 - `AU456/789XYZ_Q`
 - `AU1/2DEF_G`
 
-And the following strings would not match:
+### And the following strings would not match:
 
 - `AU123/456abc_D` (lowercase letters)
 - `AU123/456_D` (no uppercase letters after the slash)
@@ -10631,13 +10640,14 @@ And the following strings would not match:
 
 
 
-/* COMPLETE REGINDEX PACKAGES - AUDI */
+# *COMPLETE REGINDEX PACKAGES - AUDI*
 
 	
-/* EMANO REPORT */
+## EMANO REPORT
 
--- SPECIFICATION
+### SPECIFICATION
 
+```
 create or replace package emano_report is
     -- Die folgenden Konstanten sind vierstellig, da die Oracle-internen
     -- Entsprechungen 1-3-stellig sind
@@ -10686,12 +10696,13 @@ create or replace package emano_report is
     function fMakeExcelSingleSheet(aSheetName in varchar2, aTitleName in varchar2, aQuery in clob, aVertraulich in number default null) return blob;
     
 end emano_report;
+```
 
 
 
+### BODY
 
--- BODY
-
+```
 create or replace package body emano_report is
     /*
     Konvertiert einen CLOB in einen BLOB
@@ -11676,16 +11687,17 @@ end loop;
         
              
 end emano_report;
+```
 
 
 
 
 
+## EMANO UTIL
 
-/* EMANO UTIL */
+### SPECIFICATION
 
--- SPECIFICATION
-
+```
 create or replace PACKAGE "EMANO_UTIL" AS 
 
     procedure pResetPageIGIR(aPageID in number, aAPPID in number);
@@ -11701,11 +11713,12 @@ create or replace PACKAGE "EMANO_UTIL" AS
     function fIsUnequal (aString1 varchar2, aString2 varchar2) return number deterministic;    
 
 END EMANO_UTIL;
+```
 
 
+### BODY
 
--- BODY
-
+```
 create or replace PACKAGE BODY "EMANO_UTIL" AS
 
     /* Liefert die Sprache des angegebenen Benutzers zurück. Wird kein Benutzer angegeben, dann
@@ -11871,17 +11884,17 @@ end fBlobToClob;
   end fIsUnequal;
 
 END EMANO_UTIL;
+```
 
 
 
 
 
+## KOALA UTIL
 
-/* KOALA UTIL */
+### SPECIFICATION
 
--- SPECIFICATION
-
-
+```
 create or replace PACKAGE KOALA_UTIL AS 
 
     function fGetGroupmembers(aGroup in varchar2) return apex_t_varchar2;
@@ -11902,11 +11915,11 @@ create or replace PACKAGE KOALA_UTIL AS
     procedure pupdateUserRolesfromSRA(aRoleid number);
 
 END KOALA_UTIL;
+```
 
 
 
-
--- BODY
+### BODY
 
 ```
 create or replace PACKAGE BODY KOALA_UTIL AS
@@ -12194,9 +12207,9 @@ END KOALA_UTIL;
 
 
 
-/* LDAP UTIL */
+## LDAP UTIL
 
--- SPECIFICATION
+### SPECIFICATION
 
 ```
 create or replace PACKAGE "LDAP_UTIL" 
@@ -12214,7 +12227,7 @@ AS
 END LDAP_UTIL;
 ```
 
--- BODY
+### BODY
 
 ```
 create or replace PACKAGE BODY "LDAP_UTIL" AS
@@ -12378,9 +12391,9 @@ END LDAP_UTIL;
 
 
 
-/* PCK AK*/
+## PCK AK
 
--- SPECIFICATION
+### SPECIFICATION
 
 ```
 create or replace PACKAGE PCK_AK AS 
@@ -12392,7 +12405,7 @@ END PCK_AK;
 ```
 
 
--- BODY 
+### BODY 
 
 ```
 create or replace PACKAGE BODY PCK_AK AS
@@ -12444,9 +12457,9 @@ END PCK_AK;
 ```
 
 
-/* PCK RI*/
+## PCK RI
 
--- SPECIFICATION
+### SPECIFICATION
 
 ```
 create or replace PACKAGE                      "PCK_RI" AS 
@@ -12646,7 +12659,7 @@ END PCK_RI;
 ```
 
 
--- BODY
+### BODY
 
 
 ```
@@ -14464,10 +14477,11 @@ END PCK_RI;
 
 
 
-/* PCK RI BENACHRICHTIGUNG */
+## PCK RI BENACHRICHTIGUNG
 
--- SPECIFICATION
+### SPECIFICATION
 
+```
 create or replace PACKAGE PCK_RI_BENACHRICHTIGUNG AS 
 
   procedure pBenachrichtigung( aVorschriftid in number,  aArbeitskreise varchar2, aText in varchar2, aGrund in number :=0, 
@@ -14496,7 +14510,7 @@ END PCK_RI_BENACHRICHTIGUNG;
 ```
 
 
--- BODY
+### BODY
 
 ```
 create or replace PACKAGE BODY PCK_RI_BENACHRICHTIGUNG AS
@@ -15158,12 +15172,12 @@ END PCK_RI_BENACHRICHTIGUNG;
 
 
 
-/* PCK RI COCKPIT */
+## PCK RI COCKPIT
 
--- SPECIFICATION
+### SPECIFICATION
 
 ```
-create or replace PACKAGE                      "PCK_RI_COCKPIT" AS 
+create or replace PACKAGE "PCK_RI_COCKPIT" AS 
 
     type tConfig is record (
         laenderliste apex_t_number,
@@ -15291,10 +15305,10 @@ create or replace PACKAGE                      "PCK_RI_COCKPIT" AS
 END PCK_RI_COCKPIT;
 ```
 
--- BODY
+### BODY
 
 ```
-create or replace PACKAGE BODY                      "PCK_RI_COCKPIT" AS
+create or replace PACKAGE BODY "PCK_RI_COCKPIT" AS
 
     procedure pMain(aLaenderListe varchar2, aThemenListe varchar2) is
     begin
@@ -15551,9 +15565,9 @@ END PCK_RI_COCKPIT;
 
 
 
-/* PCK  RI COCKPIT2 */
+## PCK  RI COCKPIT2
 
--- SPECIFICATION
+### SPECIFICATION
 
 ```
 create or replace PACKAGE "PCK_RI_COCKPIT2" AS 
@@ -15637,7 +15651,7 @@ END PCK_RI_COCKPIT2;
 ```
 
 
--- BODY
+### BODY
 
 
 ```
@@ -16613,10 +16627,9 @@ END PCK_RI_COCKPIT2;
 
 
 
-/* PCK RI COCKPIT REFRESH */
+## PCK RI COCKPIT REFRESH
 
-
--- SPECIFICATION
+### SPECIFICATION
 
 ```
 create or replace PACKAGE PCK_RI_COCKPIT_REFRESH AS 
@@ -16630,7 +16643,7 @@ create or replace PACKAGE PCK_RI_COCKPIT_REFRESH AS
 END PCK_RI_COCKPIT_REFRESH;
 ```
 
--- BODY
+### BODY
 
 ```
 create or replace PACKAGE BODY PCK_RI_COCKPIT_REFRESH AS
@@ -16696,9 +16709,9 @@ END PCK_RI_COCKPIT_REFRESH;
 
 
 
-/* PCK RI EXPORT */
+## PCK RI EXPORT
 
--- SPECIFICATION
+### SPECIFICATION
 
 ```
 create or replace PACKAGE PCK_RI_EXPORT AS 
@@ -16708,7 +16721,7 @@ END PCK_RI_EXPORT;
 ```
 
 
--- BODY
+### BODY
 
 ```
 create or replace PACKAGE BODY PCK_RI_EXPORT AS
@@ -16872,9 +16885,9 @@ END PCK_RI_EXPORT;
 
 
 
-/* PCK RI EXPORT 1 */
+## PCK RI EXPORT 1
 
--- SPECIFICATION
+### SPECIFICATION
 
 ```
 create or replace PACKAGE PCK_RI_EXPORT_1 AS 
@@ -16884,7 +16897,7 @@ create or replace PACKAGE PCK_RI_EXPORT_1 AS
 END PCK_RI_EXPORT_1;
 ```
 
--- BODY
+### BODY
 
 ```
 create or replace PACKAGE BODY PCK_RI_EXPORT_1 AS
@@ -17040,7 +17053,7 @@ END PCK_RI_EXPORT_1;
 
 
 
-/* EMANO UTIL */
+## EMANO UTIL 
 
 -- SPECIFICATION
 
@@ -17049,6 +17062,106 @@ END PCK_RI_EXPORT_1;
 
 
 
+
+
+# Trigger
+
+```
+create or replace TRIGGER "TR_VORSCHRIFT"
+AFTER INSERT OR UPDATE ON T_VORSCHRIFT
+FOR EACH ROW
+BEGIN
+--IF ( DATE_HAS_CHANGED(:OLD.LETZTE_AENDERUNG_GETEX_ATTR, :NEW.LETZTE_AENDERUNG_GETEX_ATTR) = 'N' ) THEN
+  INSERT INTO T_H_VORSCHRIFT (
+    VORSCHRIFTID,
+    VORSCHRIFT_NUMMER,
+    VORSCHRIFT_BEZEICHNUNG,
+    PROGNOSE_QUALITAET,
+    PROGNOSE_QUALITAETID,
+    JIRA_TICKET,
+    EINSATZDATUM_MODELLID,
+    VORSCHRIFT_TYPID,
+    VORSCHRIFT_FREIGABESTATUSID,
+    BEMERKUNG,
+    LINK_ZUR_VORSCHRIFT_DMS,
+    LINK_ZUR_VORSCHRIFT_GETEX,
+    TYPSCHILD,
+    WEBSITEID,
+    WEBSITELINK,
+    NORMID,
+    HOMOLOGATION_MOEGLICH,
+    KSUID,
+    LETZTE_AENDERUNG_DATUM,
+    LETZTE_AENDERUNG_BENUTZERID,
+    VORSCHRIFT_STATUSID,
+    HOMOLOGATIONSRELEVANT,
+    RXSWIN,
+    VORSCHRIFT_BEZEICHNUNG_ENG,
+    DEKRA_DATENSATZID,
+    COP_RELEVANT,
+    TECHNOLOGIE,
+    WITHOUT_NORM_VALIDATION,
+    LINK_REQMAN,
+    DOKUMENTENDATUM,
+    -- Newly added columns here
+    MASTER,
+    SWR_HAUPTUMSETZENDE_OE,
+    TITEL_KURZ,
+    URL_GETEX_VORSCHRIFT
+
+    
+    
+  )
+  VALUES (
+    :NEW.VORSCHRIFTID,
+    :NEW.VORSCHRIFT_NUMMER,
+    :NEW.VORSCHRIFT_BEZEICHNUNG,
+    :NEW.PROGNOSE_QUALITAET,
+    :NEW.PROGNOSE_QUALITAETID,
+    :NEW.JIRA_TICKET,
+    :NEW.EINSATZDATUM_MODELLID,
+    :NEW.VORSCHRIFT_TYPID,
+    :NEW.VORSCHRIFT_FREIGABESTATUSID,
+    :NEW.BEMERKUNG,
+    :NEW.LINK_ZUR_VORSCHRIFT_DMS,
+    :NEW.LINK_ZUR_VORSCHRIFT_GETEX,
+    :NEW.TYPSCHILD,
+    :NEW.WEBSITEID,
+    :NEW.WEBSITELINK,
+    :NEW.NORMID,
+    :NEW.HOMOLOGATION_MOEGLICH,
+    :NEW.KSUID,
+    -- :NEW.LETZTE_AENDERUNG_DATUM ,
+    -- :NEW.LETZTE_AENDERUNG_BENUTZERID,
+    SYSDATE,
+    PCK_RI.fGetUserId,
+    :NEW.VORSCHRIFT_STATUSID,
+    :NEW.HOMOLOGATIONSRELEVANT,
+    :NEW.RXSWIN,
+    :NEW.VORSCHRIFT_BEZEICHNUNG_ENG,
+    :NEW.DEKRA_DATENSATZID,
+    :NEW.COP_RELEVANT,
+    :NEW.TECHNOLOGIE,
+    :NEW.WITHOUT_NORM_VALIDATION,
+    :NEW.LINK_REQMAN,
+    :NEW.DOKUMENTENDATUM,
+    -- Newly added column values from the :NEW pseudo-record
+    :NEW.MASTER,
+    :NEW.SWR_HAUPTUMSETZENDE_OE,
+    :NEW.TITEL_KURZ,
+    :NEW.URL_GETEX_VORSCHRIFT
+    
+  );
+
+--end IF;
+END;
+
+```
+
+```
+ALTER TRIGGER TR_VORSCHRIFT ENABLE;
+SELECT STATUS FROM USER_TRIGGERS WHERE TRIGGER_NAME = 'TR_VORSCHRIFT';
+```
 
 
 
