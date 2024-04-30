@@ -17324,8 +17324,112 @@ END;
 ```
 
 
-hi
+# **Comparing Tables in my Schema vs Other Schema environment:** This query lists the names of specific tables within the user's schema.
 
+```
+SELECT table_name
+FROM user_tables
+WHERE table_name IN (
+    'T_ANSPRECHPARTNER',
+    'T_SCHULUNG',
+    'T_SCHULUNG_TYP',
+    'T_AUDIT',
+    'T_AUDIT_TYP',
+    'T_IMPORTEUR_REF_LAND',
+    'T_LAND',
+    'T_IMPORTEUR_REF_KONZERN_MARKE',
+    'T_KONZERN_MARKE',
+    'T_IMPORTEUR_REF_FAHRZEUGKLASSE',
+    'T_FAHRZEUGKLASSE',
+    'T_IMPORTEUR_REF_KONZERN_CLUSTER',
+    'T_KONZERN_CLUSTER',
+    'T_IMPORTEUR_REF_KOMMUNIKATIONSART',
+    'T_KOMMUNIKATIONSART',
+    'T_IMPORTEUR',
+    'T_BENUTZER'
+);
+```
+# **Limit any table to 5 rows only, rest delete:** This block of code deletes all rows except for the top 5 based on the 'Id' column from the table `T_VORSCHRIFT_REF_THEMA_REF_LAND`.
+
+```
+DELETE FROM T_VORSCHRIFT_REF_THEMA_REF_LAND t
+WHERE ROWID IN (
+    SELECT ROWID
+    FROM (
+        SELECT t.*, ROW_NUMBER() OVER (ORDER BY Id) AS rn
+        FROM T_VORSCHRIFT_REF_THEMA_REF_LAND t
+    )
+    WHERE rn > 5
+);
+```
+
+
+#  **Select top 5 rows from a table after deletion operation:** This query retrieves the top 5 rows based on the 'Id' column from the table `T_VORSCHRIFT_REF_THEMA_REF_LAND` to confirm the deletion operation.
+
+
+```
+SELECT t.*
+FROM T_VORSCHRIFT_REF_THEMA_REF_LAND t
+WHERE ROWID IN (
+    SELECT ROWID
+    FROM (
+        SELECT t.*, ROW_NUMBER() OVER (ORDER BY Id) AS rn
+        FROM T_VORSCHRIFT_REF_THEMA_REF_LAND t
+    )
+    WHERE rn <= 5
+);
+```
+
+#  **Select top 5 rows from another table:** This query fetches the top 5 rows from the `T_KONZERN_MARKE` table, ordering by ROWID.
+
+
+```
+SELECT * FROM (
+    SELECT km.*, ROW_NUMBER() OVER (ORDER BY ROWID) AS rn
+    FROM T_KONZERN_MARKE km
+) WHERE rn <= 5;
+```
+
+#  **Dynamic SQL to limit rows across multiple tables:** This PL/SQL block dynamically constructs and executes a deletion command to keep only the top 5 rows in each specified table from a list of tables in the user's schema.
+
+
+
+```
+DECLARE
+  v_sql VARCHAR2(4000);
+BEGIN
+  FOR rec IN (
+    SELECT table_name
+    FROM user_tables
+    WHERE table_name IN (
+      'ADDRESSES', 'CUSTOMERS', 'T_ANTRIEBSART', 'T_BENACHRICHTIGUNG',
+      'T_BENACHRICHTIGUNG_KOMMENTAR', 'T_BENUTZER', 'T_BENUTZER_REF_ROLLE',
+      'T_COCKPIT_DATEN', 'T_EINSATZDATUM_TYP', 'T_ET_B_AK',
+      'T_ET_B_AK_REF_BENUTZER', 'T_ET_B_AK_VKO_REF_LAND', 'T_FAHRZEUGKLASSE',
+      'T_H_MFV_REF_VORSCHRIFT', 'T_H_VORSCHRIFT', 'T_H_VORSCHRIFT_REF_ET_B_AK',
+      'T_H_VORSCHRIFT_REF_LAND', 'T_H_VORSCHRIFT_REF_THEMA_REF_LAND',
+      'T_H_VORSCHRIFT_REF_VORSCHRIFT', 'T_KONZERN_CLUSTER',
+      'T_KONZERN_JIRA_TICKET', 'T_KONZERN_JIRA_TICKET_REF_VORSCHRIFT',
+      'T_KSU', 'T_LAND', 'T_LAND_STATEMENT_OF_COMPLETENESS', 'T_MFV',
+      'T_MFV_REF_VORSCHRIFT', 'T_NORM', 'T_ROLLE', 'T_SCHLAGWORT', 'T_THEMA',
+      'T_THEMA_REF_ANTRIEBSART', 'T_THEMA_REF_CLUSTER', 'T_THEMA_REF_ET_B_AK',
+      'T_VERANTWORTLICHER', 'T_VERLINKTE_NORM', 'T_VORSCHRIFT',
+      'T_VORSCHRIFT_REF_ANTRIEBSART', 'T_VORSCHRIFT_REF_EINSATZDATUM_TYP',
+      'T_VORSCHRIFT_REF_ET_B_AK', 'T_VORSCHRIFT_REF_FAHRZEUGKLASSE',
+      'T_VORSCHRIFT_REF_FUNKTION', 'T_VORSCHRIFT_REF_LAND',
+      'T_VORSCHRIFT_REF_SCHLAGWORT', 'T_VORSCHRIFT_REF_THEMA',
+      'T_VORSCHRIFT_REF_THEMA_REF_LAND', 'T_VORSCHRIFT_REF_VERANTWORTLICHER',
+      'T_VORSCHRIFT_REF_VORSCHRIFT', 'T_VORSCHRIFT_REF_VORSCHRIFT_REF_THEMA',
+      'T_VORSCHRIFT_STATUS', 'T_WEBSITE'
+    )
+  )
+  LOOP
+    v_sql := 'DELETE FROM ' || rec.table_name || ' t WHERE ROWID IN (SELECT ROWID FROM (SELECT t.*, ROW_NUMBER() OVER (ORDER BY ROWID) AS rn FROM ' || rec.table_name || ' t) WHERE rn > 5)';
+    EXECUTE IMMEDIATE v_sql;
+  END LOOP;
+END;
+/
+```
 
 
 
