@@ -17167,6 +17167,162 @@ SELECT STATUS FROM USER_TRIGGERS WHERE TRIGGER_NAME = 'TR_VORSCHRIFT';
 
 
 
+# PROCEDURE WITH TWO PARAMETERS RETURNING OUTPUT LIKE ONLY IDS - FILTER DATA FOR INTERACTIVE REPORT*/
+
+
+### PROCEDURE
+
+```
+create or replace PROCEDURE FILTER_DATA (
+    p_operator IN VARCHAR2,
+    p_kpb IN VARCHAR2
+)
+IS
+    sql_stmt VARCHAR2(1000);
+    type t_cursor is ref cursor;
+    c_cursor t_cursor;
+    kpb_id T_KPB.KPB_ID%TYPE;
+BEGIN
+    CASE p_operator
+        WHEN 'gleich' THEN -- 1 = 'gleich'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) = UPPER(TRIM(:p_kpb))';
+        WHEN 'ungleich' THEN -- 2 = 'ungleich'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) <> UPPER(TRIM(:p_kpb))';
+        WHEN 'ist leer' THEN -- 3 = 'ist leer'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE TRIM(KPB) IS NULL OR TRIM(KPB) = ''''';
+        WHEN 'ist nicht leer' THEN -- 4 = 'ist nicht leer'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) IS NOT NULL AND LENGTH(TRIM(KPB)) > 0';
+        /*
+        -- comma
+        WHEN 'in' THEN -- 5 = 'in' 
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) IN (' || REGEXP_REPLACE(UPPER(TRIM(p_kpb)), '([^,]+)', '''\1''') || ')';
+        */
+
+        --semicolon--
+        WHEN 'in' THEN -- 5 = 'in'
+        sql_stmt :='select  KPB_ID from T_KPB where UPPER(TRIM(KPB)) in (select regexp_substr ('''||p_kpb||''', ''[^;]+'',1,level ) value from   dual
+                                                             connect by level <=  length ('''||p_kpb||''') - length ( replace ('''||p_kpb||''', '';'' ) ) + 1)';
+       /*---comma
+            sql_stmt :='select  KPB_ID from T_KPB where  KPB in (select regexp_substr ('''||p_kpb||''', ''[^,]+'',1,level ) value from   dual
+                                                             connect by level <=  length ('''||p_kpb||''') - length ( replace ('''||p_kpb||''', '','' ) ) + 1)';
+        */
+        --sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE KPB IN (REGEXP_REPLACE(:p_kpb, '''([^;]+)''', '''\1''') || ');
+
+        /*
+        -- comma
+        WHEN 'nicht in' THEN -- 6 = 'nicht in'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) NOT IN (' || REGEXP_REPLACE(UPPER(TRIM(p_kpb)), '([^,]+)', '''\1''') || ')';
+        */
+        -- semi colon
+        WHEN 'nicht in' THEN -- 6 = 'nicht in'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) NOT IN (' || REGEXP_REPLACE(UPPER(TRIM(p_kpb)), '([^,]+)', '''\1''') || ')';
+        WHEN 'enthält' THEN -- 7 = 'enthält'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) LIKE ''%' || UPPER(TRIM(p_kpb)) || '%''';
+        WHEN 'enthält nicht' THEN -- 8 = 'enthält nicht'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) NOT LIKE ''%' || UPPER(TRIM(p_kpb)) || '%''';
+        WHEN 'beginnt mit' THEN -- 9 = 'beginnt mit'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) LIKE ''' || UPPER(TRIM(p_kpb)) || '%''';
+        WHEN 'beginnt nicht mit' THEN -- 10 = 'beginnt nicht mit'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) NOT LIKE ''' || UPPER(TRIM(p_kpb)) || '%''';
+        WHEN 'entspricht regulärem Ausdruck' THEN
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE REGEXP_LIKE(UPPER(TRIM(KPB)), ''^'||UPPER(TRIM(p_kpb))||'\d+/\d+[A-Z]+_[A-Z]$'')';
+        ELSE
+            RAISE_APPLICATION_ERROR(-20001, 'Invalid operator specified.');
+    END CASE;
+
+
+    IF p_operator IN ('gleich', 'ungleich') THEN
+        OPEN c_cursor FOR sql_stmt USING UPPER(TRIM(p_kpb));
+    ELSE
+        OPEN c_cursor FOR sql_stmt;
+    END IF;
+
+    LOOP
+        FETCH c_cursor INTO kpb_id;
+        EXIT WHEN c_cursor%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE(kpb_id);
+    END LOOP;
+
+    CLOSE c_cursor;
+END FILTER_DATA;
+```
+
+
+### TEST CASES 
+
+
+```
+BEGIN
+    FILTER_DATA('gleich', 'AU310/6EU_B');
+END;
+
+
+BEGIN
+    FILTER_DATA('ungleich', 'AU310/6EU_B');
+END;
+
+
+BEGIN
+    FILTER_DATA('ist leer', NULL); 
+END;
+
+
+BEGIN
+    FILTER_DATA('ist nicht leer', NULL);
+END;
+
+-- semicolon
+BEGIN
+    FILTER_DATA('in', 'AU536/0MY_K2;AU310/6EU_B;AU572/0EU_KR');
+END;
+
+-- comma
+BEGIN
+    FILTER_DATA('in', 'AU536/0MY_K2,AU310/6EU_B,AU572/0EU_KR');
+END;
+
+-- comma
+BEGIN
+    FILTER_DATA('nicht in', 'AU536/0MY_K2,AU310/6EU_B,AU572/0EU_KR');
+END;
+
+
+-- semicolon
+BEGIN
+    FILTER_DATA('nicht in', 'AU536/0MY_K2;AU310/6EU_B;AU572/0EU_KR');
+END;
+
+
+BEGIN
+    FILTER_DATA('enthält', 'AU');
+END;
+
+
+BEGIN
+    FILTER_DATA('enthält nicht', 'AU');
+END;
+
+
+BEGIN
+FILTER_DATA('beginnt mit', 'AU3');
+END;
+
+
+BEGIN
+FILTER_DATA('beginnt nicht mit', 'AU3');
+END;
+
+
+BEGIN
+  FILTER_DATA('entspricht regulärem Ausdruck', '^AU\d+/\d+[A-Z]+_[A-Z]$');
+END;
+
+
+BEGIN
+  FILTER_DATA('entspricht regulärem Ausdruck', 'AU');
+END;
+```
+
 
 
 
