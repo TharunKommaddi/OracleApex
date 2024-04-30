@@ -631,7 +631,126 @@ WHERE
 
 
 
+### 51. Data Encryption and Security Practices
 
+- **Transparent Data Encryption (TDE)**:
+  - TDE provides a security mechanism to encrypt data at rest, protecting sensitive data stored in database files. This encryption is transparent to applications.
+  ```sql
+  ALTER TABLE employees ENCRYPT COLUMN ssn ENCRYPT;
+  ```
+
+### 52. Using Flashback Queries for Data Recovery
+
+- **Oracle Flashback Technology**:
+  - Allows viewing and reverting to previous states of data without the need for complex recovery operations, helping to correct human errors or recover from malicious changes.
+  ```sql
+  SELECT * FROM employees AS OF TIMESTAMP (SYSTIMESTAMP - INTERVAL '30' MINUTE);
+  ```
+
+### 53. Advanced SQL Query Techniques
+
+- **Pivoting Data for Reports**:
+  - The `PIVOT` clause in SQL transforms row-level data into a format suitable for reports, turning unique column values into columns.
+  ```sql
+  SELECT * FROM (
+    SELECT year, product, amount FROM sales
+  )
+  PIVOT (
+    SUM(amount) FOR product IN ('Product A', 'Product B', 'Product C')
+  );
+  ```
+
+### 54. Performance Optimization with SQL Plan Management
+
+- **SQL Plan Management (SPM)**:
+  - Ensures consistent query performance by managing and controlling the execution plans used by the database, preventing regressions in query performance.
+  ```sql
+  BEGIN
+    DBMS_SPM.LOAD_PLANS_FROM_CURSOR_CACHE(sql_id => 'your_sql_id_here');
+  END;
+  ```
+
+### 55. Advanced PL/SQL Programming
+
+- **Implementing Complex Business Logic**:
+  - PL/SQL's robust programming capabilities allow for implementing complex business rules and procedures directly within the database, reducing application layer complexity.
+  ```plsql
+  BEGIN
+    IF business_condition THEN
+      PERFORM_COMPLEX_LOGIC;
+    ELSE
+      PERFORM_ALTERNATIVE_LOGIC;
+    END IF;
+  END;
+  ```
+
+### 56. Real-Time Data Streaming and Processing
+
+- **Utilizing Oracle Streams for Data Replication and Integration**:
+  - Oracle Streams enable the propagation and management of data, events, and transactions in real-time across multiple databases.
+  ```sql
+  BEGIN
+    DBMS_STREAMS_ADM.ADD_TABLE_RULES(
+      table_name => 'hr.employees',
+      streams_type => 'capture',
+      streams_name => 'hr_stream',
+      queue_name => 'hr_queue',
+      include_dml => TRUE,
+      include_ddl => TRUE,
+      include_tagged_lcr => FALSE
+    );
+  END;
+  ```
+
+### 57. Managing Database Workloads with Resource Manager
+
+- **Oracle Database Resource Manager**:
+  - Helps prioritize database workloads, ensuring that critical applications receive the necessary resources for optimal performance.
+  ```sql
+  BEGIN
+    DBMS_RESOURCE_MANAGER.CREATE_PLAN(
+      plan => 'critical_app_plan',
+      comment => 'Resource plan for critical applications'
+    );
+    DBMS_RESOURCE_MANAGER.CREATE_PLAN_DIRECTIVE(
+      plan => 'critical_app_plan',
+      group_or_subplan => 'HIGH_PRIORITY_GROUP',
+      comment => 'High priority workload',
+      mgmt_p1 => 70
+    );
+  END;
+  ```
+
+### 58. Utilizing Advanced Queueing Mechanisms
+
+- **Advanced Queueing (AQ)**:
+  - Provides robust message-queuing capabilities within Oracle databases to support complex messaging between applications.
+  ```plsql
+  DECLARE
+    queue_options DBMS_AQADM.AQ$_CREATE_QUEUE_OPTIONS_T;
+  BEGIN
+    DBMS_AQADM.CREATE_QUEUE(
+      queue_name => 'order_queue',
+      queue_table => 'order_messages',
+      options => queue_options
+    );
+    DBMS_AQADM.START_QUEUE(queue_name => 'order_queue');
+  END;
+  ```
+
+### 59. Leveraging Data Warehousing Features
+
+- **Oracle Exadata and Advanced Compression**:
+  - Oracle Exadata provides hardware optimizations for data warehousing operations, coupled with advanced compression techniques to improve storage efficiency and query performance.
+
+### 60. Exploring Advanced Features of Oracle 12c/19c
+
+- **Multitenant Architecture**:
+  - The multitenant architecture introduced in Oracle 12c allows multiple independent databases to coexist in a single database container, simplifying consolidation and improving resource utilization.
+  ```sql
+  CREATE PLUGGABLE DATABASE pdb1 ADMIN USER pdb_admin IDENTIFIED BY password
+    FILE_NAME_CONVERT = ('pdb1', 'pdb1_clone');
+  ```
 
 
 
