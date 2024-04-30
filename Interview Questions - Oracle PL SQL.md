@@ -144,7 +144,7 @@ Analytical functions are
 
 # 15. Can you explain performance tuning ?
 - No Answer
-- 
+
 # 16. Difference between procedure and function ?
 
 **Procedure:**
