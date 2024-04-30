@@ -17,7 +17,6 @@ There are two types of exceptions
 **Predefined exceptions** : There are several types of predefined exceptions:
 
 - no data found
-- 
 - invalid number
 - numeric or value error
 - ZERO error
