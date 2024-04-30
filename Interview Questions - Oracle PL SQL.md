@@ -80,6 +80,48 @@ select * from emp e where rowid<>(select max(rowid) from emp e1 where e.2mpno=e1
 
 # 7. While explaining about performance tuning you told about stats gathering. So can you explain how to avoid the situation where stats becomes zero after truncating table.
 
+- no answer
+
+# 8. Have you heard about resource busy. How to overcome in such case?
+
+- Follow the below steps to solve
+an ORA-00054 truncate error.when trying to perform DDL such as truncate,alter,drop or alter objects that are use by other user,you may encounter the database error ORA-00054 resource busy acquire with NOWAIT specified 
+
+
+# 9. What are triggers.can you give an example.
+Triggers are also a pl/sql block which is automatically invoked whenever the user is perform any dml operations on the table
+
+- To create consistencies
+- Access restriction
+- Implement securities
+- Auditing purpose
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
