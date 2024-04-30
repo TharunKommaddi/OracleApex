@@ -112,8 +112,30 @@ Triggers are also a pl/sql block which is automatically invoked whenever the use
 
 - `Ex:`select ename,empno,sal,dense_rank()over(order by sal) as ranking from emp.
 
+# 12. What are cursors and where do we use them ?
+cursor is private sql area, which is used to process multiple records or record by record process
+**syntax:**
+- declare cursor
+- open cursor
+- fetch cursor
+- close cursor
 
+# 13. What are packages and why do we use packages ?
 
+- Packages are also named plsql blocks which is used to creating a group of procedures and functions
+creating of packages performance improvement 
+
+# 14. What do you know about analytical functions ?
+
+Analytical functions are
+- lag()
+- lead()
+- keep_first()
+- keep_last()
+- first_value()
+- last_value()
+- rank()
+- dense_rank()
 
 
 
