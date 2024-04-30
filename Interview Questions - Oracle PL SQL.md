@@ -52,10 +52,33 @@ increament by 1
 nocache
 ```
 
+# 5. How to Delete duplicate records using having clause ?
 
+```
+select * from emp e where rowid<>(select max(rowid) from emp e1 where e.2mpno=e1.empno)
+```
 
+# 6. Difference between `CASE` and `DECODE`:
 
+**CASE**:
+- Complies with ANSI SQL.
+- Can work with logical operators other than `=`.
+- Can work with predicate and searchable queries.
+- Needs data consistency.
+- `NULL=NULL` returns false.
+- Can be used in PL/SQL blocks and SQL statements.
+- Can be used in parameters while calling a procedure.
 
+**DECODE**:
+- Oracle proprietary.
+- Works with only `=` like operator.
+- Expressions are scalar values only.
+- Data consistency is not needed.
+- `NULL IS NULL` returns true.
+- Can be used in SQL statements.
+- Cannot be used in parameters while calling parameters.
+
+# 7. While explaining about performance tuning you told about stats gathering. So can you explain how to avoid the situation where stats becomes zero after truncating table.
 
 
 
