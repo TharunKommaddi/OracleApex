@@ -142,6 +142,23 @@ Analytical functions are
 - rank()
 - dense_rank()
 
+# 15. Can you explain performance tuning ?
+- No Answer
+- 
+# 16. Difference between procedure and function ?
+
+**Procedure:**
+
+- Procedure is a named pl/sql block which accepts soome input and perfrm operation which return may or maynot return a value
+- procedure cannot be called from sql statement
+- procedure can be called from begin and end statement
+- procedure can be stored images
+
+**Function:**
+- Function is a named pl/sql block which accepts some input and peform operation must be return a value
+- function can be called from sql statement
+- functions cannot be stored images
+
 
 
 
