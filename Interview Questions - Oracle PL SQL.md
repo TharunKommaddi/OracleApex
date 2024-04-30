@@ -39,4 +39,30 @@ There are two types of exceptions
 
 - Generally in pl sql block we are not allowed to use ddl,dcl statement,using dynamic sql ddl,dcl statement in pl/sql block
 
+# 4.What is sequence and where do we use it ?
+
+Sequence is a autonumber generate in oracle 
+
+**syntax:**
+```
+create sequence sequence_name
+minvalue 1
+maxvalue 99999999
+increament by 1
+nocache
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
