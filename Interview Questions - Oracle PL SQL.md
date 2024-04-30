@@ -17,6 +17,7 @@ There are two types of exceptions
 **Predefined exceptions** : There are several types of predefined exceptions:
 
 - no data found
+- 
 - invalid number
 - numeric or value error
 - ZERO error
@@ -103,11 +104,13 @@ Triggers are also a pl/sql block which is automatically invoked whenever the use
 # 11. Difference between rank and dense_rank ?
 
 **Rank:**
+
 - rank will gives the order of the rank of a each row specified by order by clause
 
 - `Ex:`select ename,empno,sal,rank()over(order by sal ) as ranking from emp
 
 **Dense_rank:**
+
 - Dense rank is also gives the order of rank specified by order by clause
 
 - `Ex:`select ename,empno,sal,dense_rank()over(order by sal) as ranking from emp.
