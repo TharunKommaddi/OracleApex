@@ -1,12 +1,11 @@
-# 1. *Can you tell me something about `partition by` keyword What is `%rowtype`
+# 1. Can you tell me something about `partition by` keyword and `%rowtype`
 
-## Partition by:
+### Partition by:
 
 - the partition by clause is the sub clause of over clause.The partition by clause divedes query result set into two parts.
-
 - the partition cluase does not reduce the number f rows returned.
 
-## %rowtype:
+### %rowtype:
 
 - The %rowtype takes the entire row datatype of columns in asingle variable
 
