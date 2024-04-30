@@ -113,8 +113,11 @@ Triggers are also a pl/sql block which is automatically invoked whenever the use
 - `Ex:`select ename,empno,sal,dense_rank()over(order by sal) as ranking from emp.
 
 # 12. What are cursors and where do we use them ?
+
 cursor is private sql area, which is used to process multiple records or record by record process
+
 **syntax:**
+
 - declare cursor
 - open cursor
 - fetch cursor
