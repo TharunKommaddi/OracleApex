@@ -88,7 +88,7 @@ select * from emp e where rowid<>(select max(rowid) from emp e1 where e.2mpno=e1
 an ORA-00054 truncate error.when trying to perform DDL such as truncate,alter,drop or alter objects that are use by other user,you may encounter the database error ORA-00054 resource busy acquire with NOWAIT specified 
 
 
-# 9. What are triggers.can you give an example.
+# 9. What are triggers.can you give an example ?
 Triggers are also a pl/sql block which is automatically invoked whenever the user is perform any dml operations on the table
 
 - To create consistencies
@@ -96,9 +96,21 @@ Triggers are also a pl/sql block which is automatically invoked whenever the use
 - Implement securities
 - Auditing purpose
 
+# 10. Suppose I have a target table into which I need to insert or update rows conditionally based on the existence of records.what would you do in such situation ?
 
+- In that situation we are using MERGE statement
 
+# 11. Difference between rank and dense_rank ?
 
+Rank:
+rank will gives the order of the rank of a each row specified by order by clause
+
+Ex:select ename,empno,sal,rank()over(order by sal ) as ranking from emp
+
+Dense_rank:
+Dense rank is also gives the order of rank specified by order by clause
+
+Ex:select ename,empno,sal,dense_rank()over(order by sal) as ranking from emp.
 
 
 
