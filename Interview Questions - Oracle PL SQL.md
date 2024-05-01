@@ -1065,9 +1065,83 @@ type name is table of data type index by datatype;
 
 - if no match is found then oracle returns default.if default is omitted then oracle returns null.
 
+# 270. Difference Between ROWID and ROWNUM
+
+| Feature | ROWID | ROWNUM |
+|---------|-------|--------|
+| **1** | Physical address of the row | ROWNUM is the sequential number, allocated to each returned row during query execution |
+| **2** | ROWID is permanent | ROWNUM is temporary |
+| **3** | ROWID is a 16-bit hexadecimal value | ROWNUM is numeric |
+| **4** | ROWID gives the address of the rows or records | ROWNUM gives a count of records |
+| **5** | ROWID is automatically generated unique ID of a row and is generated at the time of insertion of the row | ROWNUM is a dynamic value, automatically assigned |
+| **6** | ROWID is the fastest means of accessing data | It represents the sequential order in which Oracle has retrieved the row |
+
+**Key Points**
+
+- **ROWID**: Represents the physical storage position of a row and is useful for quickly accessing rows as it points to the exact location of the data on the disk.
+- **ROWNUM**: A pseudo-column that assigns a temporary sequence number to each row as Oracle retrieves it during a query, but it does not necessarily represent the order of the rows in the database.
 
 
+# 271. What is a Trigger ?
 
+- A Trigger is similar to a stored procedure in that it is automatically invoked in response to certain events, specifically DML operations performed on a table or view.
+
+**Types of Triggers Supported by PL/SQL**
+
+1. **Statement Level Trigger**
+   - The trigger body is executed only once for the entire DML statement.
+
+2. **Row Level Trigger**
+   - The trigger body is executed for each row affected by the DML statement.
+
+**Syntax**
+
+Basic syntax for creating a trigger:
+
+```sql
+CREATE OR REPLACE TRIGGER trigger_name
+BEFORE/AFTER INSERT/UPDATE/DELETE ON table_name
+[FOR EACH ROW]
+[WHEN (condition)]
+[DECLARE]
+  variable_declaration;
+  cursors;
+  user_defined_exceptions;
+BEGIN
+  -- Trigger logic here
+[EXCEPTION]
+  -- Exception handling here
+END;
+```
+
+**Row Level Trigger Syntax**
+
+In row level triggers, you can use qualifiers to access before and after values of the row being manipulated:
+
+- `:OLD.column_name` to access the old value of the column
+- `:NEW.column_name` to access the new value of the column
+
+**Row Level Trigger Application**
+
+**Auditing a Column**
+
+Auditing is a common application for triggers in all database systems. When a column's data is modified, the transaction details can be automatically stored in another table, which is known as auditing.
+
+**Implementing Auditing in Oracle**
+
+In Oracle, you can implement auditing on a column by using the `UPDATE OF` clause in the trigger specification.
+
+```sql
+CREATE OR REPLACE TRIGGER audit_trigger
+AFTER UPDATE OF column_name ON table_name
+FOR EACH ROW
+BEGIN
+  INSERT INTO audit_table (column_names, old_value, new_value, change_date)
+  VALUES (:OLD.column_name, :NEW.column_name, SYSDATE);
+END;
+```
+
+This example illustrates how to create a trigger that logs changes to a specified column by inserting records into an audit table whenever the column is updated.
 
 
 
