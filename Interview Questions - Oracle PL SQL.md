@@ -781,16 +781,14 @@ GROUP BY item;
 # 257. How can you update and insert records into multiple tables at the same time ?
 
 # 258. How can you delete all records from two tables at the same time using one single command ?
-   **Query**:
-   ```sql
-   DELETE FROM table1;
-   DELETE FROM table2;
-   COMMIT;
-   ```
+
+**Query:**
+
+```sql
+DELETE FROM table1;
+DELETE FROM table2;
+COMMIT;
 ```
-
-This list continues to follow your requested format, ensuring each question is clear and distinct. Let me know if there are any more entries you would like to add or other specific formatting requirements!
-
 
 
 
