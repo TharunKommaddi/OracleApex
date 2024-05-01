@@ -261,13 +261,37 @@ delete from emp e where rowid<>(select max(rowid) from emp e1 where e.empno=e1.e
 
 # 36. What is a mutating table error and how can you get around it ?
 
-# 37. What is an autonomous transaction? Where do we use it ?
+# 37. What is an autonomous transaction ? Where do we use it ?
 
-# 38. What is a package? What do you mean by overloading ?
+# 38. What is a package ? What do you mean by overloading ?
 
 # 39. What is Bulk Collect ?
 
+# 40. How to insert into multiple tables using PL/SQL constructs ?
 
+# 41. How to update the base tables in a view ?
+
+# 42. What are all the joins available in Oracle ?
+
+# 43. How to restrict the users from modifying the table data ?
+
+# 48. How to add a primary key and check constraint on the table having duplicate records ?
+
+# 49. How to gather statistics ?
+
+# 50. Importing and exporting data from one database to another ?
+
+# 51. What will you consider when you look into the select statement for performance tuning ?
+
+# 52. Why do go for bulk collect ?
+
+# 53. What will you get with an explain plan ?
+
+# 54. Can we declare one ref cursor and use it multiple times for different DML statements ?
+
+# 55. Why can we use a synonym ?
+
+# 57. How can we refresh a materialized view ?
 
 
 
