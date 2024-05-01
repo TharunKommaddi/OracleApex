@@ -485,6 +485,37 @@ statements.
 
 # 140. What is the method to display messages in Output Files and Log Files ?
 
+# 141. Can you give examples of errors associated with cursors ?
+
+# 142. How do you skip the first 10 records in SQL Loader ?
+
+# 143. While inserting values from a flat file into col1, col2, col3, if you were to skip col1 and col2, how do you do this ?
+
+# 144. How do you define an error limit for SQL Loader - say, of 100 records, 5 records failed. How to determine this ?
+
+# 145. How have you generated or spooled a file from a table - how do you do this ?
+
+# 146. How can you insert values into one table from multiple tables ?
+
+# 147. Suppose a table has 100 child tables connected by foreign keys, then how do we modify the master table without having to drop all the foreign keys ?
+
+# 148. How to see how many constraints are referred from the master table ?
+
+# 149. How to see how many procedures and functions are associated with a particular table ?
+
+# 150. How to add a primary key and check constraint on a table having duplicate records ?
+
+# 151. Importing and Exporting data from one database to another, i.e., how to convert a flat file into tables just using PL/SQL ?
+
+# 152. Can we declare one ref cursor and use it multiple times for different DML statements ?
+
+# 153. Define DML, DD, and TCL commands and differentiate between them .
+
+# 154. Trigger (if updating, if inserting, if deleting clause) .
+
+# 155. What is the LIKE operator ? Also, if I want to extract those names from the emp table which start with "abh" and are only 10 characters long, how would I write the syntax ?
+
+# 156. Explain inline views, nested tables, varrays .
 
 
 
