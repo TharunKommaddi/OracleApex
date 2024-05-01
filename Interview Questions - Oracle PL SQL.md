@@ -194,7 +194,7 @@ Analytical functions are
 
 
 
-# 19. What is Difference B/W Rowid And Rownum ?
+# 19. What is Difference B/w Rowid And Rownum ?
 
 **Rowid:**
 
@@ -210,7 +210,11 @@ Analytical functions are
 - it is a sequential number
 - to avoid duplicates
 
+# 20.Wwhat is Difference B/w Lead and Lag?
 
+- Lead and lag are analytical functions
+**lead:** by the use of output lead function will be the result is current row and subsequent row
+**lag:** by the use of uotput function the result will be current row and previous row will be displayed
 
 
 
