@@ -1187,7 +1187,7 @@ END package_name;
 
 #### Method 1:
 
-##### Syntax:
+**Syntax:**
 
 ```sql
 EXEC package_name.procedure_name(actual_parameters);
@@ -1195,7 +1195,7 @@ EXEC package_name.procedure_name(actual_parameters);
 
 #### Method 2:
 
-##### Syntax:
+**Syntax:**
 
 ```sql
 BEGIN
