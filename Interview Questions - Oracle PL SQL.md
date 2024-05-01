@@ -1018,13 +1018,51 @@ EXCEPTION
 END;
 ```
 
+# 265. What is raise application error ?
+
+- using this procedure we can associate an error number with the custom error message
+
+- combining both the error number and the custom error message you can compose an error string, which looks similar to those default error strings which are displayed by oracle engine when an error occurs.
 
 
+# 266. What are collections ?
+
+- collections is a group of elements of same type
+
+**There are three types of collections**
+
+1. pl/sql table or index by table
+
+2. varray
+
+3. nested table
 
 
+# 267. if we want to use pl sql table first ?
+
+1. declare type
+
+2. declare variable 
+
+**syntax:**
+
+```sql
+type name is table of data type index by datatype; 
+```
+
+# 268. Record type or pl sql record ?
+
+- It is one of the user defined temparory data type which is used to store more than one table data or to assign more than one column datatypes
+
+- they must atleast contain one element
+
+- pinpoint of data is not possible
 
 
+# 269. DECODE ?
 
+- Decode compares expression to each search value one by one,if expression is equal to a search,then oracle database returns the corresponding result,
+if no match is found then oracle returns default.if default is omitted then oracle returns null.
 
 
 
