@@ -155,26 +155,60 @@ Analytical functions are
 - procedure can be stored images
 
 **Function:**
+
 - Function is a named pl/sql block which accepts some input and peform operation must be return a value
 - function can be called from sql statement
 - functions cannot be stored images
 
 # 17. What are constraints and its types ?
+
 - Constraint is rule per validating the data
 - constraints are used for conditional insert
-*constraints are three types:**
-entity integrity constraints:
-check,not null
-domain integrity constraints:
-primary key,unique
-referential integrity constraints:
-foreign key
+
+**constraints are three types:**
+
+- entity integrity constraints:
+- check,not null
+- domain integrity constraints:
+- primary key,unique
+- referential integrity constraints:
+- foreign key
+
+
+# 18. Difference between unique key, primary key and foreign key ?
+
+
+**unique key:**
+
+- it will not allow duplicate values
+
+**primary key:**
+
+- it will not allow duplicate and null values
+- a table must have only one primaary key
+
+**foreign key:**
+
+- Foreign key is used to build a relationship between two tables
 
 
 
 
+# 19. What is Difference B/W Rowid And Rownum ?
 
+**Rowid:**
 
+- rowid is permanent
+- rowid is psuedo column
+- it is a hexadecimal number
+- rowid is unique
+- data retrieval faster
+
+**rownum:**
+
+- Rownum is temparory
+- it is a sequential number
+- to avoid duplicates
 
 
 
