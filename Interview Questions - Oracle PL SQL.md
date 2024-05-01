@@ -517,7 +517,7 @@ statements.
 
 # 156. Explain inline views, nested tables, varrays .
 
-
+### `SOME MORE KEY ADVANCE CONCEPTS`
 
 
 
