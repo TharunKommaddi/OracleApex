@@ -159,6 +159,16 @@ Analytical functions are
 - function can be called from sql statement
 - functions cannot be stored images
 
+# 17. What are constraints and its types ?
+- Constraint is rule per validating the data
+- constraints are used for conditional insert
+*constraints are three types:**
+entity integrity constraints:
+check,not null
+domain integrity constraints:
+primary key,unique
+referential integrity constraints:
+foreign key
 
 
 
