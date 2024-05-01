@@ -293,10 +293,61 @@ delete from emp e where rowid<>(select max(rowid) from emp e1 where e.empno=e1.e
 
 # 57. How can we refresh a materialized view ?
 
+# 58. You change the value for the parameter PLSQL_CODE_TYPE to INTERPRETED from the previously set value of NATIVE. Which two statements would be true in this scenario ? (Choose two.)
+
+# 59. Which statements are true about temporary LOBs ? (Choose all that apply.)
+
+# 60. Examine the structures of the TEXT_TAB1 and TEXT_TAB2 tables.
+
+# 61. In a hospital management system that manages the patient database, a doctor needs access only to information about those patients who are treated by him or her. You need to implement row-level security without major administrative overhead on the system. Which is the best method to implement this strategy ?
+
+# 62. Which two statements are true in the context of executing a Java program from PL/SQL ?
+
+# 63. You receive the following error when executing a PL/SQL procedure that calls an external C program:
+
+```
+ERROR at line 1:
+ORA-28575: unable to open RPC connection to external procedure agent
+ORA-06512: at "OE.CALL_C", line 1
+ORA-06512: at "OE.C_OUTPUT", line 6
+ORA-06512: at line 1
+```
+
+# 64. What could be the reason for the error ?
+
+# 65. What is consistency ?
+
+# 66. What is the difference between syntax error and runtime error ?
+
+# 67. What are the two virtual tables available at the time of database trigger execution ?
+
+# 68. How many types of triggers exist in PL/SQL ?
+
+# 69. What is a trigger in PL/SQL ?
+
+# 70. What is the main reason behind using an index ?
+
+# 71. How is an exception different from an error ?
+
+# 72. Does PL/SQL support CREATE command ?
+
+# 73. How to write a single statement that concatenates the words "Hello" and "World" and assign it in a variable named Greeting ?
+
+# 74. How do you declare a user-defined exception ?
+
+# 75. What is the basic structure of PL/SQL?
+
+```
+Declaration section
+variables
+executable section
+statements
+exceptional section
+statements.
+```
 
 
-
-
+# 76. 
 
 
 
