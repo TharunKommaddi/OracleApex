@@ -843,17 +843,17 @@ EXECUTE DBMS_MVIEW.REFRESH('mview_name');
 
 - An index in a database functions similarly to an index in a textbook. Just as a textbook index helps you quickly locate specific information, a database index speeds up the retrieval of data within a database.
 
-### Key Points
+**Key Points**
 
 - **Index Key**: An index can be created on one or more columns of a database table, and these columns are referred to as index keys.
 
-### Types of Indexes
+**Types of Indexes**
 
 1. **BTREE Indexes**: This is the most common type of index used in databases. It uses a tree-like structure that enables quick searches, inserts, deletes, and updates.
 
 2. **BITMAP Indexes**: These are primarily used in environments where query operations far exceed update operations, such as data warehousing. Bitmap indexes are efficient for columns having a low cardinality of distinct values.
 
-### Syntax of Creating a BTREE Index
+**Syntax of Creating a BTREE Index**
 
 To create a BTREE index, use the following SQL syntax:
 
@@ -861,7 +861,7 @@ To create a BTREE index, use the following SQL syntax:
 CREATE INDEX index_name ON table_name (column_name);
 ```
 
-### Viewing the Execution Plan
+**Viewing the Execution Plan**
 
 To see how a query will be executed, which can show whether an index will be used, you can set the following in SQL environments that support this feature:
 
@@ -870,7 +870,7 @@ SET AUTOTRACE ON EXPLAIN;
 ```
 
 This setting displays the execution plan for SQL queries, highlighting how indexes are used to improve query performance.
-```
+
 
 
 
