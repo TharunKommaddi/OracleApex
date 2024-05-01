@@ -519,6 +519,55 @@ statements.
 
 ### `SOME MORE KEY ADVANCE CONCEPTS`
 
+# 157. Have you ever used bulk processing? Why ?
+
+# 158. How might you determine to use PL/SQL Native Compilation to speed your code ?
+
+# 159. Name a tracing utility that helps isolate PL/SQL problems and describe what it does.
+
+# 160. Name the two profiler tools and describe what they do.
+
+# 161. What does the PL/SQL Optimizer do ?
+
+# 162. Besides running an EXPLAIN PLAN to view the execution path of a SQL statement, what other means might you use to view explain plans ?
+
+# 163. What is Cursor Variables or REF CURSOR ? Give an example.
+
+# 164. Mention what does PLV msg allows you to do ?
+
+# 165. How many columns are there in DUAL ? **ANS**: Only one column that is 'dummy'. Only one row is available that is 'X'.
+
+# 166. What is a virtual column ?
+
+# 167. What is AUTHID ?
+
+# 168. List of all changes made by a person ?
+
+# 169. Text in the procedure ?
+
+# 170. User_objects ?
+
+# 171. Which is faster, IN or EXISTS ? (EXISTS is faster)
+
+# 172. Bulk collection ?
+
+# 173. Pseudocolumns ?
+
+# 174. Maximum number of triggers (12) ?
+
+# 175. Tablespace created when database is created ?
+
+# 176. Difference between strong cursor and ref cursor ?
+
+# 177. Difference between VARCHAR & CHAR ?
+
+**CHAR**: 
+
+- Char datatype is a fixed datatype. If the datatype size is 10 and we are inserting 5 characters, memory will be released.
+
+**VARCHAR2**:
+
+- Varchar2 is a variable datatype. If the datatype size is 10 and we are inserting 5 characters, it will adjust to that size.
 
 
 
