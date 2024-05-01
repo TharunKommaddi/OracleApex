@@ -790,15 +790,87 @@ DELETE FROM table2;
 COMMIT;
 ```
 
+# 259. What is Database link ?
 
+- A database link is a schema object that in one database enables you to access objects on another database
+- the other database need not to be a oracle database system
+- In sql statements you can refer to a table or view on the other database by appending @dblink to the table or view name.
 
+# 260. What is Materialized View ?
 
+A materialized view is a database object that stores the output of a query, effectively caching precomputed results. This is beneficial for several reasons:
 
+- **Maintaining a local copy of a remote database object**: This helps in scenarios where frequent access to a remote database is necessary, by providing a local snapshot of the data.
+  
+- **Improving performance**: Especially useful for complex GROUP BY and complex aggregate operations. By storing the result of these operations, the database avoids recalculating them on every query.
 
+**Syntax:**
 
+- To create a materialized view, use the following SQL syntax:
 
+```sql
+CREATE MATERIALIZED VIEW <view_name>
+AS
+SELECT statement;
+```
 
+### Characteristics
 
+- If it is a **view**, Oracle only stores the query.
+- If it is a **materialized view**, Oracle stores the query's output.
+
+### Data Changes
+
+- Changes in the base table do not automatically reflect in the materialized view. The materialized view's data remains static until it is refreshed.
+
+### Refreshing Materialized Views
+
+A materialized view can be refreshed in several ways:
+
+1. **ON DEMAND**: The user manually triggers a refresh.
+2. **ON COMMIT**: The view is refreshed automatically every time a transaction that modifies the data in its base table commits.
+3. **Periodically**: Set up to refresh at certain defined intervals.
+
+#### Refresh Command
+
+- To refresh a materialized view manually, execute the following:
+
+```sql
+EXECUTE DBMS_MVIEW.REFRESH('mview_name');
+```
+
+# 261. What is Index ?
+
+- An index in a database functions similarly to an index in a textbook. Just as a textbook index helps you quickly locate specific information, a database index speeds up the retrieval of data within a database.
+
+### Key Points
+
+- **Index Key**: An index can be created on one or more columns of a database table, and these columns are referred to as index keys.
+
+### Types of Indexes
+
+1. **BTREE Indexes**: This is the most common type of index used in databases. It uses a tree-like structure that enables quick searches, inserts, deletes, and updates.
+
+2. **BITMAP Indexes**: These are primarily used in environments where query operations far exceed update operations, such as data warehousing. Bitmap indexes are efficient for columns having a low cardinality of distinct values.
+
+### Syntax of Creating a BTREE Index
+
+To create a BTREE index, use the following SQL syntax:
+
+```sql
+CREATE INDEX index_name ON table_name (column_name);
+```
+
+### Viewing the Execution Plan
+
+To see how a query will be executed, which can show whether an index will be used, you can set the following in SQL environments that support this feature:
+
+```sql
+SET AUTOTRACE ON EXPLAIN;
+```
+
+This setting displays the execution plan for SQL queries, highlighting how indexes are used to improve query performance.
+```
 
 
 
