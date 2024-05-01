@@ -1144,6 +1144,89 @@ END;
 This example illustrates how to create a trigger that logs changes to a specified column by inserting records into an audit table whenever the column is updated.
 
 
+# 272. Oracle PL/SQL Packages
+
+- A **package** is a database object that encapsulates global variables, constants, cursors, procedures, and functions into a single unit. 
+- Packages improve the performance of applications because, when a package's subprogram is called for the first time, the entire package is loaded into memory.
+
+**Components of a Package**
+- **Packages consist of two parts:**
+    1. Package Specification
+    2. Package Body
+
+**Package Specification**
+
+The package specification is like a header section; it declares the types, variables, constants, exceptions, procedures, and functions that can be accessed from outside the package.
+
+**Syntax:**
+
+```sql
+CREATE OR REPLACE PACKAGE package_name IS/AS
+  -- Global variable declarations, constant declarations
+  -- Cursor declarations, types declarations
+  -- Procedure declarations, function declarations
+END package_name;
+```
+
+**Package Body**
+
+The package body contains the implementation of the procedures and functions defined in the package specification. It's where the actual code of the procedures and functions is written.
+
+**Syntax:**
+
+```sql
+CREATE OR REPLACE PACKAGE BODY package_name IS/AS
+  -- Procedures implementation
+  -- Function implementation
+END package_name;
+```
+
+# Executing Package Subprograms
+
+## 1. Calling Package Procedures
+
+#### Method 1:
+
+##### Syntax:
+
+```sql
+EXEC package_name.procedure_name(actual_parameters);
+```
+
+#### Method 2:
+
+##### Syntax:
+
+```sql
+BEGIN
+  package_name.procedure_name(actual_parameters);
+END;
+```
+
+### 2. Calling Package Functions
+
+#### Method 1:
+Using a SELECT statement:
+
+```sql
+SELECT package_name.function_name(actual_parameters) FROM dual;
+```
+
+#### Method 2:
+Using an anonymous block:
+
+```sql
+BEGIN
+  var_name := package_name.function_name(actual_parameters);
+END;
+```
+
+**Notes**
+
+- Generally, packages do not accept parameters at the package level.
+- Packages cannot be nested.
+- Packages cannot be invoked directly.
+
 
 
 
