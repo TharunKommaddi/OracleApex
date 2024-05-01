@@ -710,7 +710,86 @@ GROUP BY deptno
 ORDER BY deptno ASC;
 ```
 
+# 235. Write a query to increase the salary by 10%, but based on department number, it should not go above 20,000 ?
 
+**Query:**
+
+```sql
+UPDATE employees
+SET salary = LEAST(salary * 1.1, 20000)
+WHERE department_id = [Specific Department ID];
+```
+
+# 236. How to load data into a table using SQL Loader ?
+
+# 237. What is a discard file ?
+
+# 238. Have you used external tables? Explain.
+
+# 239. What are read-only tables ?
+
+# 240. What is SQL ?
+
+# 241. Difference between DBMS and RDBMS ?
+
+# 242. Data objects in database ?
+
+# 243. There are 3 rows for item with CocaCola and location as Karnataka, MP, and Kerala. Write a query to commonly separated values of location for this item CocaCola.
+
+**Query:**
+
+```sql
+SELECT item, LISTAGG(location, ', ') WITHIN GROUP (ORDER BY location) AS locations
+FROM table_name
+WHERE item = 'CocaCola'
+GROUP BY item;
+```
+
+# 244. Types of cursors ?
+
+# 245. Difference between a procedure and function ?
+
+# 246. Can we call a procedure in a function ?
+
+**Note:**
+
+- Stored procedures cannot be called from function.
+- Functions can be called from a SELECT statement.
+- Procedures cannot be called from SELECT/WHERE/HAVING and so on statements.
+- EXECUTE/EXEC statement can be used to call/execute stored procedure.
+
+# 247. What is bulk collect ?
+
+# 248. Errors encountered in bulk collect ?
+
+# 249. Difference between FORALL and FOR loop ?
+
+# 250. There is a single record in a table, but you want to populate the data 10 times ?
+
+# 251. Level in Oracle ?
+
+# 252. What is a shell in Unix ?
+
+# 253. How will you load data using SQL Loader ?
+
+# 254. What are the inputs taken by SQL Loader and what are the outputs we get in SQL Loader ?
+
+# 255. Unable to get a stable set of records ?
+
+# 256. What is the merge statement and syntax ?
+
+# 257. How can you update and insert records into multiple tables at the same time ?
+
+# 258. How can you delete all records from two tables at the same time using one single command ?
+   **Query**:
+   ```sql
+   DELETE FROM table1;
+   DELETE FROM table2;
+   COMMIT;
+   ```
+```
+
+This list continues to follow your requested format, ensuring each question is clear and distinct. Let me know if there are any more entries you would like to add or other specific formatting requirements!
 
 
 
