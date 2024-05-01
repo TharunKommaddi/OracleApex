@@ -1061,8 +1061,9 @@ type name is table of data type index by datatype;
 
 # 269. DECODE ?
 
-- Decode compares expression to each search value one by one,if expression is equal to a search,then oracle database returns the corresponding result,
-if no match is found then oracle returns default.if default is omitted then oracle returns null.
+- Decode compares expression to each search value one by one,if expression is equal to a search,then oracle database returns the corresponding result
+
+- if no match is found then oracle returns default.if default is omitted then oracle returns null.
 
 
 
