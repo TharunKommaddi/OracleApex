@@ -569,8 +569,67 @@ statements.
 
 - Varchar2 is a variable datatype. If the datatype size is 10 and we are inserting 5 characters, it will adjust to that size.
 
+# 178. How can we pop multiple dates without loops ?
 
+# 179. Function overloading ?
 
+# 180. Reset a sequence ?
+
+# 181. Types of indexes ?
+
+# 182. SQL loader ?
+
+# 183. Error limit in SQL loader ?
+
+# 184. Conventional and direct method ?
+
+# 185. View and materialized view difference ?
+
+# 186. How to get the 1st day of the month ?
+
+# 187. Partitions ?
+
+# 188. Why do we use partitions ?
+
+# 189. From the employee table retrieve employees' salary greater than 30000, empid, department name, department id, and deptname ?
+
+**Query:**
+
+```sql
+SELECT employeeid, empsal, deptid, deptname 
+FROM employee 
+WHERE empsal > 30000;
+```
+
+# 190. Clustered index ?
+
+# 191. Difference between 11g and 12c ?
+
+# 192. How to delete all the data from all tables ?
+
+# 193. Difference between ALL_TABLES & USER_TABLES ?
+
+# 194. To delete all data from all tables ?
+
+# 195. What is dynamic SQL ?
+
+# 196. Example of static SQL ?
+
+# 197. How to write dynamic delete ?
+
+# 198. Parsing XML cursor (no idea) ?
+
+# 199. XML packages in Oracle ?
+
+# 200. How to find the statements which are using TRUNCATE in packages ?
+
+# 201. How to retrieve the same statement in a table 100 times (i.e., the output should be 100 times even though there is one record) ?
+
+# 202. Find the highest salary of every department ?
+
+# 203. What are DDL and DML statements ?
+
+# 204. Why should I use a function ?
 
 
 
