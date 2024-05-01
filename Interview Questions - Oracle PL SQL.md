@@ -965,9 +965,58 @@ This approach provides an efficient way to handle frequent join operations on la
 - ENABLE, DISABLE Clauses are used in Trigger Specification
 - Named, Mixed Notations are used in a Subprogram Executed by Using SELECT Statement
 
-# 264.
+# 264. What is PRAGMA AUTONOMOUS_TRANSACTION ?
 
+- If we want separate transactions for procedures, create a procedure with `PRAGMA AUTONOMOUS_TRANSACTION`. A commit or rollback command in procedures affects only the transaction started in the procedure but not the main program.
 
+**Example**
+
+```sql
+CREATE OR REPLACE PROCEDURE update_sal(e IN NUMBER)
+IS
+  PRAGMA AUTONOMOUS_TRANSACTION;
+BEGIN
+  UPDATE emp SET sal = sal + 1000 WHERE empno = e;
+  ROLLBACK;
+END;
+```
+
+```sql
+SET SERVEROUTPUT ON;
+BEGIN
+  UPDATE emp SET sal = sal + 1000 WHERE empno = 7369;
+  update_sal(7499);
+  COMMIT;
+END;
+```
+
+There are a total of 5 PRAGMAs till Oracle 11g:
+
+- AUTONOMOUS_TRANSACTION
+- EXCEPTION_INIT
+- SERIALLY_REUSABLE
+- RESTRICT_REFERENCES
+- INLINE 
+- PRAGMA UDF (introduced in 12c)?
+
+**PRAGMA EXCEPTION_INIT**
+
+`PRAGMA EXCEPTION_INIT` links a user-defined exception to an Oracle error code.
+
+**Example**
+
+```sql
+DECLARE
+  vdno dept.deptno%TYPE;
+  child_found EXCEPTION;
+  PRAGMA EXCEPTION_INIT(child_found, -02292);
+BEGIN
+  DELETE FROM dept WHERE deptno = vdno;
+EXCEPTION
+  WHEN child_found THEN
+    DBMS_OUTPUT.PUT_LINE('Child record found');
+END;
+```
 
 
 
