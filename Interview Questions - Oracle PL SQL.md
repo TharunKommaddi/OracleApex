@@ -872,8 +872,45 @@ SET AUTOTRACE ON EXPLAIN;
 This setting displays the execution plan for SQL queries, highlighting how indexes are used to improve query performance.
 
 
+# 262. What is Cluster ?
 
+- A cluster is a database object that allows storage of data from two or more tables in a single disk space, optimizing data retrieval across these tables. This approach is used to enhance performance by reducing the I/O operations required during queries that join these tables.
 
+**Steps to Create a Cluster**
+
+1. **Create Cluster**: Establish the cluster with a specified name and data type for the key column.
+2. **Create Index on Cluster**: Create an index on the cluster to facilitate quick access and efficient data retrieval.
+3. **Create Tables within the Cluster**: Define tables that will be part of the cluster, specifying the column(s) that align with the cluster key.
+
+**Syntax**
+
+To create a cluster, use the following SQL command:
+
+```sql
+CREATE CLUSTER cluster_name (variable_name datatype);
+```
+
+To create an index on the cluster:
+
+```sql
+CREATE INDEX index_name ON cluster_name;
+```
+
+To create a table associated with the cluster:
+
+```sql
+CREATE TABLE table_name (columnname1 datatype, columnname2 datatype) CLUSTER cluster_name (variable);
+```
+
+**Data Organization in a Cluster**
+
+If two tables are organized within a cluster using a single column, such as `deptno`, they will be stored at the same disk location. This organization significantly improves the performance of queries that join these tables on the clustered column.
+
+**Verifying Data Storage Location**
+
+To verify that the data from clustered tables is stored in the same memory location, you can examine the `ROWID`. The `ROWID` for rows from different tables but in the same cluster should be the same, indicating that they are stored together on disk.
+
+This approach provides an efficient way to handle frequent join operations on large tables by minimizing disk I/O and thus speeding up query performance.
 
 
 
