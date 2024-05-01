@@ -913,8 +913,59 @@ To verify that the data from clustered tables is stored in the same memory locat
 This approach provides an efficient way to handle frequent join operations on large tables by minimizing disk I/O and thus speeding up query performance.
 
 
+# 263. What are Locking and Concurrent Access
 
+**Concurrent access**:
 
+- refers to multiple users accessing the same data at the same time. This can lead to conflicts and inconsistencies without proper management mechanisms like locking.
+
+**Types of Locking Modes:**
+
+- **Exclusive Lock Mode**: This type of lock prevents the associated resource from being shared. It is typically obtained to modify data. The first transaction to lock a resource exclusively can alter the resource until the lock is released, blocking other transactions from making changes.
+
+### Oracle Version Features
+
+- Each version of Oracle has introduced different features enhancing functionality and performance:
+
+**Oracle 8i Features**
+
+- Materialized View
+- Rollup and Cube
+- Autonomous Transactions
+- Analytical Functions
+- Bulk Bind
+- TRIM() Function
+
+**Oracle 9i Features**
+
+- Merge Statement
+- Renaming a Column
+- ANSI Joins
+- Flashback Queries
+- Multiple Inserts
+
+**Oracle 10g Features**
+
+- Introduced Recycle Bin
+- Flashback Table
+- INDICES OF Clause (PL/SQL)
+- WM_CONCAT()
+- Regular Expressions
+
+**Oracle 11g Features**
+
+- Continue Statement in PL/SQL Loops
+- Read-Only Tables
+- Virtual Columns
+- PIVOT()
+- Simple Integer Datatype in PL/SQL
+- Compound Triggers
+- Sequences used in PL/SQL without using the DUAL Table
+- Follow Clause in Triggers
+- ENABLE, DISABLE Clauses are used in Trigger Specification
+- Named, Mixed Notations are used in a Subprogram Executed by Using SELECT Statement
+
+# 264.
 
 
 
