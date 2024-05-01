@@ -1125,11 +1125,11 @@ In row level triggers, you can use qualifiers to access before and after values 
 
 **Auditing a Column**
 
-Auditing is a common application for triggers in all database systems. When a column's data is modified, the transaction details can be automatically stored in another table, which is known as auditing.
+- Auditing is a common application for triggers in all database systems. When a column's data is modified, the transaction details can be automatically stored in another table, which is known as auditing.
 
 **Implementing Auditing in Oracle**
 
-In Oracle, you can implement auditing on a column by using the `UPDATE OF` clause in the trigger specification.
+- In Oracle, you can implement auditing on a column by using the `UPDATE OF` clause in the trigger specification.
 
 ```sql
 CREATE OR REPLACE TRIGGER audit_trigger
