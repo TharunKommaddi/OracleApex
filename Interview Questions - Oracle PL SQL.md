@@ -210,15 +210,62 @@ Analytical functions are
 - it is a sequential number
 - to avoid duplicates
 
-# 20.Wwhat is Difference B/w Lead and Lag?
+# 20.Wwhat is Difference B/w Lead and Lag ?
 
 - Lead and lag are analytical functions
 **lead:** by the use of output lead function will be the result is current row and subsequent row
 **lag:** by the use of uotput function the result will be current row and previous row will be displayed
 
+# 21. Query to identify and delete duplicate row from a table ?
+
+**to identify the duplicates:**
+
+```
+select * from emp e where rowid<>(select max(rowid) from emp e1 where e.empno=e1.empno)
+```
 
 
+**to delete the duplicates:**
 
+```
+delete from emp e where rowid<>(select max(rowid) from emp e1 where e.empno=e1.empno)
+```
+
+# 22. Merge Syntax ?
+
+# 23. Get the Previous Year Latest Sunday ?
+
+# 24. PRAGMA EXCEPTION_INIT() ?
+
+# 25. Trigger and Types ?
+
+# 26. Cross join, outer join, left outer join, right outer join.
+
+# 27. Trigger (if updating, if inserting, if deleting clause) ?
+
+# 28. What is dynamic SQL ?
+
+# 29. What is an index and how many types of indexes are there ? 
+
+# 30. How to see how many constraints are referred from a master table ?
+
+# 31. What is a cursor, its attributes, and types ?
+
+# 32. What does TCL do ?
+
+# 33. Order By Clause ?
+
+# 34. What is TKPROF and how is it used  ?
+
+# 35. What is an explain plan and how is it used ?
+
+# 36. What is a mutating table error and how can you get around it ?
+
+# 37. What is an autonomous transaction? Where do we use it ?
+
+# 38. What is a package? What do you mean by overloading ?
+
+# 39. What is Bulk Collect ?
 
 
 
