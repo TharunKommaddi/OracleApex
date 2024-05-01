@@ -355,6 +355,147 @@ statements.
 - 
 - The Exception handling Section (optional)
 
+# 76. What are the datatypes available in PL/SQL ?
+
+# 77. What is PL/SQL table? Why it is used ?
+
+# 78. What are the most important characteristics of PL/SQL ?
+
+# 79. What is the purpose of using PL/SQL ?
+
+# 80. What is PL/SQL ?
+
+# 81. Explain three different rules that apply to NULLs when doing comparisons ?
+
+# 82. Mention what PLVcmt and PLVrb does in PL/SQL ?
+
+# 83. Mention what is the use of function “module procedure” in PL/SQL ?
+
+# 84. Why PLVtab is considered as the easiest way to access the PL/SQL table ?
+
+# 85. When you have to use a default “rollback to” savepoint of PLVlog ?
+
+# 86. Mention what is the function that is used to transfer a PL/SQL table log to a database table ?
+
+# 87. Mention what problem one might face while writing log information to a database table in PL/SQL ?
+
+# 88. Explain how exception handling is done in advance PL/SQL ? (PL/SQL provides an effective plugin PLVexc)
+
+# 89. Mention what does PLV msg allows you to do ?
+
+# 90. How would you convert date into Julian date format ?
+
+# 91. What is out parameter used for even though return statement can also be used in PL/SQL ?
+
+# 92. Explain polymorphism in PL/SQL .
+
+# 93. Differentiate between SGA and PGA .
+
+# 94. Explain autonomous transaction .
+
+# 95. Explain the uses of Control File .
+
+# 96. How would you reference column values BEFORE and AFTER you have inserted and deleted triggers ?
+
+# 97. What are sequences ?
+
+# 98. What is an Intersect ?
+
+# 99. What are character functions ?
+
+# 100. Explain TTITLE and BTITLE .
+
+# 101. If a cursor is open, how can we find in a PL/SQL Block ?
+
+# 102. Define Implicit and Explicit Cursors .
+
+# 103. Explain Commit, Rollback and Savepoint .
+
+# 104. Differentiate between Syntax and runtime errors .
+
+# 105. Differentiate between % ROWTYPE and TYPE RECORD .
+
+# 106. What are different methods to trace the PL/SQL code ?
+
+# 107. What is the difference between a Rollback Command and a Commit Command ?
+
+# 108. What is a Statement Level Trigger ?
+
+# 109. What are the different parts of an Explicit Cursor ?
+
+# 110. What is Context Area in PL/SQL ?
+
+# 111. What rules are to be taken care of when doing comparisons using NULL ?
+
+# 112. What is the maximum limit of applying Triggers to a Table ?
+
+# 113. What is a Row Level Trigger ?
+
+# 114. What is an Active Set ?
+
+# 115. What are the different Loop Control Structures used in PL/SQL ?
+
+# 116. Explain the difference between Truncate and Delete ?
+
+# 117. What are the disadvantages of Cursors and is there any alternative to it ?
+
+# 118. What is the method to display messages in Output Files and Log Files ?
+
+# 119. Explain the difference between Varchar and Char ?
+
+# 120. Explain Union, Union All, Intersect and Minus in PL/SQL - give live examples of where have you used it in your projects
+
+# 121. Enlist the packages provided by Oracle for use by the Developers ?
+
+# 122. Enlist the methods to recover from Deadlock
+
+# 123. Enlist the Attributes of a Cursor in PL/SQL.
+
+# 124. Explain about Pragma Exception_Init.
+
+# 125. Enlist various loops in PL/SQL Database.
+
+# 126. Which is the Default Cursor in Oracle PL/SQL ?
+
+# 127. How can you Rollback a particular part of a procedure or any PL/SQL Program ?
+
+# 128. What are the areas where the tuning of the database is needed ?
+
+# 129. What are the tools provided by oracle to assist performance tuning ?
+
+# 130. Explain rule-based optimizer and cost-based optimizer ?
+
+# 131. What is RAISE_APPLICATION_ERROR ?
+
+# 132. What do u mean by overloading ?
+
+# 133. What are SQLCODE and SQLERRM and why are they important ?
+
+# 134. What is a mutating table error and how can you get around it ?
+
+# 135. How can we refresh a snapshot ?
+
+# 136. Attributes Of an Implicit Cursor:
+
+# 137. What are the benefits of PL/SQL packages ?
+
+# 138. Mention what PL/SQL package consists of ?
+
+# 139. Explain the uses of database trigger ?
+
+# 140. What is the method to display messages in Output Files and Log Files ?
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
