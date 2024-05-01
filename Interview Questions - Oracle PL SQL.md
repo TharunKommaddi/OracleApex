@@ -345,9 +345,15 @@ statements
 exceptional section
 statements.
 ```
+- PL/SQL uses BLOCK structure as its basic structure. Each PL/SQL program consists of SQL and PL/SQL statement which form a PL/SQL block.
 
+**PL/SQL block contains 3 sections:**
 
-# 76. 
+- The Declaration Section (optional)
+- 
+- The Execution Section (mandatory)
+- 
+- The Exception handling Section (optional)
 
 
 
