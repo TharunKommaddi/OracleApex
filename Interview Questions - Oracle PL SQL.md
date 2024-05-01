@@ -631,8 +631,84 @@ WHERE empsal > 30000;
 
 # 204. Why should I use a function ?
 
+# 205. Find 3rd highest salary ?
 
+**Query:**
 
+```sql
+SELECT empno, ename, sal 
+FROM emp e 
+WHERE 3 = (SELECT COUNT(DISTINCT sal) 
+          FROM emp e1 
+          WHERE e1.sal >= e.sal);
+```
+
+# 206. If a target table exists and we want to insert a record from a child table if it doesn't exist ?
+
+# 207. Can I use WHERE clause with MERGE ?
+
+# 208. Can we insert multiple data into all tables ?
+
+# 209. Triggers ?
+
+# 210. What is a mutating table error ?
+
+# 211. How to overcome this error ?
+
+# 212. Difference between cursor and normal cursor ?
+
+# 213. What is cursor for all ?
+
+# 214. How to delete a CSV file ?
+
+# 215. In SQL Loader, if we want to skip N number of records, how to do that ?
+
+# 216. How to control the error count in SQL Loader ?
+
+# 217. Dynamic SQL ?
+
+# 218. Generate UTL file having table name and number of records in schema ?
+
+# 219. Cursor attributes ?
+
+# 220. How to find text in procedures or packages ?
+
+# 221. Which is faster, IN or EXISTS ?
+
+# 222. Bulk collection ?
+
+# 223. Difference between strong and weak cursor ?
+
+# 224. Load dates in a month without using a loop ?
+
+# 225. What is function overloading ?
+
+# 226. What is the difference between CYCLE and NOCYCLE in sequence ?
+
+# 227. Difference between conventional and direct loading method ?
+
+# 228. How to get the first day of the month ?
+
+# 229. What is partition ?
+
+# 230. What is CONNECT BY PRIOR ?
+
+# 231. Difference between LEAD and LAG ?
+
+# 232. I have a table A, where I am running `SELECT * FROM customer` it returns within a minute, but in the afternoon it takes more minute. Why is that ?
+
+# 233. Compute statistics ?
+
+# 234. I want to see how many employees for a particular department are there ?
+
+**Query:**
+
+```sql
+SELECT deptno, COUNT(empno) 
+FROM emp 
+GROUP BY deptno 
+ORDER BY deptno ASC;
+```
 
 
 
