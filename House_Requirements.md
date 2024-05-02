@@ -15,7 +15,7 @@
 2. **Present address:** D.No - 3/5/267, Islampuram Street, Pulivendula, Kadapa District, Andhra Pradesh - 516390
 3. **Phone no:** `+4917647670970` ( WhatsApp ), If not reachaeble, please contact my brother Sai - `7981879778` ( Call or WhatsApp )
 4. **Email id:** `tharunkommaddi@gmail.com`
-
+---
 - ## SITE  DETAILS 
 
 1. **Site size, dimensions and direction [facing]**
@@ -103,88 +103,74 @@
 
 ---
 
+Here's your formatted markdown for the detailed lifestyle and space requirements of your household:
 
-8.	Are there any residents with special needs ? if yes, please elaborate 
+---
 
-ABOUT THE LIFESTYLE: 
-1.	Describe your lifestyle and the kind of spaces that you need? For example, work from home, entertain often, etc
-How much time do you spend in the different areas of your home (indoors and outdoors)? 
-Work from Home: Need a quiet, organized home office space with technological setups for efficient remote work.
-Entertainment: Require a spacious living area for hosting gatherings, equipped with a good audio-visual system for movies and games.
-Outdoor Living: Prefer a comfortable, accessible courtyard and garden area for relaxation and family activities.
-Cooking and Family Meals: A large, well-equipped kitchen with an adjoining dining area that supports family cooking sessions and communal meals.
-Puja Routine: A dedicated puja room, peaceful and isolated, accommodating multiple people during festivals or daily rituals.
-Personal Space: Each family member needs personal spaces tailored to their hobbies and daily routines
-Time Spent Indoors: Majority of the day spent in personal and communal indoor areas (home office, kitchen, living room).
-Time Spent Outdoors: Regular intervals spent in the garden or courtyard, especially in the mornings and evenings.
+## ABOUT THE LIFESTYLE
 
+**1. Describe your lifestyle and the kind of spaces that you need:**
 
-2.	What type of entertainment systems do you require? Music, TV, projectors, speakers throughout the house?
-What type of storage do you require? Specific hobbies that require lots of storage space? Large wardrobe space? 
-Entertainment Systems Required:
-TV in the living room
-High-quality sound system for the living area and outdoor spaces.
-Speakers installed throughout the house for seamless audio experience, including in common areas and bathrooms.
-Storage Requirements:
-Large wardrobes in each bedroom to accommodate clothing and personal items.
-Dedicated storage for gardening tools and supplies, accessible from the garden.
-Storage space for kitchen appliances and bulk groceries, supporting the cooking and hosting needs.
-Bookshelves and cabinets in the living room and bedrooms for books, knick-knacks, and display items.
+- **Work from Home:** Need a quiet, organized home office space with technological setups for efficient remote work.
+- **Entertainment:** Require a spacious living area for hosting gatherings, equipped with a good audio-visual system for movies and games.
+- **Outdoor Living:** Prefer a comfortable, accessible courtyard and garden area for relaxation and family activities.
+- **Cooking and Family Meals:** A large, well-equipped kitchen with an adjoining dining area that supports family cooking sessions and communal meals.
+- **Puja Routine:** A dedicated puja room, peaceful and isolated, accommodating multiple people during festivals or daily rituals.
+- **Personal Space:** Each family member needs personal spaces tailored to their hobbies and daily routines.
+- **Time Spent Indoors:** Majority of the day spent in personal and communal indoor areas (home office, kitchen, living room).
+- **Time Spent Outdoors:** Regular intervals spent in the garden or courtyard, especially in the mornings and evenings.
 
-3.	Please describe your cooking and eating habits in detail- e.g., do you cook together as a family? Do you eat together as a family?
-- Cooking Habits:
+**2. What type of entertainment and storage systems do you require?**
+- **Entertainment Systems Required:**
+  - TV in the living room.
+  - High-quality sound system for the living area and outdoor spaces.
+  - Speakers installed throughout the house for seamless audio experience, including in common areas and bathrooms.
+- **Storage Requirements:**
+  - Large wardrobes in each bedroom to accommodate clothing and personal items.
+  - Dedicated storage for gardening tools and supplies, accessible from the garden.
+  - Storage space for kitchen appliances and bulk groceries, supporting the cooking and hosting needs.
+  - Bookshelves and cabinets in the living room and bedrooms for books, knick-knacks, and display items.
+
+**3. Cooking and eating habits:**
+- **Cooking Habits:**
   - Family members, especially the mother, enjoy cooking and often prepare meals together.
   - The kitchen is used daily for meal preparation, with a focus on homemade, traditional dishes.
   - Weekend cooking is a major activity, involving more elaborate recipes and participation from other family members.
-
-- Eating Habits:
+- **Eating Habits:**
   - The family values eating together, making it a point to share at least one meal daily.
   - Dinner is the main meal where everyone gathers to eat and discuss their day.
   - Outdoor dining is preferred when weather permits, especially for weekend meals and special occasions.
 
-4.	Please describe your puja routine in detail – which side should the god face? How many people should be able to sit inside the puja room? Do you conduct pujas where there are a lot of people congregating? Etc.
+**4. Puja routine:**
+- **Direction:** The idols or images in the puja room should face East, in accordance with traditional practices.
+- **Capacity:** The puja room should comfortably accommodate 2 people sitting at a time and again 2 more people back of first row for daily rituals.
+- **Frequent Use:** Puja is conducted daily, making accessibility and a serene atmosphere important for the room.
+- **Additional Features:** Space for storing religious books, puja utensils, and other ritual accessories; good ventilation for smoke from incense and lamps and appropriate sunlight and ventilation for early morning and evening rituals.
 
-Direction: The idols or images in the puja room should face East, in accordance with traditional practices.
-Capacity: The puja room should comfortably accommodate 2 people sitting at a time and again 2 more people back of first row for daily rituals.
-Frequent Use: Puja is conducted daily, making accessibility and a serene atmosphere important for the room.
-Additional Features: Space for storing religious books, puja utensils, and other ritual accessories; good ventilation for smoke from incense and lamps and appropriate sun light and ventilation for early morning and evening rituals.
+**5. Various hobbies of residents of the home:**
+- **Grandma (Age 80):**
+  - Gardening: Enjoys maintaining a small garden with accessible features.
+  - Knitting: Engages in knitting as a leisure activity.
+  - Watching classic movies: Enjoys old films as a pastime.
+- **Father (Age 47):**
+  - Watching news: Keeps up with current events and news regularly.
+  - Playing with children: Enjoys interactive games and teaching small tasks to children.
+- **Mother (Age 45):**
+  - Cooking: Enjoys preparing new recipes and cooking for family and friends.
+  - Gardening: Takes pleasure in cultivating plants and flowers in the home garden.
+  - Hosting: Loves organizing gatherings and meals for guests.
+- **You (Age 26):**
+  - Coding: Engages in coding projects, both as a hobby and professionally.
+  - Watching movies: Likes to watch movies, particularly in a home theater setting.
+  - Spending time in nature: Appreciates relaxing and dining outdoors.
+- **Brother (Age 23):**
+  - Sports: Actively participates in various sports activities.
+  - Traveling: Enjoys exploring new places and experiencing different cultures.
+  - Socializing: Frequently spends time with friends and engages in social activities.
 
-5.	What are the various hobbies of residents of the home? 
+---
 
-1. Grandma (Age 80):
-   - Gardening: Enjoys maintaining a small garden with accessible features.
-   - Knitting: Engages in knitting as a leisure activity.
-   - Watching classic movies: Enjoys old films as a pastime.
-
-2. Father (Age 47):
-   - Watching news: Keeps up with current events and news regularly.
-   - Playing with children: Enjoys interactive games and teaching small tasks to children.
-
-3. Mother (Age 45):
-   - Cooking: Enjoys preparing new recipes and cooking for family and friends.
-   - Gardening: Takes pleasure in cultivating plants and flowers in the home garden.
-   - Hosting: Loves organizing gatherings and meals for guests.
-
-4. You (Age 26):
-   - Coding: Engages in coding projects, both as a hobby and professionally.
-   - Watching movies: Likes to watch movies, particularly in a home theater setting.
-   - Spending time in nature: Appreciates relaxing and dining outdoors.
-
-5. Brother (Age 23):
-   - Sports: Actively participates in various sports activities.
-   - Traveling: Enjoys exploring new places and experiencing different cultures.
-   - Socializing: Frequently spends time with friends and engages in social activities.
-
-
-
-
-
-
-
-
-
-
-PROJECT DETAILS
+# PROJECT DETAILS
 INDOOR SPACES: 
 1.	Number of rooms / spaces and use for each?
 Are there any particular areas that are to be more private than others? Or particular rooms that you would like to have connected?
