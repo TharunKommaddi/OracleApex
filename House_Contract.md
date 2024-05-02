@@ -1,96 +1,108 @@
-# HOUSE CONTRACT 
+# HOUSE CONTRACT
 
-1. Rods - TATA Tiscon rods, Filler size 9 × 14, 16 mm - 6 rods, Plinth beams 16 mm - 4 rods, Slab beams 16 mm - 4 rods, Lintels 10 mm - 4 rods, Slab 10 mm rods for all rings 8 mm rods
+**1. Rods:**
+- **TATA Tiscon rods**
+- **Filler size:** 9 × 14
+- **16 mm rods:** 6 for plinth beams, 4 for slab beams
+- **Lintels:** 10 mm - 4 rods
+- **Slab:** 10 mm rods for all rings, 8 mm rods
 
-2. Cement: UltraTech company
+**2. Cement:**
+- **Brand:** UltraTech company
 
-3. I will use Kolar wire cut bricks.
+**3. Bricks:**
+- **Type:** Kolar wire cut bricks
 
-4. Main door, main door frames, main teak, other plain teak should be used, 4 doors, 6 windows, main door size 6 × 5 others 5 × 3, main teak Rs 3800 / - Plain teak: Rs 2600 / -
+**4. Doors and Windows:**
+   - **Main door and frames:** Main teak
+   - **Other doors:** Plain teak
+   - **Quantity:** 4 doors, 6 windows
+   - **Sizes:** Main door 6 × 5, others 5 × 3
+   - **Cost:** Main teak Rs 3800/-, Plain teak: Rs 2600/-
 
-5. Teak for main door, one iron wicket behind a teak door.
+**5. POP Application:**
+   - **Areas:** Hall, bedroom, sit out
 
-6. I will do POP in the hall, bed room, sit out.
+**6. Door Details:**
+   - **Main door:** Teak
+   - **Back door bedrooms:** Readymade doors
+   - **Rate per unit:** Rs 5000/-
 
-7. Teak for main door, readymade doors should be used for back door bedrooms. Rate per unit Rs 5000 / -
+**7. Wall Finishes:**
+   - **Interior:** Two coats of wall putty, one coat of putty paper, one coat of primer, and two coats of paint from Asian Paints
+   - **Paint types:** Inside - Royal Emulsion, Outside - Apex Ultima
 
-8. Inside the house, I will apply two coats of wall putty, one coat of putty paper, one coat of primer and two coats of paint from Asian Paints company.
+**8. Flooring:**
+   - **Material:** Granite
+   - **Rate:** Rs 120 per foot
 
-Paint inside - Royal Emulsion, outside Apex Ultima
+**9. Bathroom Tiles:**
+   - **Height:** Up to 7 feet
+   - **Cost per box:** Rs 490/-
 
-9. I will lay flooring granite at a rate of Rs 120 per foot.
+**10. Elevation Tiles:**
+- **Application:** Will be laid
 
-10. Tiles should be laid up to 7 feet high in the bathrooms, box Rs.490 / -
+**11. Wiring and Plumbing:**
+- **Wiring brands:** Finolex or Havells
+- **Water line pipes:** Ashirwad company
+- **Water tank:** 1000 liters, six-layer tank from Plasto company
 
-11. I will lay elevation tiles.
+**12. Woodwork:**
+- **Locations:** Bedrooms, hall, kitchen
+- **Details:** TV cabinet in the hall, hall wood arch, shelf above and complete woodwork below the kitchen platform
+- **Material costs:** Plywood 19 mm sheet Rs 120/- per foot, Decolam sheet 1 mm Rs 1350/-
 
-12. For wiring, Finolex or Havells company should be used. Water line pipes should be completely from Ashirwad company. I will lay a 1000 liters water tank, a six layer tank from Plasto company.
+**13. Kitchen Details:**
+- **Platform:** Granite stone
+- **Tile height:** Up to 4 feet
 
-13. Woodwork in the bedrooms: one side from bottom to top, a TV cabinet (7 feet) in the hall, one hall wood arch, a shelf above the kitchen platform, complete woodwork below the kitchen platform. Plywood 19 mm sheet rate Rs 120 / - per foot, Decolam sheet 1 mm Rs 1350 / -
+**14. Kitchen Sink:**
+- **Options:** Steel or granite sink
 
-14. Granite stone should be used for the kitchen platform. I will lay tiles up to 4 feet high in the kitchen.
+**15. Bathroom Fixtures:**
+- **Faucets and showers:** Steel, Jaquar brand
+- **Mounting:** Wall-mounted faucets in both bathrooms
 
-15. I will install a steel sink or granite sink.
+**16. Additional Installations:**
+- **Wash basin:** One
+- **Granite platform:** 3 feet long
 
-16. Steel faucets and Jaquar company’s showers should be used. I will install wall mounted faucets in both bathrooms.
+**17. Electrical:**
+- **Switches and boards:** Legrand company
 
-17. I will install one wash basin.
+**18. Sanitaryware:**
+- **Basin:** Western latest model, under Rs 10,000
 
-18. I will install a 3 feet long granite platform.
+**19. Additional Flooring:**
+- **Location:** On the slab
 
-19. Legrand company switches and electrical boards should be used.
+**20. Mat Details:**
+- **Materials:** Granite for the mat, steel pipes for the railing
 
-20. Western latest model basin should be installed. The basin should be under Rs 10,000.
+**21. Cement Types:**
+- **For slab:** OPC cement
+- **For other places:** PPC cement
 
-21. I will lay flooring on the slab.
+**22. Pooja Room:**
+- **Details:** Tiles laid, ventilator installed
 
-22. I will put granite for the mat and make a railing for the mat with steel pipes.
+**23. Bedroom Enhancements:**
+- **Installations:** Vertical mirrors in two bedrooms
 
-23. I will use OPC cement for the slab and PPC cement for other places.
+**24. Meter Box Room:**
+- **Construction:** If a room is built for the meter box and a slab is cast, the amount will be calculated per square foot.
 
-24. I will lay tiles in the pooja room and install a ventilator.
+**25. Concrete Mix Ratio:**
+- **Materials:** 7 tubs of gravel, 6 tubs of sand, 1 bag of cement
 
-25. I will fix vertical mirrors in two bedrooms.
+**26. Parking Tiles:**
+- **Cost per box:** Rs 350/-
+- **Size:** 16 × 16
 
-26. If a room is built for the meter box and a slab is cast according to the agreement, the amount for that should also be calculated per square foot.
+**27. Construction Cost:**
+- **Rate:** Rs 2,350 per square feet, including slab measurement for the first floor
 
-27. Concrete mixing will be done with 7 tubs of gravel, 6 tubs of sand and 1 bag of cement.
-
-28. Parking tiles: one box is Rs 350 / -,  size 16 × 16.
-
-29. I can construct the house with the above-mentioned materials for Rs 2,35,000 per 100 square foot,  including the slab measurement for the first floor,  if there is a meter room on the same floor. The rate will also be Rs 2,35,000 per 100 square foot.
-
-I, Prasad Babu, will supply the materials mentioned above and Chandra Sekhar Reddy will do the house work.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+**Contractors:**
+- **Materials Supplier:** Prasad Babu
+- **Construction Work:** Chandra Sekhar Reddy
