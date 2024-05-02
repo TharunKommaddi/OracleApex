@@ -1183,7 +1183,7 @@ END package_name;
 
 # Executing Package Subprograms
 
-## 1. Calling Package Procedures
+- ## 1. Calling Package Procedures
 
 #### Method 1:
 
@@ -1203,7 +1203,7 @@ BEGIN
 END;
 ```
 
-### 2. Calling Package Functions
+- ### 2. Calling Package Functions
 
 #### Method 1:
 Using a SELECT statement:
