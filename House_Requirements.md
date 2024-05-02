@@ -7,9 +7,11 @@
 - PROJECT DETAILS			
 - SERVICE DETAILS			
 ---
-
+---
 ## PRELIMINARY DETAILS
 ---
+---
+
 - ## CLIENT CONTACT DETAILS 
 1. **Name:** Tharun Kommaddi
 2. **Present address:** D.No - 3/5/267, Islampuram Street, Pulivendula, Kadapa District, Andhra Pradesh - 516390
@@ -103,11 +105,7 @@
 
 ---
 
-Here's your formatted markdown for the detailed lifestyle and space requirements of your household:
-
----
-
-## ABOUT THE LIFESTYLE
+- ## ABOUT THE LIFESTYLE
 
 **1. Describe your lifestyle and the kind of spaces that you need:**
 
@@ -169,13 +167,10 @@ Here's your formatted markdown for the detailed lifestyle and space requirements
   - Socializing: Frequently spends time with friends and engages in social activities.
 
 ---
-
-Here's your formatted markdown for the project details, including specifics about indoor and outdoor spaces:
-
 ---
-
 # PROJECT DETAILS
-
+---
+---
 - ## INDOOR SPACES:
 **1. Number of rooms / spaces and use for each?**
 - **Master Bedroom:** Currently used by parents; post-marriage, it will be used by me and my future wife, including a small work setup for home office tasks.
@@ -197,8 +192,8 @@ Here's your formatted markdown for the project details, including specifics abou
 
 **5. Parking needs:**
 - Space required for one car (future) and one bike, including a provision for an EV charging station to future-proof the home for potential electric vehicle purchases.
-
-## OUTDOOR SPACES:
+---
+- ## OUTDOOR SPACES:
 
 **1. Specific ideas or plans for the outside spaces:**
 - **Multi-functional Patio Area:** For dining, relaxing, and social gatherings.
@@ -211,44 +206,43 @@ Here's your formatted markdown for the project details, including specifics abou
 
 **3. Water Body Preferences:**
 - **Water Features:** A small decorative pond or fountain is desirable in the garden area, designed with safety considerations and easy maintenance in mind.
+
 ---
-
+---
 # SERVICES DETAILS
-WATER : 
-1.	What are the water services like?
-Water Services: Water supply is primarily provided through municipal services, ensuring reliable access for daily needs.
+---
+---
+- ## WATER:
+**1. What are the water services like?**
+- **Water Services:** Water supply is primarily provided through municipal services, ensuring reliable access for daily needs.
 
-2.	What are the sources of water ?
-Sources of Water: Mainly from the municipal supply, with potential access to groundwater if necessary.
+**2. What are the sources of water?**
+- **Sources of Water:** Mainly from the municipal supply, with potential access to groundwater if necessary.
 
+**3. What sort of water storage do you need?**
+- **Water Storage Needs:** A storage tank of approximately 1,000 liters to ensure an adequate backup supply for emergencies.
 
-3.	What sort of water storage do you need? And how many litres, if aware 
-Water Storage Needs: A storage tank of approximately 1,000 liters to ensure an adequate backup supply for emergencies.
+**4. Rainwater Harvesting:**
+- **Interested in Rainwater Harvesting:** Yes, interested in implementing rainwater harvesting to augment water supply and promote sustainability.
+---
+- ## ELECTRICITY:
+**1. What are the electricity services like?**
+- **Electricity Services:** Regular supply from the local electricity board with occasional outages.
 
-4.	Would you like to do rain water harvesting ?
-Rain Water Harvesting: Interested in implementing rainwater harvesting to augment water supply and promote sustainability.
+**2. Solar Power:**
+- **Interest in Solar Power:** Interested in installing solar panels to power lighting and other electrical appliances, reducing dependency on grid electricity and lowering energy costs.
 
+**3. Uninterrupted Power Supply (UPS):**
+- **UPS Need:** Yes, would like to have a UPS system to maintain critical functions during power outages.
 
-ELECTRICITY 
-1.	What are the electricity services like?
-Electricity Services: Regular supply from the local electricity board with occasional outages.
+**4. Automation for Lighting and Security:**
+- **Considering Automation:** Yes, considering automation to enhance convenience and security, including automated lighting systems and security features like cameras and alarms.
+---
+- ## WASTE:
+**1. Methods of Waste Disposal:**
+- **Current Disposal Methods:** Connected to the municipal sewage system for bathroom waste; kitchen waste is managed through local waste management services.
 
+**2. Garbage Segregation:**
+- **Interest in Garbage Segregation:** Yes, would like to implement garbage segregation to promote recycling and more environmentally friendly waste management practices.
 
-2.	Would you like to have solar power for lighting and other electrical appliances?
-Solar Power: Interested in installing solar panels to power lighting and electrical appliances, reducing dependency on grid electricity and lowering energy costs.
-
-3.	Would you like to have UPS?
-UPS: Yes, would like to have an Uninterrupted Power Supply (UPS) system to maintain critical functions during power outages.
-
-
-4.	Would you like to consider automation for lighting and security?
-Automation for Lighting and Security: Considering automation to enhance convenience and security, including automated lighting systems and security features like cameras and alarms.
-
-WASTE 
-1.	What are the methods of waste disposal - both kitchen and bathroom waste? Do you have connection to any sewage network?
-Methods of Waste Disposal: Currently connected to the municipal sewage system for bathroom waste; kitchen waste is disposed of through local waste management services.
-
-2.	Would you like to consider garbage segregation?
-Garbage Segregation: Yes, would like to implement garbage segregation to promote recycling and more environmentally friendly waste management practices.
-
-
+---
