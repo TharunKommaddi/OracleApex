@@ -8,7 +8,7 @@
 - **YouTube Video:** [`House Design Inspiration`](https://youtu.be/6C8nEQVlY-E?si=5tpqrnuUf6u9MASX)
   - This video serves as a visual guide for the architectural style and layout desired for the new home construction. 
 ---
-## My Material Specifications and Details
+## Summary of my Material Specifications and Details
 - **Main Materials Used:**
   - **Construction Rods:** TATA Tiscon rods, various sizes
   - **Cement:** UltraTech
