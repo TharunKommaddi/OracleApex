@@ -1474,12 +1474,56 @@ CREATE UNIQUE INDEX index_name ON table_name (column_name);
 
 ---------------------------------------------------------
 
-# 293. 
+# 293. Materialized Views
 
+- Materialized Views (MVs) are database objects that store the result of a query or a precomputed result. 
+- They are particularly useful in very large databases, such as Data Warehouses (DWH), because they improve the performance of queries that perform joins and group by operations.
 
+**Syntax for Creating a Materialized View**
 
+```sql
+CREATE MATERIALIZED VIEW view_name AS
+SELECT statement;
+```
 
+**Example**
 
+```sql
+CREATE MATERIALIZED VIEW mv1 AS
+SELECT deptno, SUM(sal) AS sumsal
+FROM emp
+GROUP BY deptno;
+```
+
+**Refreshing Materialized Views**
+
+By default, a materialized view is not updated when the base table changes.
+
+**Methods to Update Materialized Views**
+
+1. **Manually**
+2. **Automatically**
+
+**Manually Refreshing**
+```sql
+EXECUTE DBMS_MVIEW.REFRESH('materialized_view_name');
+```
+
+**Automatically Refreshing**
+
+- **Refresh on Commit**: Refreshes the materialized view every time a transaction that modifies the data in its base tables commits.
+- **Refresh Based on Time Interval**: Refreshes the materialized view at specified time intervals.
+
+**Example of Automatic Refresh on Commit**
+
+```sql
+CREATE MATERIALIZED VIEW mv2
+REFRESH ON COMMIT AS
+SELECT deptno, SUM(sal) AS sumsal
+FROM emp
+GROUP BY deptno;
+```
+--------------------------------------
 
 
 
