@@ -170,53 +170,48 @@ Here's your formatted markdown for the detailed lifestyle and space requirements
 
 ---
 
+Here's your formatted markdown for the project details, including specifics about indoor and outdoor spaces:
+
+---
+
 # PROJECT DETAILS
-INDOOR SPACES: 
-1.	Number of rooms / spaces and use for each?
-Are there any particular areas that are to be more private than others? Or particular rooms that you would like to have connected?
-Number of Rooms / Spaces and Their Uses:
-1. Master Bedroom - Currently used by parents; after my marriage, it will be used by me and my future wife. This room will also include a small work setup with a chair and stool for home office tasks.
-2. Second Bedroom - Initially shared by me and my brother; will transition to parents' room after my marriage and my brother's relocation.
-3. Kitchen - Large, open layout with a dining area, facing as per Vastu.
-4. Living Room - Central gathering space, connects to the kitchen and dining area.
-5. Puja Room - East-facing for morning rituals, located in a quiet part of the house.
 
-2.	Do you have any preferred room layouts/relationships or orientations (Vastu)? – a south facing kitchen for example
-Vastu Considerations:
-- The kitchen should be south-facing to align with Vastu principles, promoting positive energy flow.
-- The puja room should face east, capturing the morning sunlight for spiritual rituals.
-- Bedrooms should avoid facing directly south to comply with Vastu, promoting better sleep and health.
+- ## INDOOR SPACES:
+**1. Number of rooms / spaces and use for each?**
+- **Master Bedroom:** Currently used by parents; post-marriage, it will be used by me and my future wife, including a small work setup for home office tasks.
+- **Second Bedroom:** Initially shared by me and my brother; will transition to parents' room after my marriage and my brother's relocation.
+- **Kitchen:** Large, open layout with a dining area, facing as per Vastu.
+- **Living Room:** Central gathering space, connects to the kitchen and dining area.
+- **Puja Room:** East-facing for morning rituals, located in a quiet part of the house.
 
+**2. Preferred room layouts/relationships or orientations (Vastu):**
+- **Kitchen:** Should be south-facing to align with Vastu principles, promoting positive energy flow.
+- **Puja Room:** Should face east, capturing the morning sunlight for spiritual rituals.
+- **Bedrooms:** Should avoid facing directly south to comply with Vastu, promoting better sleep and health.
 
-3.	Do you have any family heirlooms or pieces of furniture that you would like to accommodate in the new home? Please provide details if yes.
+**3. Family heirlooms or furniture to accommodate in the new home:**
+- (No details provided; please specify if there are any.)
 
-4.	Do you have a particular preference for certain building materials? If yes, please elaborate. 
+**4. Preference for certain building materials:**
+- (No preferences provided; please specify if there are any.)
 
-5.	How many parking spaces do you need? Do you have an EV or would you like to have one in the future? 
-Parking Needs:
-- Space for one car ( future ) and one bike  is required, including provision for an EV charging station to future-proof the home for potential electric vehicle purchases.
+**5. Parking needs:**
+- Space required for one car (future) and one bike, including a provision for an EV charging station to future-proof the home for potential electric vehicle purchases.
 
+## OUTDOOR SPACES:
 
-OUTDOOR SPACES: 
-1.	Do you have any specific ideas or plans for the outside spaces that you would like us to consider?
+**1. Specific ideas or plans for the outside spaces:**
+- **Multi-functional Patio Area:** For dining, relaxing, and social gatherings.
+- **Outdoor Fitness Area:** Dedicated space for fitness activities or yoga.
+- **Children's Play Area:** A small playground or safe play area for children, if applicable in the future.
+- **Pathways:** Efficient pathways connecting different areas of the garden to the house for ease of access and mobility.
 
-Outdoor Space Ideas:
-- A multi-functional patio area that can be used for dining, relaxing, and social gatherings.
-- Dedicated space for outdoor fitness activities or yoga.
-- A small playground or safe play area for children, if applicable in the future.
-- Efficient pathways connecting different areas of the garden to the house to ensure ease of access and mobility.
+**2. Gardens:**
+- **Internal/External Gardens:** Appreciated and desired, with a preference for low-maintenance plants and shrubs suitable for the local climate.
 
-2.	Do you like gardens ? are you willing to maintain internal/external gardens? 
-
-Garden Preferences:
-- Yes, I appreciate having gardens and would like to maintain both an internal courtyard garden for privacy and external gardens for aesthetic and recreational purposes.
-- The gardens should include low-maintenance plants and shrubs, suitable for the local climate to reduce upkeep.
-
-
-3.	Would you like a water body ?
-Water Body Preferences:
-- Yes, a small decorative pond or a fountain would be desirable in the garden area to enhance the tranquility and beauty of the outdoor space.
-- The water body should be designed with safety considerations and easy maintenance in mind.
+**3. Water Body Preferences:**
+- **Water Features:** A small decorative pond or fountain is desirable in the garden area, designed with safety considerations and easy maintenance in mind.
+---
 
 # SERVICES DETAILS
 WATER : 
