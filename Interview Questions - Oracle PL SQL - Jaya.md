@@ -123,7 +123,7 @@ cursor is private sql area, which is used to process multiple records or record 
 
 - Packages are also named plsql blocks which is used to creating a group of procedures and functions
 creating of packages performance improvement 
-
+---
 # 14. What do you know about analytical functions ?
 
 Analytical functions are
@@ -135,10 +135,10 @@ Analytical functions are
 - last_value()
 - rank()
 - dense_rank()
-
+---
 # 15. Can you explain performance tuning ?
 - No Answer
-
+---
 # 16. Difference between procedure and function ?
 
 **Procedure:**
@@ -153,7 +153,7 @@ Analytical functions are
 - Function is a named pl/sql block which accepts some input and peform operation must be return a value
 - function can be called from sql statement
 - functions cannot be stored images
-
+---
 # 17. What are constraints and its types ?
 
 - Constraint is rule per validating the data
