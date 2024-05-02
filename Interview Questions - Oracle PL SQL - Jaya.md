@@ -26,12 +26,6 @@ There are two types of exceptions
 - User defined exceptions
     
 
-# 2. Have you heard about raise_application _error. what is it and when do we use it?
-
-- Raise_application_error is a predefined exception procedure available in dbms_standard package
-- In oracle if we want to display user defined exception messages in more descriptive form then only we are using this procedure.If we want to display user_defined exception messages as same as oracle error displayed format then we must use raise_application_error procedure.this procedure is used either in execute section or the exception section of pl sql block
-
-
 # 3. What is dynamic sql?
 - Oracle 7.1 introduced dynamic sql
 
@@ -1526,6 +1520,10 @@ GROUP BY deptno;
 --------------------------------------
 
 
+# 294. Have you heard about raise_application _error. what is it and when do we use it?
+
+- Raise_application_error is a predefined exception procedure available in dbms_standard package
+- In oracle if we want to display user defined exception messages in more descriptive form then only we are using this procedure.If we want to display user_defined exception messages as same as oracle error displayed format then we must use raise_application_error procedure.this procedure is used either in execute section or the exception section of pl sql block
 
 
 
