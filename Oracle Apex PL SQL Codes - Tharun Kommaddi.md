@@ -12,12 +12,43 @@ INSERT INTO t_translation_table (text_german, text_english)
                     AND dbms_lob.substr(from_string,2000) = dbms_lob.substr(text_german, 2000));
 ```                                                    
                                                     
-                                                    
+ 
+
+```sql
+SELECT DISTINCT
+    dbms_lob.substr(from_string, 2000) AS text_german
+FROM apex_application_trans_repos
+WHERE application_id = 118
+    AND dbms_lob.substr(to_string, 2000) IS NULL
+    AND NOT EXISTS (
+        SELECT 1
+        FROM t_translation_table
+        WHERE application_id = 118
+            AND dbms_lob.substr(from_string, 2000) = dbms_lob.substr(text_german, 2000)
+    );
+```
+
+
+
+```sql
+SELECT COUNT(*) FROM apex_application_trans_repos WHERE application_id = 118;
+
+
+
+
+
+SELECT COUNT(*) 
+FROM apex_application_trans_repos
+WHERE application_id = 118
+    AND dbms_lob.substr(to_string, 2000) IS NULL;
+	
+```
+ 
 # Updates the English text in T_TRANSLATION_TABLE by fetching distinct translations from apex_application_trans_repos for application_id 112 where German and English texts differ and match with the table's German text.
                                                   
 ### Updating t_translation_table with new translations from apex_application_trans_repos
 
-```
+```sql
 UPDATE t_translation_table ttt
 SET (text_english) = (
     SELECT DISTINCT dbms_lob.substr(src.to_string,2000) 
@@ -17324,6 +17355,11 @@ END;
 ```
 
 
+
+
+
+
+
 # **Comparing Tables in my Schema vs Other Schema environment:** This query lists the names of specific tables within the user's schema.
 
 ```
@@ -17430,7 +17466,6 @@ BEGIN
 END;
 /
 ```
-
 
 
 
