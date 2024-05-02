@@ -19,16 +19,16 @@
 ## SITE  DETAILS 
 
 1. **Site size, dimensions and direction [facing]**
-- 4020 sqft, 67 ft width x 60 ft height, [East facing]
+      - 4020 sqft, 67 ft width x 60 ft height, [East facing]
 2. **Site address**
-- D.No - 3/5/267, Islampuram Street, Pulivendula, Kadapa District, Andhra Pradesh - 516390
+      - D.No - 3/5/267, Islampuram Street, Pulivendula, Kadapa District, Andhra Pradesh - 516390
 3. **Why did you choose this particular site ?**
-- I choose this particular site due to its convenient location, spacious dimensions, and favorable surroundings.
+      - I choose this particular site due to its convenient location, spacious dimensions, and favorable surroundings.
 4. **Are there any particular views you like from the site ?**
-- Yes, I appreciate the serene surroundings and distant cityscape views from the site. Being 1.5 kilometers away from the city, I can enjoy proper natural air and a peaceful environment.
+      - Yes, I appreciate the serene surroundings and distant cityscape views from the site. Being 1.5 kilometers away from the city, I can enjoy proper natural air and a peaceful environment.
 5. **Are there any pre-existing issues with the site ?**
-- No
-
+      - No
+---
 **HOUSEHOLD COMPOSITION**
 
 **1. Who are the permanent residents of the proposed home?**
