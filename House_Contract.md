@@ -101,7 +101,7 @@
 - **Size:** 16 × 16
 
 **27. Construction Cost:**
-- **Rate:** Rs 2,350 per square feet, including slab measurement for the first floor
+- **Rate:** Rs 2,350 per sqft, including slab measurement for the first floor
 
 **Contractors:**
 - **Materials Supplier:** Prasad Babu
