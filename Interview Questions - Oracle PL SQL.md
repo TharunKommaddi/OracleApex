@@ -1253,9 +1253,60 @@ END pz1;
 ```
 
 
-# 273.
+# 273. State of the Global Variable
 
+- In Oracle, if we want to maintain the state of the global variable or state of the cursor, then we must use `PRAGMA SERIALLY_REUSABLE` in the package.
 
+**Syntax**
+
+```sql
+PRAGMA SERIALLY_REUSABLE;
+```
+
+# 273. Types Used in Packages 
+
+- In Oracle, we create our own datatype by using the `TYPE` keyword. Creating user-defined types involves a two-step process:
+
+   1. First, we create our own user-defined datatype using the appropriate syntax.
+   2. Then, we create a variable from that user-defined type.
+
+PL/SQL supports the following user-defined types:
+1. PL/SQL record
+2. Index by table or PL/SQL table or associative array
+3. Nested table
+4. Varray
+5. Refcursor
+
+# 274. Difference Between WHERE Clause and HAVING Clause
+
+**Where:**
+1. The WHERE clause is used to select specific rows.
+2. Conditions are applied before the GROUP BY operation.
+3. Use the WHERE clause if the condition does not contain group functions.
+
+**Having:**
+1. The HAVING clause is used to select specific groups.
+2. Conditions are applied after the GROUP BY operation.
+3. Use the HAVING clause if the condition contains group functions.
+
+# 275. Constraints
+
+**Novalidate**
+
+- If a constraint is added with novalidate, Oracle doesn't validate existing data. It only validates new data.
+
+**Delete Rules**
+
+There are three rules:
+- ON DELETE NO ACTION
+- ON DELETE CASCADE
+- ON DELETE SET NULL
+
+These rules specify how child rows are affected if the parent row is deleted. These rules are declared with a foreign key.
+
+- **ON DELETE NO ACTION**: The parent record cannot be deleted if it is associated with child records.
+- **ON DELETE CASCADE**: If the parent row is deleted, then it is deleted along with child rows.
+- **ON DELETE SET NULL**: If the parent row is deleted, then it is deleted without deleting child rows, but the foreign key is set to null value.
 
 
 
