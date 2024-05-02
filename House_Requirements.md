@@ -1,14 +1,15 @@
 
 # `Tharun Kommaddi – A Questionnaire`
-
+---
+---
 ## TABLE OF CONTENTS
 - PRELIMINARY DETAILS					
 - PROJECT DETAILS			
 - SERVICES DETAILS			
-
+---
 
 ## PRELIMINARY DETAILS
-
+---
 ## CLIENT CONTACT DETAILS 
 1. **Name:** Tharun Kommaddi
 2. **Present address:** D.No - 3/5/267, Islampuram Street, Pulivendula, Kadapa District, Andhra Pradesh - 516390
@@ -18,71 +19,79 @@
 ## SITE  DETAILS 
 
 1. **Site size, dimensions and direction [facing]**
-4020 sqft, 67 ft width x 60 ft height, [East facing]
-2. Site address
-D.No - 3/5/267, Islampuram Street, Pulivendula, Kadapa District, Andhra Pradesh - 516390
-3. Why did you choose this particular site?
-I choose this particular site due to its convenient location, spacious dimensions, and favorable surroundings.
-4. Are there any particular views you like from the site?  
-Yes, I appreciate the serene surroundings and distant cityscape views from the site. Being 1.5 kilometers away from the city, I can enjoy proper natural air and a peaceful environment.
-5. Are there any pre-existing issues with the site? 
-No
-HOUSEHOLD COMPOSITION 
-1.	Who are the permanent residents of the proposed home?
-Grandma: Age 80
-Father: Age 47
-Mother: Age 45
-Me: Age 26
-Brother: Age 23
-Future Family Member : After marrige wife
+- 4020 sqft, 67 ft width x 60 ft height, [East facing]
+2. **Site address**
+- D.No - 3/5/267, Islampuram Street, Pulivendula, Kadapa District, Andhra Pradesh - 516390
+3. **Why did you choose this particular site ?**
+- I choose this particular site due to its convenient location, spacious dimensions, and favorable surroundings.
+4. **Are there any particular views you like from the site ?**
+- Yes, I appreciate the serene surroundings and distant cityscape views from the site. Being 1.5 kilometers away from the city, I can enjoy proper natural air and a peaceful environment.
+5. **Are there any pre-existing issues with the site ?**
+- No
 
-2.	What are their ages?
-Grandma: Age 80
-Father: Age 47
-Mother: Age 45
-Me: Age 26
-Brother: Age 23
-Future Family Member : After marrige wife
+**HOUSEHOLD COMPOSITION**
 
-3.	Who are the guests that are expected to stay overnight/ prolonged period of time?
-2 Guests - My father relatives 
-2 guests - My mother relatives 
-4.	Are there any pets?
-Right now we don't have pet. Planning to bring dog in future
-5.	Do you have household help?
-Right now no. If needs then will keep in future
-6.	Do you have stay-in help?
-Right now no 
-7.	Please provide a brief about each resident: their likes, dislikes, hobbies, daily routine etc.
-Grandma (Age 80)
-Likes: Enjoying quiet time, reading, gardening in accessible areas.
-Dislikes: Loud noises
-Hobbies: Knitting, watching classic movies.
-Daily Routine: Typically spends mornings in the garden, afternoon with family, and enjoys early dinners.
+**1. Who are the permanent residents of the proposed home?**
+- **Grandma:** Age 80
+- **Father:** Age 47
+- **Mother:** Age 45
+- **Me:** Age 26
+- **Brother:** Age 23
+- **Future Family Member:** After marriage, wife
 
-Father (Age 47)
-Likes: Relaxing at home, spending time with family.
-Dislikes: Unnecessary complexity, being idle for too long.
-Hobbies: Watching news, playing with children.
-Daily Routine: Spends much of his time at home in the courtyard, enjoying the outdoors while staying close to family activities. He prefers to watch the news to stay informed and enjoys playing with children, involving them in simple games or teaching them small tasks. He keeps his professional life separate, not engaging in mechanical work at home, ensuring home is a space for relaxation and family.
+**2. What are their ages?**
+- **Grandma:** Age 80
+- **Father:** Age 47
+- **Mother:** Age 45
+- **Me:** Age 26
+- **Brother:** Age 23
+- **Future Family Member:** After marriage, wife
 
-Mother (Age 45)
-Likes: Cooking, hosting.
-Dislikes: Clutter, being rushed.
-Hobbies: Gardening, cooking new recipes.
-Daily Routine: Spends a lot of time in the kitchen, enjoys hosting friends and family, and often ends the day with some light gardening or a walk. On weekends she likes to enjoy the nature by sitting in courtyard whether it is inside house or inside garden.
+**3. Who are the guests that are expected to stay overnight/ prolonged period of time?**
+- 2 Guests - My father's relatives 
+- 2 guests - My mother's relatives 
 
-Me (Age 26)
-Likes: Technology, privacy, and nature.
-Dislikes: Unplanned disruptions, inefficiency.
-Hobbies: Gaming, coding, watching movies, spending time in nature.
-Daily Routine: My day typically involves working from home, where I value a quiet and organized workspace that supports my technology and coding projects. I enjoy retreating to the home's courtyard or garden for breaks, appreciating both indoor and outdoor environments that blend sunlight and natural elements with comfort. Leisure time is often spent gaming or watching movies in a well-equipped media space, ideally integrated with views or access to the garden to enjoy nature. I prefer to end my day with late dinners in a serene setting, possibly an outdoor dining area that captures the tranquility of my surroundings.
+**4. Are there any pets?**
+- Right now we don't have a pet. Planning to bring a dog in the future.
 
-Brother (Age 23)
-Likes: Social activities, sports.
-Dislikes: Inactivity, being indoors for too long.
-Hobbies: Sports, traveling, socializing with friends.
-Daily Routine: Likely has a flexible schedule, spends a lot of time outside, evenings are often spent with friends or at sports activities.
+**5. Do you have household help?**
+- Right now no. If needed, then will keep in the future.
+
+**6. Do you have stay-in help?**
+- Right now no.
+
+**7. Please provide a brief about each resident: their likes, dislikes, hobbies, daily routine, etc.**
+- **Grandma (Age 80):**
+  - **Likes:** Enjoying quiet time, reading, gardening in accessible areas.
+  - **Dislikes:** Loud noises
+  - **Hobbies:** Knitting, watching classic movies.
+  - **Daily Routine:** Typically spends mornings in the garden, afternoon with family, and enjoys early dinners.
+
+- **Father (Age 47):**
+  - **Likes:** Relaxing at home, spending time with family.
+  - **Dislikes:** Unnecessary complexity, being idle for too long.
+  - **Hobbies:** Watching news, playing with children.
+  - **Daily Routine:** Spends much of his time at home in the courtyard, enjoying the outdoors while staying close to family activities. Prefers to watch the news to stay informed and enjoys playing with children, involving them in simple games or teaching them small tasks.
+
+- **Mother (Age 45):**
+  - **Likes:** Cooking, hosting.
+  - **Dislikes:** Clutter, being rushed.
+  - **Hobbies:** Gardening, cooking new recipes.
+  - **Daily Routine:** Spends a lot of time in the kitchen, enjoys hosting friends and family, and often ends the day with some light gardening or a walk.
+
+- **Me (Age 26):**
+  - **Likes:** Technology, privacy, and nature.
+  - **Dislikes:** Unplanned disruptions, inefficiency.
+  - **Hobbies:** Gaming, coding, watching movies, spending time in nature.
+  - **Daily Routine:** Working from home with a focus on technology and coding projects. Enjoys breaks in the home's courtyard or garden and leisure time spent gaming or watching movies.
+
+- **Brother (Age 23):**
+  - **Likes:** Social activities, sports.
+  - **Dislikes:** Inactivity, being indoors for too long.
+  - **Hobbies:** Sports, traveling, socializing with friends.
+  - **Daily Routine:** Flexible schedule, spends a lot of time outside, evenings often spent with friends or at sports activities.
+
+---
 
 
 8.	Are there any residents with special needs ? if yes, please elaborate 
