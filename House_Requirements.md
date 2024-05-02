@@ -29,9 +29,10 @@
 5. **Are there any pre-existing issues with the site ?**
       - No
 ---
-**HOUSEHOLD COMPOSITION**
+- ## HOUSEHOLD COMPOSITION
 
-**1. Who are the permanent residents of the proposed home?**
+**1. Who are the permanent residents of the proposed home ?**
+
 - **Grandma:** Age 80
 - **Father:** Age 47
 - **Mother:** Age 45
@@ -39,7 +40,8 @@
 - **Brother:** Age 23
 - **Future Family Member:** After marriage, wife
 
-**2. What are their ages?**
+**2. What are their ages ?**
+
 - **Grandma:** Age 80
 - **Father:** Age 47
 - **Mother:** Age 45
@@ -47,17 +49,21 @@
 - **Brother:** Age 23
 - **Future Family Member:** After marriage, wife
 
-**3. Who are the guests that are expected to stay overnight/ prolonged period of time?**
+**3. Who are the guests that are expected to stay overnight/ prolonged period of time ?**
+
 - 2 Guests - My father's relatives 
 - 2 guests - My mother's relatives 
 
-**4. Are there any pets?**
+**4. Are there any pets ?**
+
 - Right now we don't have a pet. Planning to bring a dog in the future.
 
-**5. Do you have household help?**
+**5. Do you have household help ?**
+
 - Right now no. If needed, then will keep in the future.
 
-**6. Do you have stay-in help?**
+**6. Do you have stay-in help ?**
+
 - Right now no.
 
 **7. Please provide a brief about each resident: their likes, dislikes, hobbies, daily routine, etc.**
