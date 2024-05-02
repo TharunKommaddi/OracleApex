@@ -67,6 +67,7 @@
 - Right now no.
 
 **7. Please provide a brief about each resident: their likes, dislikes, hobbies, daily routine, etc.**
+
 - **Grandma (Age 80):**
   - **Likes:** Enjoying quiet time, reading, gardening in accessible areas.
   - **Dislikes:** Loud noises
@@ -74,18 +75,21 @@
   - **Daily Routine:** Typically spends mornings in the garden, afternoon with family, and enjoys early dinners.
 
 - **Father (Age 47):**
+
   - **Likes:** Relaxing at home, spending time with family.
   - **Dislikes:** Unnecessary complexity, being idle for too long.
   - **Hobbies:** Watching news, playing with children.
   - **Daily Routine:** Spends much of his time at home in the courtyard, enjoying the outdoors while staying close to family activities. Prefers to watch the news to stay informed and enjoys playing with children, involving them in simple games or teaching them small tasks.
 
 - **Mother (Age 45):**
+
   - **Likes:** Cooking, hosting.
   - **Dislikes:** Clutter, being rushed.
   - **Hobbies:** Gardening, cooking new recipes.
   - **Daily Routine:** Spends a lot of time in the kitchen, enjoys hosting friends and family, and often ends the day with some light gardening or a walk.
 
 - **Me (Age 26):**
+
   - **Likes:** Technology, privacy, and nature.
   - **Dislikes:** Unplanned disruptions, inefficiency.
   - **Hobbies:** Gaming, coding, watching movies, spending time in nature.
