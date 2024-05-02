@@ -1230,10 +1230,30 @@ END;
 
 
 
+# 272. What are Overloading Procedures ?
+
+- Overloading refers to the use of the same name for different purposes within the same programmatic scope in Oracle. This allows functions or procedures to be defined with the same name but different parameters or parameter types, enabling them to perform different tasks based on their input signatures. This is typically implemented through packages.
+
+### Purpose of Overloading
+
+- Overloading allows multiple procedures or functions to share the same name but handle different data types or numbers of arguments. This feature helps in simplifying the codebase by grouping related functionalities under a single name, enhancing both readability and maintainability.
+
+### Syntax for Overloading Procedures
+
+Here's an example of how to declare overloaded procedures within a package:
+
+```sql
+CREATE OR REPLACE PACKAGE pz1 IS
+  -- First procedure: accepts two numbers
+  PROCEDURE p1(a NUMBER, b NUMBER);
+
+  -- Overloaded procedure: same name, different parameter types
+  PROCEDURE p1(x NUMBER, y NUMBER);
+END pz1;
+```
 
 
-
-
+# 273.
 
 
 
