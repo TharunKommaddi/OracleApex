@@ -1,8 +1,8 @@
-# House Design References for 1500 sqft Home in Andhra Pradesh, India
+# House Design References for 1400 - 1500 sqft Home in Andhra Pradesh, India
 ---
 ---
 ## Introduction
-- This document provides design references and material specifications for constructing a 1500 square foot house in Pulivendula, Andhra Pradesh, India. The details and inspirations are drawn from a variety of sources including a reference video and detailed specifications in a PDF.
+- This document provides design references and material specifications for constructing a 1400 - 1500 sqft house in Pulivendula, Andhra Pradesh, India. The details and inspirations are drawn from a variety of sources including a reference video and detailed specifications in a PDF.
 ---
 ## Reference Video
 - **YouTube Video:** [`House Design Inspiration`](https://youtu.be/6C8nEQVlY-E?si=5tpqrnuUf6u9MASX)
@@ -17,11 +17,11 @@
   - **Paint:** Asian Paints for interior and exterior
   - **Tiles:** High-quality tiles for flooring and bathrooms
   - **Electricals:** Finolex or Havells for wiring, Legrand for switches
-- **Additional Features:**
+- **Additional Features:**f
   - **Water Tank:** 1000 liters, Plasto company
   - **Kitchen Details:** Granite countertops, stainless steel or granite sink
   - **Bathroom Fittings:** Jaquar fixtures
-  - **Flooring:** Granite at Rs 120 per foot, specific tiles for elevation and parking
+  - **Flooring:** Granite at Rs 120 per ft, specific tiles for elevation and parking
 ---
 ## PDF Document with Detailed Specifications
 To access the detailed PDF with complete specifications and additional information for the architect:
