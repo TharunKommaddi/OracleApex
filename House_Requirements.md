@@ -5,18 +5,18 @@
 ## TABLE OF CONTENTS
 - PRELIMINARY DETAILS					
 - PROJECT DETAILS			
-- SERVICES DETAILS			
+- SERVICE DETAILS			
 ---
 
 ## PRELIMINARY DETAILS
 ---
-## CLIENT CONTACT DETAILS 
+- ## CLIENT CONTACT DETAILS 
 1. **Name:** Tharun Kommaddi
 2. **Present address:** D.No - 3/5/267, Islampuram Street, Pulivendula, Kadapa District, Andhra Pradesh - 516390
 3. **Phone no:** `+4917647670970` ( WhatsApp ), If not reachaeble, please contact my brother Sai - `7981879778` ( Call or WhatsApp )
 4. **Email id:** `tharunkommaddi@gmail.com`
 
-## SITE  DETAILS 
+- ## SITE  DETAILS 
 
 1. **Site size, dimensions and direction [facing]**
       - 4020 sqft, 67 ft width x 60 ft height, [East facing]
@@ -222,7 +222,7 @@ Water Body Preferences:
 - Yes, a small decorative pond or a fountain would be desirable in the garden area to enhance the tranquility and beauty of the outdoor space.
 - The water body should be designed with safety considerations and easy maintenance in mind.
 
-SERVICES DETAILS
+# SERVICES DETAILS
 WATER : 
 1.	What are the water services like?
 Water Services: Water supply is primarily provided through municipal services, ensuring reliable access for daily needs.
