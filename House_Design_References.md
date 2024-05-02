@@ -25,14 +25,7 @@
 ---
 ## PDF Document with Detailed Specifications
 To access the detailed PDF with complete specifications and additional information for the architect:
-- [Download PDF Specifications](#)
+- [`Download PDF Specifications`](https://drive.google.com/file/d/1hjvlGu3cjgv5STMWNs-Idwh1Ezj2vgvb/view?usp=drivesdk)
 ---
 ## Conclusion
-The above materials and design references are intended to guide the construction of a modern and durable home in Andhra Pradesh, reflecting both traditional and contemporary elements.
-
----
-
-**Steps to include your PDF:**
-1. **Upload the PDF** to a cloud storage service like Google Drive or Dropbox.
-2. **Get a shareable link** for the PDF.
-3. **Replace** the placeholder link in the markdown file with your actual PDF link.
+The above materials and design references are intended to guide the construction of a compact, modern, durable home in Pulivendula, Andhra Pradesh, India by reflecting both traditional and contemporary elements.
