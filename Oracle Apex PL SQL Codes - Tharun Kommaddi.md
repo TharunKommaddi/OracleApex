@@ -17236,7 +17236,7 @@ END PCK_RI_GETEX;
 
 ### BODY
 
-```sqlsql
+```sql
 create or replace PACKAGE BODY PCK_RI_GETEX AS
 
     /*  Berechnet den Soll-Vorschrifttyp für eine GETEX-Vorschrift
