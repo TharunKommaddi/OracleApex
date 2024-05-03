@@ -1,7 +1,7 @@
 
 # Inserts distinct translations from apex_application_trans_repos into T_TRANSLATION_TABLE where German and English texts differ for application_id 112 and ensures no duplicate German entries in the T_TRANSLATION_TABLE.
 
-```
+```sql
 INSERT INTO t_translation_table (text_german, text_english)
     SELECT DISTINCT dbms_lob.substr(from_string,2000) as from_string, dbms_lob.substr(to_string,2000) as to_string
     FROM apex_application_trans_repos
@@ -12,7 +12,7 @@ INSERT INTO t_translation_table (text_german, text_english)
                     AND dbms_lob.substr(from_string,2000) = dbms_lob.substr(text_german, 2000));
 ```                                                    
                                                     
- 
+
 
 ```sql
 SELECT DISTINCT
@@ -29,10 +29,8 @@ WHERE application_id = 118
 ```
 
 
-
 ```sql
 SELECT COUNT(*) FROM apex_application_trans_repos WHERE application_id = 118;
-
 
 
 
@@ -69,7 +67,7 @@ WHERE EXISTS (
 
 # Sets the APEX security group to the associated workspace, then updates English translations in APEX_APPLICATION_TRANS_REPOS based on matches with T_TRANSLATION_TABLE for a specific target application = 240. 
 
-```
+```sql
 BEGIN
  -- The strings can be imported into the target application via the APEX_LANG package
  -- If running from SQL*Plus, we need to set the environment
@@ -115,7 +113,7 @@ END;
 
 # Fetches translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. 
 
-```
+```sql
 SELECT
     APPLICATION_ID,
     APPLICATION_NAME,
@@ -136,7 +134,7 @@ WHERE
 
 # Counts the number of translation records from APEX_APPLICATION_TRANS_REPOS where the from_string and translated to_string are identical for application ID = 240. 
 
-```
+```sql
 SELECT
     COUNT(*) AS IDENTICAL_RECORD_COUNT
 FROM
@@ -151,7 +149,7 @@ WHERE
 
 # Updates a specific English translation string using the APEX_LANG package 
 
-```
+```sql
 BEGIN
  APEX_LANG.UPDATE_TRANSLATED_STRING(
             P_ID => 730032710308662664,
@@ -165,7 +163,7 @@ END;
 # Retrieves records from APEX_APPLICATION_TRANS_REPOS where APPLICATION_ID is 240 and the original and translated strings are identical.
 
 
-```
+```sql
 SELECT
     APPLICATION_ID,
     APPLICATION_NAME,
@@ -185,7 +183,7 @@ WHERE
 # Help Table t_hilfe
 
 
-```
+```sql
 describe t_hilfe
 
 
@@ -220,7 +218,7 @@ desc t_hilfe
 
 # Page 25, titel table t_vorschrift 
 
-```
+```sql
 ALTER TABLE t_vorschrift ADD Titel_German VARCHAR2(500 CHAR);
 
 ALTER TABLE t_vorschrift ADD Comment_English VARCHAR2(4000 CHAR);
@@ -238,7 +236,7 @@ desc t_vorschrift
 
 # Page 25 table t_vorschrift_ref_einsatzdatum_typ 
 
-```
+```sql
 ALTER TABLE t_vorschrift_ref_einsatzdatum_typ ADD EINSATZDATUM_TEXT_Englisch VARCHAR2(4000 CHAR);
 
 select * from t_vorschrift_ref_einsatzdatum_typ
@@ -269,14 +267,14 @@ desc t_vorschrift_ref_einsatzdatum_typ
 
 # Page 25 tabel T_VORSCHRIFT_REF_VORSCHRIFT 
 
-```
+```sql
 ALTER TABLE T_VORSCHRIFT_REF_VORSCHRIFT ADD Kommentar_Englisch VARCHAR2(1000 CHAR);
 ```
 
 
 # Page 25 tabel T_VORSCHRIFT_REF_LAND 
 
-```
+```sql
 ALTER TABLE T_VORSCHRIFT_REF_LAND ADD Bemerkung_Englisch VARCHAR2(4000 CHAR);
 ```
 
@@ -285,13 +283,13 @@ ALTER TABLE T_VORSCHRIFT_REF_LAND ADD Bemerkung_Englisch VARCHAR2(4000 CHAR);
 
 ```
 ALTER TABLE T_VORSCHRIFT_REF_THEMA ADD Bemerkung_Englisch VARCHAR2(4000 CHAR);
-```
+```sql
 
 
 
 # Page 25 tabel T_THEMA 
 
-```
+```sql
 ALTER TABLE t_thema RENAME COLUMN name_eng TO name_englisch;
 
 
@@ -305,14 +303,14 @@ desc t_thema
 
 # Page 25 table T_LAND 
 
-```
+```sql
 ALTER TABLE T_LAND ADD BesonderheitenMarkt_Englisch VARCHAR2(400 CHAR);
 ```
 
 
 # view V_VORSCHRIFT_EQUAL
 
-```
+```sql
 desc V_VORSCHRIFT_EQUAL
 
 SELECT TEXT 
@@ -327,7 +325,7 @@ ALTER VIEW V_VORSCHRIFT_EQUAL ADD COLUMN land_eng VARCHAR2(4000);
 # T_LAND Continent
 
 
-```
+```sql
 desc t_land
 
 
@@ -363,7 +361,7 @@ SELECT LANDID, LAND, LAND_ENG, KONTINENT, CONTINENT_ENG FROM T_LAND;
 
 # T_thema bezeichnung
 
-```
+```sql
 select BEZEICHNUNG from t_thema;
 
 
@@ -378,7 +376,7 @@ WHERE BEZEICHNUNG <> name_eng OR
 
 
 
-```
+```sql
 SELECT
     FROM_STRING,
     TO_STRING
@@ -393,7 +391,7 @@ WHERE
 
 # T_ET_B_AK 
 
-```
+```sql
 ALTER TABLE T_ET_B_AK ADD name_eng VARCHAR2(250);
 
 
@@ -450,7 +448,7 @@ SELECT T1.name_eng, t2.name_eng, t1.bezeichnung, t2.bezeichnung from t_thema t1,
 # View V_VORSCHRIFT_EQUAL added land_eng
 
 
-```
+```sql
 CREATE OR REPLACE FORCE EDITIONABLE VIEW "VORSCHRIFTEN_ADMIN"."V_VORSCHRIFT_EQUAL" ("LOCAL_VORSCHRIFT", "PERMALINK", "VORSCHRIFTID", "EQUAL_VORSCHRIFT", "PERMALINK_EQUAL", "VORSCHRIFTID_EQUAL", "LAND", "B_NUMMER", "AK_KURZ", "LAND_ENG") AS 
   with cte1 as(  Select  tv.vorschrift_nummer local_vorschrift,'https://apps1.web.audi.vwg/apexaudi-sp/apex-sp/f?p=REGINDEX:VORSCHRIFT::::25:P25_VORSCHRIFTID:'|| tv.vorschriftid as Permalink,tv.vorschriftid,
  tvl.vorschrift_nummer equal_vorschrift, 'https://apps1.web.audi.vwg/apexaudi-sp/apex-sp/f?p=REGINDEX:VORSCHRIFT::::25:P25_VORSCHRIFTID:'|| tvl.vorschriftid as Permalink_equal, tvl.vorschriftid vorschriftid_equal
@@ -481,7 +479,7 @@ group by t1.local_vorschrift,equal_vorschrift,Permalink,t1.vorschriftid,Permalin
 # LIST AGG with separator ; semicolon and how we can use that in select statement and underline 
 
 
-```
+```sql
 -- two or many records
 
 r as (
@@ -536,7 +534,7 @@ from t_vorschrift v
 
 # T_ANTRIEBSART 
 
-```
+```sql
 desc T_ANTRIEBSART
 
 ALTER TABLE T_ANTRIEBSART ADD NAME_ENG VARCHAR2(30 CHAR);
@@ -545,7 +543,7 @@ ALTER TABLE T_ANTRIEBSART ADD NAME_ENG VARCHAR2(30 CHAR);
 # T_SCHULUNG_TYP 
 
 
-```
+```sql
 desc T_SCHULUNG_TYP
 
 ALTER TABLE T_SCHULUNG_TYP ADD NAME_ENG VARCHAR2(100 CHAR);
@@ -554,7 +552,7 @@ ALTER TABLE T_SCHULUNG_TYP ADD NAME_ENG VARCHAR2(100 CHAR);
 # T_AUDIT_TYP 
 
 
-```
+```sql
 desc T_AUDIT_TYP
 
 ALTER TABLE T_AUDIT_TYP ADD NAME_ENG VARCHAR2(100 CHAR);
@@ -565,7 +563,7 @@ ALTER TABLE T_AUDIT_TYP ADD NAME_ENG VARCHAR2(100 CHAR);
 
 
 
-```
+```sql
 desc T_VORSCHRIFT_TYP
 
 ALTER TABLE T_VORSCHRIFT_TYP ADD NAME_ENG VARCHAR2(100 CHAR);
@@ -575,7 +573,7 @@ ALTER TABLE T_VORSCHRIFT_TYP ADD NAME_ENG VARCHAR2(100 CHAR);
 # T_EINSATZDATUM_MODELL
 
 
-```
+```sql
 desc T_EINSATZDATUM_MODELL
 
 ALTER TABLE T_EINSATZDATUM_MODELL ADD Modell_ENG VARCHAR2(300 CHAR);
@@ -585,7 +583,7 @@ ALTER TABLE T_EINSATZDATUM_MODELL ADD Modell_ENG VARCHAR2(300 CHAR);
 # T_KSU
 
 
-```
+```sql
 desc T_KSU
 
 ALTER TABLE T_KSU ADD name_eng VARCHAR2(250 CHAR);
@@ -599,7 +597,7 @@ select * from t_KSU
 
 
 
-```
+```sql
   CREATE OR REPLACE FORCE EDITIONABLE VIEW "VORSCHRIFTEN_ADMIN"."V_TABLEAU_BASE" ("VORSCHRIFTNUMMER", "VORSCHRIFTTITEL", "VORSCHRIFTID", "VORSCHRIFTTYP", "LANDID", "IN_KRAFT", "NEUE_TYPEN", "NEUE_TYPEN_CKD", "NEUE_TYPEN_FBU", "ALLE_FZG", "ALLE_FZG_CKD", "ALLE_FZG_FBU", "ERSTELLUNG_DATUM", "AENDERUNGEN", "LAND", "LAND_ENG", "MFV_ID", "MFV_TYP", "AK_KURZ") AS 
   WITH vorschrift AS (
     SELECT
@@ -744,7 +742,7 @@ FROM
 # V_VORSCHRIFT_DEMANDS 
 
 
-```
+```sql
 ALTER VIEW "VORSCHRIFTEN_ADMIN"."V_VORSCHRIFT_DEMANDS" COMPILE;
 ```
 
@@ -754,7 +752,7 @@ ALTER VIEW "VORSCHRIFTEN_ADMIN"."V_VORSCHRIFT_DEMANDS" COMPILE;
 # This SQL creates a CTE to aggregate country numbers and names based on language preference, then joins with the T_NORM table to display Norm IDs, designations, and associated country details while excluding Norm ID 1016.
 
 
-```
+```sql
 
 with cte_la as (
     select 
@@ -783,7 +781,7 @@ order by n.BEZEICHNUNG asc;
 
 # CSS inside SQL for colors 
 
-```
+```sql
 
 case when FIRST_NAME_OLD <> FIRST_NAME_NEW 
                  OR(FIRST_NAME_OLD IS NOT NULL AND FIRST_NAME_NEW IS NULL)
@@ -797,7 +795,7 @@ case when FIRST_NAME_OLD <> FIRST_NAME_NEW
 # DECODE
 
 
-```
+```sql
 CREATE TABLE "VORSCHRIFTEN_ADMIN"."T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE" 
    (	"BILD_NUMMER_AUS_DOKU" VARCHAR2(26 BYTE), 
 	"NUMMER" NUMBER(38,0), 
@@ -861,7 +859,7 @@ CREATE TABLE "VORSCHRIFTEN_ADMIN"."T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE"
   
   
   
-```
+```sql
   CREATE TABLE "VORSCHRIFTEN_ADMIN"."T_X_MS_PARAMETER_MODEL_YEAR" 
    (	"BILD_NUMMER_AUS_DOKU" VARCHAR2(26 BYTE), 
 	"NUMMER" NUMBER(38,0), 
@@ -950,7 +948,7 @@ CREATE TABLE "VORSCHRIFTEN_ADMIN"."T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE"
 
 
 
-```
+```sql
   CREATE TABLE "VORSCHRIFTEN_ADMIN"."T_MS_PARAMETER" 
    (	"MS_PARAMETERID" NUMBER GENERATED BY DEFAULT ON NULL AS IDENTITY MINVALUE 1 MAXVALUE 9999999999999999999999999999 INCREMENT BY 1 START WITH 1000 CACHE 20 NOORDER  NOCYCLE  NOKEEP  NOSCALE  NOT NULL ENABLE, 
 	"NUMMER" NUMBER(38,0) NOT NULL ENABLE, 
@@ -1039,7 +1037,7 @@ CREATE TABLE "VORSCHRIFTEN_ADMIN"."T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE"
 
 
 
-```
+```sql
 --delete from T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE;
 --delete from T_X_MS_PARAMETER_MODEL_YEAR;
 
@@ -1049,7 +1047,7 @@ CREATE TABLE "VORSCHRIFTEN_ADMIN"."T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE"
 # T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE 
 
 
-```
+```sql
 
 --select * from T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE;
 --select * from T_X_MS_PARAMETER_MODEL_YEAR;
@@ -1309,7 +1307,7 @@ ALLE_FAHRZEUGE_RELEVANT_EOP = DECODE(trim(upper(ALLE_FAHRZEUGE_RELEVANT_EOP)),
 
 # T_X_MS_PARAMETER_MODEL_YEAR 
 
-```
+```sql
 --delete from T_X_MS_PARAMETER_MODEL_YEAR;
 
 UPDATE T_X_MS_PARAMETER_MODEL_YEAR
@@ -1691,7 +1689,7 @@ SOP__IST_GLEICH_ODER_NACH_IN_KRAFT_ = DECODE(TRIM(UPPER(SOP__IST_GLEICH_ODER_NAC
 
 # MERGE WITH INSERT AND UPDATE
 
-```
+```sql
 MERGE INTO T_MS_PARAMETER t
 USING (
     SELECT distinct
@@ -2124,7 +2122,7 @@ END;
 
 
 # This script updates specific columns in the T_MS_PARAMETER table to predefined values if they are NULL.
-```
+```sql
 DECLARE
     v_sql VARCHAR2(4000);
     
@@ -2529,7 +2527,7 @@ END;
 
 
 
-```
+```sql
 
 -- Rows in t_ms_parameter_old but not in t_ms_parameter
 SELECT olde.NUMMER
@@ -2837,7 +2835,7 @@ where olde.NUMMER not in (select NUMMER from t_ms_parameter);
 
      
 # Delete a record and child record */
-```
+```sql
 --select * from T_MS_PARAMETER where nummer = 99;
 --
 --select * from t_ms_parameter_ref_ausgabe where ms_parameterid = 1042;
@@ -2960,7 +2958,7 @@ WHERE NUMMER NOT IN (SELECT NUMMER FROM T_MS_PARAMETER);
 
 # 18.03.2024 
 
-```
+```sql
 UPDATE T_MS_PARAMETER
 SET NUMMER = NUMMER
 WHERE 1=1;
@@ -2989,10 +2987,22 @@ WHERE NOT EXISTS (
 
 ```
 
+# Duplicates values ina  column in a table
+
+```sqlsql
+SELECT *
+FROM T_MS_PARAMETER p
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM T_H_MS_PARAMETER h
+    WHERE h.NUMMER = p.NUMMER
+);
+```
 
 
 # All column names in a table 
-```
+
+```sqlsql
 SELECT column_name 
 FROM all_tab_columns 
 WHERE table_name = 'T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE' 
@@ -3008,7 +3018,8 @@ select * from T_X_MS_PARAMETER_MODEL_YEAR
 ```
 
 # Distinct Count 
-```
+
+```sql
 -- SELECT COUNT(DISTINCT IN_KRAFT_RELEVANT)
 -- FROM T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE;
 
@@ -3174,7 +3185,7 @@ Dependency:
 - Uses the fDeleteMfv function for specific delete operations.
 */
 
-```
+```sql
 create or replace TRIGGER TR_HILFE
 AFTER INSERT OR UPDATE OR DELETE ON T_HILFE
 FOR EACH ROW
@@ -3240,7 +3251,7 @@ Return:
     return: true bei Erfolg
 */
 
-```
+```sql
 FUNCTION fDeleteMfv(aMfvId NUMBER) return BOOLEAN IS
   BEGIN
   
@@ -3274,7 +3285,7 @@ END fDeleteMfV;
  * does not return any matching rows. The following logic then decides between an update or insert operation.
 
 
-```
+```sql
 declare
     l_count number;
 begin
@@ -3318,7 +3329,7 @@ end;
  * Overall, the block maintains data integrity and ensures the correct associations
  * between users and their respective themes and roles.
  
-```
+```sql
 declare
     l_co number:=0;
     l_count number;
@@ -3379,7 +3390,7 @@ Note on Oracle APEX:
 Oracle APEX (Application Express) is a platform that enables the development of enterprise apps with minimal coding. It facilitates the creation of apps that interact directly with Oracle databases. In this context, it's probable this SQL is part of a dynamic action or computed item in an APEX application. The user might select a regulation, and this message gets displayed to notify them about their choice and offer further directions.
 
 
-```
+```sql
 SELECT emano_util.fLang(
     'Sie haben die Vorschrift ' || 
     (SELECT vorschrift_nummer FROM t_vorschrift WHERE vorschriftid = :P572_MASTER_VORSCHRIFTID) || 
@@ -3397,7 +3408,7 @@ FROM dual;
 
 
 
-```
+```sql
 CREATE OR REPLACE FUNCTION CalculateEndDate (
     aDatumStart IN DATE,
     aDauer IN NUMBER,
@@ -3479,7 +3490,7 @@ END CalculateEndDate;
 
 
 
-```
+```sql
 DECLARE
     vResult VARCHAR2(50);
 BEGIN
@@ -3494,7 +3505,7 @@ END;
 
 # Creating the main table
 
-```
+```sql
 CREATE TABLE T_VORSCHRIFT_REF_VORSCHRIFT_REF_THEMA (
     VORSCHRIFT_REF_VORSCHRIFT_REF_THEMAID NUMBER GENERATED BY DEFAULT ON NULL AS IDENTITY MINVALUE 1 MAXVALUE 9999999999999999999999999999 INCREMENT BY 1 START WITH 1000 CACHE 20 NOORDER  NOCYCLE  NOKEEP  NOSCALE  NOT NULL ENABLE,
     VORSCHRIFT_REF_VORSCHRIFTID number,
@@ -3616,7 +3627,7 @@ end;
 
 # Trigger
 
-```
+```sql
 CREATE OR REPLACE EDITIONABLE TRIGGER  "TR_VORSCHRIFT_REF_VORSCHRIFT_REF_THEMA" 
 AFTER INSERT OR UPDATE OR DELETE ON T_VORSCHRIFT_REF_VORSCHRIFT_REF_THEMA
 FOR EACH ROW
@@ -3725,7 +3736,7 @@ ALTER TRIGGER TR_VORSCHRIFT_REF_VORSCHRIFT_REF_THEMA_B ENABLE;
 
 # REGEXP
 
-```
+```sql
 SELECT * 
 FROM T_Benutzer
 WHERE REGEXP_LIKE(nachname, '[0-9]') 
@@ -3738,19 +3749,19 @@ WHERE REGEXP_LIKE(nachname, '[0-9]')
 
 
 # all column names in a table
-```
+```sql
 SELECT column_name 
 FROM all_tab_columns 
 WHERE table_name = 'T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE';
 ```
 # Distinct Count
-```
+```sql
 SELECT COUNT(DISTINCT IN_KRAFT_RELEVANT)
 FROM T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE;
 ```
 
 # Relacing one value with another
-```
+```sql
 UPDATE T_X_MS_PARAMETER_EU_WENDER_CHINA_DATE
 SET IN_KRAFT_RELEVANT = 'fehlt'
 WHERE IN_KRAFT_RELEVANT = 'nicht relevant';
@@ -3758,7 +3769,7 @@ WHERE IN_KRAFT_RELEVANT = 'nicht relevant';
 			
 
 # ADD role to the user
-```
+```sql
 INSERT INTO t_benutzer_ref_rolle (
     benutzerid, 
     rolleid, 
@@ -3774,7 +3785,7 @@ INSERT INTO t_benutzer_ref_rolle (
 ```		
 		
 # Single Check box Color 
-```
+```sql
 .apex-item-single-checkbox input:checked+.u-checkbox, .apex-item-single-checkbox input:checked+label, .u-checkbox.is-checked {
     --a-checkbox-background-color: #bb0a31 !important; -- red
     --a-checkbox-text-color: var(--a-checkbox-checked-text-color);
@@ -3788,7 +3799,7 @@ INSERT INTO t_benutzer_ref_rolle (
 -- Chart - attributes
 -- Advanced
 -- Initialization JavaScript Function
-```
+```sql
 function (options) {
  options.styleDefaults = $.extend(options.styleDefaults, {
  threeDEffect: "on",
@@ -3801,7 +3812,7 @@ function (options) {
 # Regular Expression with interactive built in Filter
 
 ### Examples
-```
+```sql
 1. ^10$|^11$|^12$
 2. ^10$|^11$|^12$|^20$
 3. ^10$|^11$|^12$|^105$
@@ -3811,7 +3822,7 @@ function (options) {
 # Complete Oracle Text package in dynamic and also in lov ( list of value) 
 
 ### Specification
-```
+```sql
 create or replace package pck_ri_vorschrift_oracle_text_pkg authid current_user is 
     -- Checks if Oracle Text is available
     function text_is_available return boolean; 
@@ -3850,7 +3861,7 @@ end pck_ri_vorschrift_oracle_text_pkg;
 
 ### BODY
 
-```
+```sql
 create or replace package body pck_ri_vorschrift_oracle_text_pkg is
     procedure execute_sql(p_sql in varchar2, p_throw_error in boolean default true) is 
     begin 
@@ -4020,7 +4031,7 @@ end pck_ri_vorschrift_oracle_text_pkg;
 
 # lov (list of value ) oracle text
 
-```
+```sql
 with cte_la as (
     select 
         normid,
@@ -4047,7 +4058,7 @@ order by n.BEZEICHNUNG asc;
 # Complete Oracle Text package in static 
 
 ### Specification
-```
+```sql
 create or replace package pck_ri_vorschrift_oracle_text_pkg authid current_user is 
  
     function text_is_available return boolean; 
@@ -4076,7 +4087,7 @@ end pck_ri_vorschrift_oracle_text_pkg;
 ```
 
 # BODY
-```
+```sql
 create or replace package body pck_ri_vorschrift_oracle_text_pkg is 
     procedure execute_sql( 
         p_sql         in varchar2,  
@@ -4495,7 +4506,7 @@ end convert_text_query;
 
 
 ### minus working correctly in lov ( list of value ) also for this convert text query function
-```
+```sql
 function convert_text_query( p_enduser_query in varchar2 ) return varchar2  
 is  
     l_tokens       apex_t_varchar2 := apex_t_varchar2();
@@ -4688,7 +4699,7 @@ END;
 
 ### INITIAL CODE 
 
-```
+```sql
 drop table customers
 
 drop table addresses
@@ -4800,7 +4811,7 @@ INSERT INTO addresses VALUES (4, 'Schrobenhausen', 'EMANO', 'DE');
 
 # SPECIFICATION
 
-```
+```sql
 create or replace package pck_ri_vorschrift_oracle_text_pkg authid current_user is 
  
     function text_is_available return boolean; 
@@ -4836,7 +4847,7 @@ end pck_ri_vorschrift_oracle_text_pkg;
 
 
 -- BODY
-```
+```sql
 create or replace package body pck_ri_vorschrift_oracle_text_pkg is 
     procedure execute_sql( 
         p_sql         in varchar2,  
@@ -5363,7 +5374,7 @@ end pck_ri_vorschrift_oracle_text_pkg;
 
 ### html to show while doing oracle text introduction
 
-```
+```sql
 <p>This page shows how Oracle Text can be used within an Interactive Report to perform full-text search using linguistic features.</p>
 <p>In this example, Oracle Text features are available to search the <b>VORSCHRIFT_NUMMER</b> and <b>VORSCHRIFT_BEZEICHNUNG_DEUTSCH</b> columns with the Interactive Report.</p>
 <p>Few Test Cases which will work using Oracle Text</p>
@@ -5406,7 +5417,7 @@ end pck_ri_vorschrift_oracle_text_pkg;
 
 ```
 #  inline css for that html 
-```
+```sql
 .align-colon:before {
     content: '';
     display: inline-block;
@@ -5424,7 +5435,7 @@ li b {
 
 #  Icon will show instead of link in interactive Report but when we click on icon it will 
 redirect to link in new tab. for that we need to write that code in sql report using case statement
-```
+```sql
 CASE WHEN v.url_getex_vorschrift IS NOT NULL 
             THEN '<a href="' || v.url_getex_vorschrift || '" title="' || v.url_getex_vorschrift || '"><span class="fa fa-link"></span></a>'
             ELSE null
@@ -5433,14 +5444,14 @@ END AS getex_vorschrift_link
 
 
 # To empty the columsn name we will use nbsp; for the column to keep empty in interactive report
-```
+```sql
 &nbsp;
 ```
 
 
 
 #  Procedure with two parameters returning output like select statement
-```
+```sql
 CREATE OR REPLACE PROCEDURE FILTER_DATA (
     p_operator IN VARCHAR2,
     p_kpb IN VARCHAR2
@@ -5483,7 +5494,7 @@ END FILTER_DATA;
 
 # TEST CASES
 
-```
+```sql
 BEGIN
     FILTER_DATA('ungleich', 'AU310/6EU_B');
 END;
@@ -5535,7 +5546,7 @@ END FILTER_DATA;
 
 
 
-```
+```sql
 BEGIN
     FILTER_DATA('gleich', 'AU310/6EU_B');
 END;
@@ -5550,7 +5561,7 @@ END;
 
 ### PROCEDURE
 
-```
+```sql
 CREATE OR REPLACE PROCEDURE FILTER_DATA (
     p_operator IN VARCHAR2,
     p_kpb IN VARCHAR2,
@@ -5609,10 +5620,9 @@ BEGIN
 END FILTER_DATA;
 ```
 
-```
 # TEST CASES 
 
-```
+```sql
 BEGIN
     FILTER_DATA('gleich', 'AU310/6EU_B');
 END;
@@ -5677,7 +5687,7 @@ END;
 
 #### SPECIFICATION
 
-```
+```sql
 create or replace package emano_report is
     -- Die folgenden Konstanten sind vierstellig, da die Oracle-internen
     -- Entsprechungen 1-3-stellig sind
@@ -5730,7 +5740,7 @@ end emano_report;
 
 ### BODY
 
-```
+```sql
 create or replace package body emano_report is
     /*
     Konvertiert einen CLOB in einen BLOB
@@ -6725,7 +6735,7 @@ end emano_report;
 
 ### SPECIFICATION
 
-```
+```sql
 create or replace PACKAGE xlsx_builder_pkg
    AUTHID CURRENT_USER
 IS
@@ -7103,7 +7113,7 @@ END;
 
 ### BODY
 
-```
+```sql
 create or replace PACKAGE BODY xlsx_builder_pkg
 IS
    /* Some Naming-conventions
@@ -9943,7 +9953,7 @@ END;
 
 ### SPECIFICATION
 
-```
+```sql
 create or replace PACKAGE zip_util_pkg
   AUTHID CURRENT_USER
 AS
@@ -10016,7 +10026,7 @@ END zip_util_pkg;
 
 ### BODY
 
-```
+```sql
 create or replace package body zip_util_pkg
 is
 
@@ -10422,7 +10432,7 @@ end zip_util_pkg;
 
 ### exportStatmentOfCompletenes2
 
-```
+```sql
 declare
     lBlob blob;
     lQuery clob;
@@ -10494,7 +10504,7 @@ end;
 
 
 
-```
+```sql
 create or replace PROCEDURE FILTER_DATA (
     p_operator IN VARCHAR2,
     p_kpb IN VARCHAR2
@@ -10551,7 +10561,7 @@ END FILTER_DATA;
 
 # TO check whether sql query and pl sql is returning correct or not we can check using 
 
-```
+```sql
 SELECT KPB_ID, KPB FROM T_KPB WHERE REGEXP_LIKE(KPB, '^AU\d+/\d+[A-Z]+_[A-Z]$')
 
 
@@ -10566,7 +10576,7 @@ end;
 
 ### TEST CASES
 
-```
+```sql
 BEGIN
   FILTER_DATA('entspricht regulärem Ausdruck', 'AU');
 END;
@@ -10678,7 +10688,7 @@ END;
 
 ### SPECIFICATION
 
-```
+```sql
 create or replace package emano_report is
     -- Die folgenden Konstanten sind vierstellig, da die Oracle-internen
     -- Entsprechungen 1-3-stellig sind
@@ -10733,7 +10743,7 @@ end emano_report;
 
 ### BODY
 
-```
+```sql
 create or replace package body emano_report is
     /*
     Konvertiert einen CLOB in einen BLOB
@@ -11728,7 +11738,7 @@ end emano_report;
 
 ### SPECIFICATION
 
-```
+```sql
 create or replace PACKAGE "EMANO_UTIL" AS 
 
     procedure pResetPageIGIR(aPageID in number, aAPPID in number);
@@ -11749,7 +11759,7 @@ END EMANO_UTIL;
 
 ### BODY
 
-```
+```sql
 create or replace PACKAGE BODY "EMANO_UTIL" AS
 
     /* Liefert die Sprache des angegebenen Benutzers zurück. Wird kein Benutzer angegeben, dann
@@ -11925,7 +11935,7 @@ END EMANO_UTIL;
 
 ### SPECIFICATION
 
-```
+```sql
 create or replace PACKAGE KOALA_UTIL AS 
 
     function fGetGroupmembers(aGroup in varchar2) return apex_t_varchar2;
@@ -11952,7 +11962,7 @@ END KOALA_UTIL;
 
 ### BODY
 
-```
+```sql
 create or replace PACKAGE BODY KOALA_UTIL AS
 -- Daten sind Zugangsdaten für Schulungsumgebung!!!
     cLdapHost constant varchar2(250) := 'koala.in.audi.vwg';
@@ -12242,7 +12252,7 @@ END KOALA_UTIL;
 
 ### SPECIFICATION
 
-```
+```sql
 create or replace PACKAGE "LDAP_UTIL" 
 AS
 
@@ -12260,7 +12270,7 @@ END LDAP_UTIL;
 
 ### BODY
 
-```
+```sql
 create or replace PACKAGE BODY "LDAP_UTIL" AS
 
  --******************************************************************************
@@ -12426,7 +12436,7 @@ END LDAP_UTIL;
 
 ### SPECIFICATION
 
-```
+```sql
 create or replace PACKAGE PCK_AK AS 
 
     function fValidateDeleteVKO(aETB_AK_REF_BENUTZERID in number) return varchar2;
@@ -12438,7 +12448,7 @@ END PCK_AK;
 
 ### BODY 
 
-```
+```sql
 create or replace PACKAGE BODY PCK_AK AS
 
     function fValidateDeleteVKO(aETB_AK_REF_BENUTZERID in number) return varchar2 AS
@@ -12492,7 +12502,7 @@ END PCK_AK;
 
 ### SPECIFICATION
 
-```
+```sql
 create or replace PACKAGE                      "PCK_RI" AS 
 
     -- PK der Rolle 'Admin'
@@ -12693,7 +12703,7 @@ END PCK_RI;
 ### BODY
 
 
-```
+```sql
 create or replace PACKAGE BODY                      "PCK_RI" AS
  
   g_jira_base_url CONSTANT VARCHAR2(60 CHAR) := 'https://cicd.cloud.audi/jira/browse/';
@@ -14512,7 +14522,7 @@ END PCK_RI;
 
 ### SPECIFICATION
 
-```
+```sql
 create or replace PACKAGE PCK_RI_BENACHRICHTIGUNG AS 
 
   procedure pBenachrichtigung( aVorschriftid in number,  aArbeitskreise varchar2, aText in varchar2, aGrund in number :=0, 
@@ -14543,7 +14553,7 @@ END PCK_RI_BENACHRICHTIGUNG;
 
 ### BODY
 
-```
+```sql
 create or replace PACKAGE BODY PCK_RI_BENACHRICHTIGUNG AS
 
     PROCEDURE pBenachrichtigung( aVorschriftid in number,  aArbeitskreise varchar2, aText in varchar2, 
@@ -15207,7 +15217,7 @@ END PCK_RI_BENACHRICHTIGUNG;
 
 ### SPECIFICATION
 
-```
+```sql
 create or replace PACKAGE "PCK_RI_COCKPIT" AS 
 
     type tConfig is record (
@@ -15338,7 +15348,7 @@ END PCK_RI_COCKPIT;
 
 ### BODY
 
-```
+```sql
 create or replace PACKAGE BODY "PCK_RI_COCKPIT" AS
 
     procedure pMain(aLaenderListe varchar2, aThemenListe varchar2) is
@@ -15600,7 +15610,7 @@ END PCK_RI_COCKPIT;
 
 ### SPECIFICATION
 
-```
+```sql
 create or replace PACKAGE "PCK_RI_COCKPIT2" AS 
 
     gMaxSpaltenIndex number;
@@ -15685,7 +15695,7 @@ END PCK_RI_COCKPIT2;
 ### BODY
 
 
-```
+```sql
 create or replace PACKAGE BODY "PCK_RI_COCKPIT2" AS
 
 
@@ -16662,7 +16672,7 @@ END PCK_RI_COCKPIT2;
 
 ### SPECIFICATION
 
-```
+```sql
 create or replace PACKAGE PCK_RI_COCKPIT_REFRESH AS 
     
     /* Gibt eine Aktualisierung der Cockpit-Daten in Auftrag. Kann direkt aufgerufen werden. */
@@ -16676,7 +16686,7 @@ END PCK_RI_COCKPIT_REFRESH;
 
 ### BODY
 
-```
+```sql
 create or replace PACKAGE BODY PCK_RI_COCKPIT_REFRESH AS
 
     procedure pRefresh is
@@ -16744,7 +16754,7 @@ END PCK_RI_COCKPIT_REFRESH;
 
 ### SPECIFICATION
 
-```
+```sql
 create or replace PACKAGE PCK_RI_EXPORT AS 
     -- Combined function for both current and future data
     function fGetSQLExportCombined return clob;
@@ -16754,7 +16764,7 @@ END PCK_RI_EXPORT;
 
 ### BODY
 
-```
+```sql
 create or replace PACKAGE BODY PCK_RI_EXPORT AS
   FUNCTION fGetSQLExportCombined RETURN CLOB AS
     lSQL CLOB;
@@ -16920,7 +16930,7 @@ END PCK_RI_EXPORT;
 
 ### SPECIFICATION
 
-```
+```sql
 create or replace PACKAGE PCK_RI_EXPORT_1 AS 
     function fGetSQLExportCurrent return clob;
     function fGetSQLExportFuture return clob;
@@ -16930,7 +16940,7 @@ END PCK_RI_EXPORT_1;
 
 ### BODY
 
-```
+```sql
 create or replace PACKAGE BODY PCK_RI_EXPORT_1 AS
   function fGetSQLExportCurrent return clob AS
     lSQL clob;  
@@ -17085,7 +17095,7 @@ END PCK_RI_EXPORT_1;
 
 ### SPECIFICATION
 
-``` sql
+```sql sql
 create or replace PACKAGE PCK_RI_GETEX AS 
 
   /* TODO enter package declarations (types, exceptions, methods etc) here */
@@ -17226,7 +17236,7 @@ END PCK_RI_GETEX;
 
 ### BODY
 
-```sql
+```sqlsql
 create or replace PACKAGE BODY PCK_RI_GETEX AS
 
     /*  Berechnet den Soll-Vorschrifttyp für eine GETEX-Vorschrift
@@ -31353,7 +31363,7 @@ end zip_util_pkg;
 
 # Trigger
 
-```
+```sql
 create or replace TRIGGER "TR_VORSCHRIFT"
 AFTER INSERT OR UPDATE ON T_VORSCHRIFT
 FOR EACH ROW
@@ -31445,7 +31455,7 @@ END;
 
 ```
 
-```
+```sql
 ALTER TRIGGER TR_VORSCHRIFT ENABLE;
 SELECT STATUS FROM USER_TRIGGERS WHERE TRIGGER_NAME = 'TR_VORSCHRIFT';
 ```
@@ -31459,7 +31469,7 @@ SELECT STATUS FROM USER_TRIGGERS WHERE TRIGGER_NAME = 'TR_VORSCHRIFT';
 
 ### PROCEDURE
 
-```
+```sql
 create or replace PROCEDURE FILTER_DATA (
     p_operator IN VARCHAR2,
     p_kpb IN VARCHAR2
@@ -31538,7 +31548,7 @@ END FILTER_DATA;
 ### TEST CASES 
 
 
-```
+```sql
 BEGIN
     FILTER_DATA('gleich', 'AU310/6EU_B');
 END;
@@ -31610,6 +31620,143 @@ BEGIN
 END;
 ```
 
+# PROCEDURE WITH TWO PARAMETERS RETURNING OUTPUT LIKE ONLY IDS - FILTER DATA FOR INTERACTIVE REPORT
+
+
+### PROCEDURE
+
+```sql
+create or replace PROCEDURE FILTER_DATA (
+    p_operator IN VARCHAR2,
+    p_kpb IN VARCHAR2
+)
+IS
+    sql_stmt VARCHAR2(1000);
+    type t_cursor is ref cursor;
+    c_cursor t_cursor;
+    kpb_id T_KPB.KPB_ID%TYPE;
+BEGIN
+    CASE p_operator
+        WHEN 1 THEN -- 1 = 'gleich'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) = UPPER(TRIM(:p_kpb))';
+        WHEN 2 THEN -- 2 = 'ungleich'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) <> UPPER(TRIM(:p_kpb))';
+        WHEN 3 THEN -- 3 = 'ist leer'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE TRIM(KPB) IS NULL OR TRIM(KPB) = ''''';
+        WHEN 4 THEN -- 4 = 'ist nicht leer'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) IS NOT NULL AND LENGTH(TRIM(KPB)) > 0';
+
+        -- comma 'in'
+        /*
+        WHEN 5 THEN -- 5 = 'in'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) IN (' || REGEXP_REPLACE(UPPER(TRIM(p_kpb)), '([^,]+)', '''\1''') || ')';
+        */
+        -- semicolon 'in'
+        WHEN 5 THEN -- 5 = 'in'
+            sql_stmt :='select  KPB_ID from T_KPB where UPPER(TRIM(KPB)) in (select regexp_substr ('''||p_kpb||''', ''[^;]+'',1,level ) value from   dual
+                                                             connect by level <=  length ('''||p_kpb||''') - length ( replace ('''||p_kpb||''', '';'' ) ) + 1)';
+        -- comma for 'nicht in'
+        /*
+        WHEN 6 THEN -- 6 = 'nicht in'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) NOT IN (' || REGEXP_REPLACE(UPPER(TRIM(p_kpb)), '([^,]+)', '''\1''') || ')';
+        */
+        -- semicolon for 'nicht in'
+        WHEN 6 THEN -- 6 = 'nicht in'
+            sql_stmt :='select  KPB_ID from T_KPB where UPPER(TRIM(KPB)) not in (select regexp_substr ('''||p_kpb||''', ''[^;]+'',1,level ) value from   dual
+                                                             connect by level <=  length ('''||p_kpb||''') - length ( replace ('''||p_kpb||''', '';'' ) ) + 1)';
+
+        WHEN 7 THEN -- 7 = 'enthält'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) LIKE ''%' || UPPER(TRIM(p_kpb)) || '%''';
+        WHEN 8 THEN -- 8 = 'enthält nicht'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) NOT LIKE ''%' || UPPER(TRIM(p_kpb)) || '%''';
+        WHEN 9 THEN -- 9 = 'beginnt mit'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) LIKE ''' || UPPER(TRIM(p_kpb)) || '%''';
+        WHEN 10 THEN -- 10 = 'beginnt nicht mit'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE UPPER(TRIM(KPB)) NOT LIKE ''' || UPPER(TRIM(p_kpb)) || '%''';
+        WHEN 11 THEN -- 11 = 'entspricht regulärem Ausdruck'
+            sql_stmt := 'SELECT KPB_ID FROM T_KPB WHERE REGEXP_LIKE(UPPER(TRIM(KPB)), ''^'||UPPER(TRIM(p_kpb))||'\d+/\d+[A-Z]+_[A-Z]$'')';
+        ELSE
+            RAISE_APPLICATION_ERROR(-20001, 'Invalid operator specified.');
+    END CASE;
+
+
+    IF p_operator IN (1,2) THEN
+        OPEN c_cursor FOR sql_stmt USING UPPER(TRIM(p_kpb));
+    ELSE
+        OPEN c_cursor FOR sql_stmt;
+    END IF;
+
+    LOOP
+        FETCH c_cursor INTO kpb_id;
+        EXIT WHEN c_cursor%NOTFOUND;
+        DBMS_OUTPUT.PUT_LINE(kpb_id);
+    END LOOP;
+
+    CLOSE c_cursor;
+END FILTER_DATA;
+
+```
+
+
+### TEST CASES 
+
+
+```sql
+-- 1 = 'gleich'
+BEGIN
+    FILTER_DATA(1, 'AU310/6Eu_B');
+END;
+ 
+-- 2 = 'ungleich'
+BEGIN
+    FILTER_DATA(2, 'au310/6EU_B');
+END;
+ 
+-- 3 = 'ist leer'
+BEGIN
+    FILTER_DATA(3, NULL); 
+END;
+ 
+-- 4 = 'ist nicht leer'
+BEGIN
+    FILTER_DATA(4, NULL);
+END;
+ 
+-- 5 = 'in'
+BEGIN
+    FILTER_DATA(5, 'AU536/0MY_K2,AU310/6EU_B,AU572/0EU_KR');
+END;
+ 
+-- 6 = 'nicht in'
+BEGIN
+    FILTER_DATA(6, 'AU536/0MY_K2,AU310/6EU_B,AU572/0EU_KR');
+END;
+ 
+-- 7 = 'enthält'
+BEGIN
+    FILTER_DATA(7, 'AU');
+END;
+
+-- 8 = 'enthält nicht'
+BEGIN
+    FILTER_DATA(8, 'AU');
+END;
+ 
+-- 9 = 'beginnt mit'
+BEGIN
+FILTER_DATA(9, 'AU3');
+END;
+ 
+-- 10 = 'beginnt nicht mit'
+BEGIN
+FILTER_DATA(10, 'AU3');
+END;
+ 
+-- 11 = 'entspricht regulärem Ausdruck'
+BEGIN
+FILTER_DATA(11, 'AU');
+END;
+```
 
 
 
@@ -31618,7 +31765,7 @@ END;
 
 # **Comparing Tables in my Schema vs Other Schema environment:** This query lists the names of specific tables within the user's schema.
 
-```
+```sql
 SELECT table_name
 FROM user_tables
 WHERE table_name IN (
@@ -31643,7 +31790,7 @@ WHERE table_name IN (
 ```
 # **Limit any table to 5 rows only, rest delete:** This block of code deletes all rows except for the top 5 based on the 'Id' column from the table `T_VORSCHRIFT_REF_THEMA_REF_LAND`.
 
-```
+```sql
 DELETE FROM T_VORSCHRIFT_REF_THEMA_REF_LAND t
 WHERE ROWID IN (
     SELECT ROWID
@@ -31659,7 +31806,7 @@ WHERE ROWID IN (
 #  **Select top 5 rows from a table after deletion operation:** This query retrieves the top 5 rows based on the 'Id' column from the table `T_VORSCHRIFT_REF_THEMA_REF_LAND` to confirm the deletion operation.
 
 
-```
+```sql
 SELECT t.*
 FROM T_VORSCHRIFT_REF_THEMA_REF_LAND t
 WHERE ROWID IN (
@@ -31686,7 +31833,7 @@ SELECT * FROM (
 
 
 
-```
+```sql
 DECLARE
   v_sql VARCHAR2(4000);
 BEGIN
@@ -31725,8 +31872,205 @@ END;
 
 
 
+# COLORS DIFFERENCE HISTORY DELETE ADD REMOVE RED GREEN LAG LEAD DECODE LOV LIST OF VALUES
 
 
+```sql
+with cte1 as (
+select H_VORSCHRIFTID,
+       v.VORSCHRIFTID,
+       vt.BEZEICHNUNG as VORSCHRIFT_TYP, LAG(vt.BEZEICHNUNG) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as VORSCHRIFT_TYP_H,
+       edm.MODELL as EINSATZDATUM_MODELL, LAG(edm.MODELL) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as EINSATZDATUM_MODELL_H,
+       vn.BEZEICHNUNG as NORM, LAG(vn.BEZEICHNUNG) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as NORM_H,
+       v.VORSCHRIFT_NUMMER as VORSCHRIFT_NUMMER, LAG(v.VORSCHRIFT_NUMMER) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as VORSCHRIFT_NUMMER_H,
+       v.vorschrift_bezeichnung as VORSCHRIFT_BEZEICHNUNG, LAG(v.vorschrift_bezeichnung) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as VORSCHRIFT_BEZEICHNUNG_H,
+       -- pq.display_value as PROGNOSE_QUALITAET, LAG(pq.display_value) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as PROGNOSE_QUALITAET_H,
+       decode(v.PROGNOSE_QUALITAETid, 0, 'offen', 10, 'sicher', 20, 'abschätzbar', 30, 'bestätigt (in Kraft)') as PROGNOSE_QUALITAET, LAG(decode(v.PROGNOSE_QUALITAETid, 0, 'offen', 10, 'sicher', 20, 'abschätzbar', 30, 'bestätigt (in Kraft)')) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as PROGNOSE_QUALITAET_H,
+       v.JIRA_TICKET as JIRA_TICKET, LAG(v.JIRA_TICKET) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as JIRA_TICKET_H,
+       -- fs.display_value as VORSCHRIFT_FREIGABESTATUS, LAG(fs.display_value) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as VORSCHRIFT_FREIGABESTATUS_H,
+       DECODE(v.VORSCHRIFT_FREIGABESTATUSID,
+        -1, 'Neue Vorschrift aus GETEX',
+         1, 'Grundbefüllung (sichtbar für VKO)',
+        10, 'in Bearbeitung (sichtbar für VKO und VEX)',
+        20, 'Freigegeben (sichtbar für alle User)',
+        30, 'nicht relevant (sichtbar für VKO und VEX)') as VORSCHRIFT_FREIGABESTATUS, 
+        LAG(DECODE(v.VORSCHRIFT_FREIGABESTATUSID,
+        -1, 'Neue Vorschrift aus GETEX',
+         1, 'Grundbefüllung (sichtbar für VKO)',
+        10, 'in Bearbeitung (sichtbar für VKO und VEX)',
+        20, 'Freigegeben (sichtbar für alle User)',
+        30, 'nicht relevant (sichtbar für VKO und VEX)'))
+        OVER (PARTITION BY v.vorschriftid ORDER BY v.letzte_aenderung_datum asc) AS VORSCHRIFT_FREIGABESTATUS_H,
+
+
+       vs.STATUS as VORSCHRIFT_STATUS, LAG(vs.STATUS) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as VORSCHRIFT_STATUS_H,
+       -- hr.display_value as HOMOLOGATION_MOEGLICH, LAG(hr.display_value) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as HOMOLOGATION_MOEGLICH_H,
+       DECODE(v.HOMOLOGATIONSRELEVANT, 10,'Ja',0,'Nein',20, 'Nicht geprüft') AS HOMOLOGATIONSRELEVANT,
+       LAG(DECODE(v.HOMOLOGATIONSRELEVANT, 10,'Ja',0,'Nein',20, 'Nicht geprüft'))
+      OVER (PARTITION BY v.vorschriftid ORDER BY v.letzte_aenderung_datum ASC) AS HOMOLOGATIONSRELEVANT_H,
+       
+
+       decode(v.rxswin,10,'Ja',0,'Nein',20, 'Nicht geprüft') as rxswin, lag(decode(v.rxswin,10,'Ja',0,'Nein',20,'Nicht geprüft')) over (partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as rxswin_h,
+       --rwr.display_value as RXSWIN, LAG(rwr.display_value) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as RXSWIN_H,
+       
+       
+       v.bemerkung as BEMERKUNG, LAG(v.bemerkung) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as BEMERKUNG_H,
+       v.LINK_ZUR_VORSCHRIFT_DMS as LINK_ZUR_VORSCHRIFT_DMS, LAG(v.LINK_ZUR_VORSCHRIFT_DMS) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as LINK_ZUR_VORSCHRIFT_DMS_H,
+       v.LINK_ZUR_VORSCHRIFT_GETEX as LINK_ZUR_VORSCHRIFT_GETEX, LAG(v.LINK_ZUR_VORSCHRIFT_GETEX) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as LINK_ZUR_VORSCHRIFT_GETEX_H,
+       ws.WEBSITE_NAME as WEBSITE, LAG(ws.WEBSITE_NAME) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as WEBSITE_H,
+       v.WEBSITELINK as WEBSITELINK, LAG(v.WEBSITELINK) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as WEBSITELINK_H,
+       ksu.BEZEICHNUNG as KSU, LAG(ksu.BEZEICHNUNG) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as KSU_H,
+       /*case v.cop_relevant when 0 then 'nein' when 10 then 'ja' when 20 then 'nicht geprüft' else '' || v.cop_relevant end as cop_relevant, case LAG(v.cop_relevant) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) when 0 then 'nein' when 10 then 'ja' WHEN 20 THEN 'nicht geprüft' else '' || LAG(v.cop_relevant) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) end  as cop_relevant_h,*/
+       decode(v.cop_relevant,0,'Nein',10,'Ja',20,'Nicht geprüft') as cop_relevant, lag(decode(v.cop_relevant,0,'Nein',10,'Ja',20, 'Nicht geprüft')) over (partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as cop_relevant_h,
+       
+       v.letzte_aenderung_datum as letzte_aenderung_datum,
+       pck_ri.fCreatePermalinkUrl(v.vorschriftid) as PERMALINK,
+       b.email as EMAIL,
+       nvl2(v.letzte_aenderung_benutzerid, b.nachname || ', ' || b.vorname, null) AS LETZTE_AENDERUNG_BENUTZER,
+
+       -- newly added 
+
+       decode(v.MASTER,10,'Master in RegIndex',20,'Master in GETEX') as MASTER, lag(decode(v.MASTER,10,'Master in RegIndex',20,'Master in GETEX')) over (partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as MASTER_H,
+
+       /*
+       v.MASTER as MASTER,
+       LAG(v.MASTER) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as MASTER_H,
+       */
+       v.DOKUMENTENDATUM as DOKUMENTENDATUM,
+       LAG(v.DOKUMENTENDATUM) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as DOKUMENTENDATUM_H,
+       v.SWR_HAUPTUMSETZENDE_OE as SWR_HAUPTUMSETZENDE_OE,
+       LAG(v.SWR_HAUPTUMSETZENDE_OE) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as SWR_HAUPTUMSETZENDE_OE_H,
+       v.TITEL_KURZ as TITEL_KURZ,
+       LAG(v.TITEL_KURZ) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as TITEL_KURZ_H,
+       v.URL_GETEX_VORSCHRIFT as URL_GETEX_VORSCHRIFT,
+       LAG(v.URL_GETEX_VORSCHRIFT) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as URL_GETEX_VORSCHRIFT_H,
+       v.TECHNOLOGIE as TECHNOLOGIE,
+       LAG(v.TECHNOLOGIE) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as TECHNOLOGIE_H,
+       v.BEMERKUNG_ENGLISCH as BEMERKUNG_ENGLISCH,
+       LAG(v.BEMERKUNG_ENGLISCH) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as BEMERKUNG_ENGLISCH_H,
+    --    dt.TEXT_DEUTSCH as TEXT_DEUTSCH,
+    --    LAG(dt.TEXT_DEUTSCH) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as TEXT_DEUTSCH_H,
+    --    dt.TEXT_ENGLISCH as TEXT_ENGLISCH,
+    --    LAG(dt.TEXT_ENGLISCH) over(partition by v.vorschriftid order by v.letzte_aenderung_datum asc) as TEXT_ENGLISCH_H
+    CASE WHEN :FSP_LANGUAGE_PREFERENCE = 'de' THEN dt.TEXT_DEUTSCH ELSE dt.TEXT_ENGLISCH END AS DOCUMENT_TYPE_TEXT,
+    LAG(CASE WHEN :FSP_LANGUAGE_PREFERENCE = 'de' THEN dt.TEXT_DEUTSCH ELSE dt.TEXT_ENGLISCH END) OVER (PARTITION BY v.vorschriftid ORDER BY v.letzte_aenderung_datum ASC) AS DOCUMENT_TYPE_TEXT_H
+
+
+       
+
+from T_H_VORSCHRIFT v
+LEFT OUTER JOIN t_vorschrift tv ON tv.vorschriftid = v.vorschriftid
+LEFT OUTER JOIN t_document_type dt ON tv.document_typeid = dt.document_typeid
+left outer join t_benutzer b on (b.benutzerid = v.letzte_aenderung_benutzerid)
+left outer join T_VORSCHRIFT_TYP vt on (vt.VORSCHRIFT_TYPID = v.VORSCHRIFT_TYPID)
+left outer join T_EINSATZDATUM_MODELL edm on (edm.EINSATZDATUM_MODELLID = v.EINSATZDATUM_MODELLID)
+left outer join T_NORM vn on (vn.NORMID = v.NORMID)
+/*
+left outer join apex_application_lov_entries pq on (pq.return_value = v.prognose_qualitaet 
+                                                    and pq.list_of_values_name = 'LOV_VORSCHRIFT_PROGNOSE_QUALITAET'
+                                                    and pq.application_id = :APP_ID)
+*/
+
+/*
+left outer join apex_application_lov_entries fs on (fs.return_value = v.VORSCHRIFT_FREIGABESTATUSID 
+                                                    and fs.list_of_values_name = 'LOV_VORSCHRIFT_FREIGABE_STATUS'
+                                                    and fs.application_id = :APP_ID)
+*/
+
+
+left outer join T_VORSCHRIFT_STATUS vs on (vs.VORSCHRIFT_STATUSID = v.VORSCHRIFT_STATUSID)
+/*
+left outer join apex_application_lov_entries hr on (hr.return_value = v.HOMOLOGATIONSRELEVANT 
+                                                    and hr.list_of_values_name = 'LOV_HOMOLOGATIONSRELEVANT'
+                                                    and hr.application_id = :APP_ID)
+
+*/
+
+/*
+left outer join apex_application_lov_entries rwr on (rwr.return_value = v.RXSWIN 
+                                                    and rwr.list_of_values_name = 'LOV_RXSWIN_RELEVANT'
+                                                    and rwr.application_id = :APP_ID)
+*/
+left outer join T_WEBSITE ws on (ws.WEBSITEID = v.WEBSITEID)
+left outer join T_KSU ksu on (ksu.KSUID = v.KSUID)
+
+where v.VORSCHRIFTID = :P350_VORSCHRIFTID
+)
+select cte1.H_VORSCHRIFTID,
+       cte1.VORSCHRIFTID,
+       pck_ri_history.fdiff(cte1.VORSCHRIFT_TYP, cte1.VORSCHRIFT_TYP_H) as VORSCHRIFT_TYP,
+       pck_ri_history.fdiff(cte1.EINSATZDATUM_MODELL, cte1.EINSATZDATUM_MODELL_H) as EINSATZDATUM_MODELL,
+       pck_ri_history.fdiff(cte1.NORM, cte1.NORM_H) as NORM,
+       pck_ri_history.fdiff(cte1.VORSCHRIFT_NUMMER, cte1.VORSCHRIFT_NUMMER_H) as VORSCHRIFT_NUMMER,
+       pck_ri_history.fdiff(cte1.VORSCHRIFT_BEZEICHNUNG, cte1.VORSCHRIFT_BEZEICHNUNG_H) as VORSCHRIFT_BEZEICHNUNG,
+       pck_ri_history.fdiff(cte1.PROGNOSE_QUALITAET, cte1.PROGNOSE_QUALITAET_H) as PROGNOSE_QUALITAET,
+       pck_ri_history.fdiff(cte1.JIRA_TICKET, cte1.JIRA_TICKET_H) as JIRA_TICKET,
+       pck_ri_history.fdiff(cte1.VORSCHRIFT_FREIGABESTATUS, cte1.VORSCHRIFT_FREIGABESTATUS_H) as VORSCHRIFT_FREIGABESTATUS,
+       pck_ri_history.fdiff(cte1.VORSCHRIFT_STATUS, cte1.VORSCHRIFT_STATUS_H) as VORSCHRIFT_STATUS,
+       pck_ri_history.fdiff(cte1.HOMOLOGATIONSRELEVANT, cte1.HOMOLOGATIONSRELEVANT_H) as HOMOLOGATIONSRELEVANT,
+       pck_ri_history.fdiff(cte1.RXSWIN, cte1.RXSWIN_H) as RXSWIN,
+       pck_ri_history.fdiff(cte1.BEMERKUNG, cte1.BEMERKUNG_H) as BEMERKUNG,
+       pck_ri_history.fdiff(cte1.LINK_ZUR_VORSCHRIFT_DMS, cte1.LINK_ZUR_VORSCHRIFT_DMS_H) as LINK_ZUR_VORSCHRIFT_DMS,
+       pck_ri_history.fdiff(cte1.LINK_ZUR_VORSCHRIFT_GETEX, cte1.LINK_ZUR_VORSCHRIFT_GETEX_H) as LINK_ZUR_VORSCHRIFT_GETEX,
+       pck_ri_history.fdiff(cte1.WEBSITE, cte1.WEBSITE_H) as WEBSITE,
+       pck_ri_history.fdiff(cte1.WEBSITELINK, cte1.WEBSITELINK_H) as WEBSITELINK,
+       pck_ri_history.fdiff(cte1.KSU, cte1.KSU_H) as KSU,
+       pck_ri_history.fdiff(cte1.cop_relevant, cte1.cop_relevant_h) as cop_relevant,
+       cte1.letzte_aenderung_datum as letzte_aenderung_datum,
+       cte1.PERMALINK as PERMALINK,
+       cte1.email as EMAIL,
+       cte1.LETZTE_AENDERUNG_BENUTZER AS LETZTE_AENDERUNG_BENUTZER,
+        -- newly added 
+       pck_ri_history.fdiff(cte1.MASTER, cte1.MASTER_H) as MASTER,
+       pck_ri_history.fdiff(cte1.DOKUMENTENDATUM, cte1.DOKUMENTENDATUM_H) as DOKUMENTENDATUM,
+       pck_ri_history.fdiff(cte1.SWR_HAUPTUMSETZENDE_OE, cte1.SWR_HAUPTUMSETZENDE_OE_H) as SWR_HAUPTUMSETZENDE_OE,
+       pck_ri_history.fdiff(cte1.TITEL_KURZ, cte1.TITEL_KURZ_H) as TITEL_KURZ,
+       pck_ri_history.fdiff(cte1.URL_GETEX_VORSCHRIFT, cte1.URL_GETEX_VORSCHRIFT_H) as URL_GETEX_VORSCHRIFT,
+       pck_ri_history.fdiff(cte1.TECHNOLOGIE, cte1.TECHNOLOGIE_H) as TECHNOLOGIE,
+       pck_ri_history.fdiff(cte1.BEMERKUNG_ENGLISCH, cte1.BEMERKUNG_ENGLISCH_H) as BEMERKUNG_ENGLISCH,
+    --    pck_ri_history.fdiff(cte1.TEXT_DEUTSCH, cte1.TEXT_DEUTSCH_H) AS DOCUMENT_TYPE_DEUTSCH,
+    --    pck_ri_history.fdiff(cte1.TEXT_ENGLISCH, cte1.TEXT_ENGLISCH_H) AS DOCUMENT_TYPE_ENGLISCH
+       pck_ri_history.fdiff(cte1.DOCUMENT_TYPE_TEXT, cte1.DOCUMENT_TYPE_TEXT_H) AS DOCUMENT_TYPE_TEXT
+
+
+
+from cte1 
+where 
+       (cte1.VORSCHRIFT_TYP <> cte1.VORSCHRIFT_TYP_H)
+       OR (nvl(cte1.EINSATZDATUM_MODELL, '-1') <> nvl(cte1.EINSATZDATUM_MODELL_H, '-1'))
+       OR (nvl(cte1.NORM, '-1') <> nvl(cte1.NORM_H, '-1'))
+       OR (nvl(cte1.VORSCHRIFT_NUMMER, '-1') <> nvl(cte1.VORSCHRIFT_NUMMER_H, '-1'))
+       OR (nvl(cte1.VORSCHRIFT_BEZEICHNUNG, '-1') <> nvl(cte1.VORSCHRIFT_BEZEICHNUNG_H, '-1'))
+       OR (nvl(cte1.PROGNOSE_QUALITAET, '-1') <> nvl(cte1.PROGNOSE_QUALITAET_H, '-1'))
+       OR (nvl(cte1.JIRA_TICKET, '-1') <> nvl(cte1.JIRA_TICKET_H, '-1'))
+       OR (nvl(cte1.VORSCHRIFT_FREIGABESTATUS, '-1') <> nvl(cte1.VORSCHRIFT_FREIGABESTATUS_H, '-1'))
+       OR (nvl(cte1.VORSCHRIFT_STATUS, '-1') <> nvl(cte1.VORSCHRIFT_STATUS_H, '-1'))
+       OR (nvl(cte1.HOMOLOGATIONSRELEVANT, '-1') <> nvl(cte1.HOMOLOGATIONSRELEVANT_H, '-1'))
+       OR (nvl(cte1.RXSWIN, '-1') <> nvl(cte1.RXSWIN_H, '-1'))
+       OR (nvl(cte1.BEMERKUNG, '-1') <> nvl(cte1.BEMERKUNG_H, '-1'))
+       OR (nvl(cte1.LINK_ZUR_VORSCHRIFT_DMS, '-1') <> nvl(cte1.LINK_ZUR_VORSCHRIFT_DMS_H, '-1'))
+       OR (nvl(cte1.LINK_ZUR_VORSCHRIFT_GETEX, '-1') <> nvl(cte1.LINK_ZUR_VORSCHRIFT_GETEX_H, '-1'))
+       OR (nvl(cte1.WEBSITE, '-1') <> nvl(cte1.WEBSITE_H, '-1'))
+       OR (nvl(cte1.WEBSITELINK, '-1') <> nvl(cte1.WEBSITELINK_H, '-1'))
+       OR (nvl(cte1.KSU, '-1') <> nvl(cte1.KSU_H, '-1'))
+       OR (nvl(cte1.cop_relevant, '-1') <> nvl(cte1.cop_relevant_H, '-1'))
+       
+
+        OR (nvl(cte1.MASTER, '-1') <> nvl(cte1.MASTER_H, '-1'))
+        ---OR (nvl(cte1.DOKUMENTENDATUM, TO_DATE('01.01.0001','DD.MM.YYYY')) <> nvl(cte1.DOKUMENTENDATUM_H, TO_DATE('01.01.0001','DD.MM.YYYY')))
+        OR (NVL(TO_CHAR(cte1.DOKUMENTENDATUM, 'DD.MM.YYYY'), 'N/A') <> NVL(TO_CHAR(cte1.DOKUMENTENDATUM_H, 'DD.MM.YYYY'), 'N/A'))
+        OR (nvl(cte1.SWR_HAUPTUMSETZENDE_OE, '-1') <> nvl(cte1.SWR_HAUPTUMSETZENDE_OE_H, '-1'))
+        OR (nvl(cte1.TITEL_KURZ, '-1') <> nvl(cte1.TITEL_KURZ_H, '-1'))
+        OR (nvl(cte1.URL_GETEX_VORSCHRIFT, '-1') <> nvl(cte1.URL_GETEX_VORSCHRIFT_H, '-1'))
+        OR (nvl(cte1.TECHNOLOGIE, '-1') <> nvl(cte1.TECHNOLOGIE_H, '-1'))
+        
+        -- OR (nvl(cte1.TEXT_DEUTSCH, '-1') <> nvl(cte1.TEXT_DEUTSCH_H, '-1'))
+        -- OR (nvl(cte1.TEXT_ENGLISCH, '-1') <> nvl(cte1.TEXT_ENGLISCH_H, '-1'))
+        OR (nvl(cte1.DOCUMENT_TYPE_TEXT, '-1') <> nvl(cte1.DOCUMENT_TYPE_TEXT_H, '-1'))
+
+
+order by cte1.LETZTE_AENDERUNG_DATUM desc
+```
 
 
 
