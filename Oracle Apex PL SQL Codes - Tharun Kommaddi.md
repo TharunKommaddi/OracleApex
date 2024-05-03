@@ -17081,15 +17081,14271 @@ END PCK_RI_EXPORT_1;
 ```
 
 
+## PCK_RI_GETEX
+
+### SPECIFICATION
+
+``` sql
+create or replace PACKAGE PCK_RI_GETEX AS 
+
+  /* TODO enter package declarations (types, exceptions, methods etc) here */
+
+  /*
+  *  Legt eine neue Vorschrift in T_VORSCHRIFT an
+  *  nur dann, wenn der GETEX_SCHLUESSEL (in der Spalte regindexid) noch nicht vorhanden ist
+  *             und vorschrift_nummer in T_Vorschrift nicht vorhanden ist
+  *  Falls GETEX_SCHLUESSEL (in der Spalte regindexid) noch nicht vorhanden ist
+  *    aber gleiche vorschrift_nummer existiert, dann wird für diese vorschrift_nummer
+  *        der GETEX_SCHLUESSEL in die Spalte regindexid geschrieben 
+  *
+  *  parameter: 
+  *   getex_Import_id   - primary key of T_GETEX_IMPORT
+  **/
+  --procedure pCreateRegulationFromGetexImport(agetex_import_id number); -- obsolete
+  
+    function fCalcVorschriftTypID(aGetexKey in T_VORSCHRIFT.REGINDEXID%type) return number;  
+  procedure pCompareVorschrift(aVorschriftID in number); 
+  
+  procedure pCreateNewRegulationFromGetex;
+  
+  procedure pactualiseVorschriftKerndaten(aregindexid varchar2, avorschriftid number);
+  
+  procedure pactualiseVorschriftThema(aregindexid varchar2, avorschriftid number);
+ 
+  procedure pactualiseVorschriftAntriebsart(aregindexid varchar2, avorschriftid number);
+  
+  procedure pactualiseVorschriftFahrzeugklasse(aregindexid varchar2, avorschriftid number);
+
+  procedure pactualiseVorschriftLand(aregindexid varchar2, avorschriftid number);
+   
+  PROCEDURE pactualiseVorschriftEinsatzmodel(aregindexid IN varchar2, avorschriftid IN number);
+   
+  PROCEDURE pactualiseVorschriftEinsatzDaten(aregindexid IN varchar2, avorschriftid IN number);
+  
+  procedure paktualise_In_Kraft_Datum(avorschriftid in number);
+  
+  procedure pRefreshMViews;
+  
+   /*
+  *  returns 0 if dates are equal,     returns  != 0 if not equal
+  **/
+  FUNCTION fCheckdiff_in_Kraft_datum(avorschriftid IN NUMBER) RETURN NUMBER;
+   /*
+  * used in pVergleichAttributevonGetex
+  */ 
+  FUNCTION fCheckDiffGetexVorschriftEinsatzDaten(aregindexid IN varchar2, avorschriftid IN number) RETURN NUMBER;
+  
+  /*
+  *
+  */
+   PROCEDURE pVergleichAttributevonGetex(avorschriftid IN number );
+   
+  /*
+  *  reads BLOB with getex_zipid = aGetexZIPId from T_X_GETEX_ZIP
+  *  extract files , entzips all of them
+  *  and  write all of them into T_X_GETEX_IMPORT
+  **/
+  procedure pImportFromZip;
+  
+  /**
+  *  reads BLOB with getex_zipid = aGetexZIPId from T_X_GETEX_ZIP
+  *  extract files , skips askipfiles 
+  * entzips aimportfiles and  write them into T_X_GETEX_IMPORT
+  *
+  */
+  procedure pImportFromZip_snippet(aGetexZIPId number, askipfiles number, aimportfiles number);
+
+  /*
+  *
+  **/
+  FUNCTION fTimestampToDate(aInput Varchar2) RETURN DATE; 
+ 
+  /*
+  *
+  **/
+  procedure pSetAttributesForGetexImport;
+  /*
+  * Import new regulation in regindex from t_x_getex_import
+  **/
+  --procedure  pInitialCreation_regulationFromGetex;  -- obsolete
+ /*
+  * compare existing regulations in regindex with there in t_x_getex_import 
+  * and set status_update_getex
+  **/
+ -- PROCEDURE  pInitialComparing_existingWithregulationFromGetex;     -- obsolete
+ 
+ /*
+ * vergleich aenderung in länder list v. Vorschriften
+ * unabhängig von "master" status  ( ISO3 )
+ **/
+ FUNCTION fIsLandListChanging(avorschriftid number, alandids varchar2) return number;
+ /*
+ *  TemaListChanging
+ **/
+ FUNCTION fIsThemaListChanging(avorschriftid number, athemaids varchar2) return number;
+ /*
+ *  antribsart changing
+ **/
+ FUNCTION fIsAntriebsartListChanging(avorschriftid number, aantriebsartds varchar2) return number;
+
+ /*
+ *  FzgKlass changing
+ **/
+  FUNCTION fIsFzgKlasseListChanging(avorschriftid number, afzgklasseds varchar2) return number;
+  
+  FUNCTION fIsEinsatzdatumModelChanging(avorschriftid in number, aEinsatzdatumModel in number) return number;
+  
+  FUNCTION fIsEinsatzdatum_TypChanging(avorschriftid in number, aEinsatzdatumTypid in number, aEinsatzdatum in varchar2) return number;
+  
+  FUNCTION fIsEinsatzdatum_Types_Changing(avorschriftid in number, aEinsatzdatumTypids in varchar2, aEinsatzdatums in varchar2) return number;
+  
+  procedure pAbgleichRegindexVorschriftVomGetex(avorschriftid in NUMBER);
+
+ 
+/*
+Speicherung von Einsatzdatumsangaben differenziert nach Themengebieten
+-- This procedure inserts data from v_getex_thema_scenario into T_vorschrift_ref_thema_ref_einsatzdatum_typ for a specific VORSCHRIFTID.
+ 
+*/
+
+  PROCEDURE tpFilltheThemaEinsatzdaten_from_getex(aVorschriftid IN NUMBER);
+  
+  procedure pLoad_Vorschrift_Thema_Einsatzdatum_typ_fromGetex;
+  
+  procedure pfill_Getex_key_in_regindex_vorschrift(a_anzahl in number);
+  
+  FUNCTION  fgetRelationDates_Getex(avorschriftid IN NUMBER, atarget_key IN VARCHAR2, arelationtype IN VARCHAR2,           
+                                    adate_all_vehicles OUT DATE, adate_new_types OUT DATE) RETURN NUMBER;
+                                    
+  FUNCTION fCheckDifference_to_Getex_relations(avorschriftid IN NUMBER) RETURN NUMBER;
+  
+  PROCEDURE pActualisiereVorschriftVerknuepfungen_vomGetex(avorschriftid IN NUMBER);
+  
+END PCK_RI_GETEX;
+```
+
+### BODY
+
+```sql
+create or replace PACKAGE BODY PCK_RI_GETEX AS
+
+    /*  Berechnet den Soll-Vorschrifttyp für eine GETEX-Vorschrift
+        Regel: Wenn "UN-R" UND "Supplement" in Vorschriftnummer enthalten, dann Supplement (20)
+               Wenn mindestens eine Relation des Typs DEMANDS oder DEMANDS MULTI, dann Rahmenrichtlinie (30)
+               Sonst Vorschrift (10) */
+    function fCalcVorschriftTypID(aGetexKey in T_VORSCHRIFT.REGINDEXID%type) return number is
+        lCountDemandsRelations number;
+        lVorschriftNummerGetex MV_GETEX_VORSCHRIFT.reg_num%type;
+    begin
+    
+        select count(*) into lCountDemandsRelations        
+        from mv_getex_vorschrift_relation mgr
+        where mgr.v_id = aGetexKey and mgr.relationtype in ('DEMANDS','DEMANDS_MULTI');    
+        
+        select mg.reg_num into lVorschriftNummerGetex
+        from mv_getex_vorschrift mg
+        where mg.reg_id = aGetexKey;
+        
+        if (instr(lVorschriftNummerGetex,'UN-R') > 0 and instr(lVorschriftNummerGetex,'Supplement') > 0) then
+            return 20; -- Supplement
+        elsif (lCountDemandsRelations > 0) then
+            return 30; -- Rahmenrichtlinie
+        else
+            return 10; -- Vorschrift
+        end if;        
+    
+    end fCalcVorschriftTypID;
+
+     procedure pCompareVorschrift(aVorschriftID in number) is
+        lBitMask number := 0;
+        lGetexKey T_VORSCHRIFT.REGINDEXID%type;
+        lAnzahlGetexKey number;
+        lCompareVorschriftNummer number;
+        lCompareDocumentDate number;
+        lCompareDocumentType number;
+        lCompareTitleLong number;
+        lCompareTitleShort number;
+        lCompareStatus number;
+        lCompareEinsatzdatumModell number;
+        lCompareInkraftsetzungsdatum number;
+        lRegIndexVorschriftTypID number;
+        
+        lDiffAntriebsart number;
+        lDiffFzTyp number;   
+        lDiffLand number;
+        lDiffThema number; 
+        
+        lStatusUpdateGetex number;
+
+    begin
+    
+        select regindexid into lGetexKey
+        from t_vorschrift
+        where vorschriftid = aVorschriftID;
+        
+        if (lGetexKey is null) then
+            update t_vorschrift
+            set getex_vergleich_bitmaske = -1, status_update_getex = 30
+            where vorschriftid = aVorschriftID;
+            return;
+        end if;
+        
+        select count(*) into lAnzahlGetexKey
+        from mv_getex_vorschrift
+        where reg_id = lGetexKey;
+        
+        if (lAnzahlGetexKey != 1) then
+            update t_vorschrift
+            set getex_vergleich_bitmaske = -2, status_update_getex = 30
+            where vorschriftid = aVorschriftID;
+            return;
+        end if;
+        
+        select
+            emano_util.fIsUnequal(v.vorschrift_nummer, mg.reg_num), emano_util.fIsUnequal(v.dokumentendatum, trunc(mg.rev_doc_datum)), emano_util.fIsUnequal(dt.document_type,mg.rev_documenttype),
+            emano_util.fIsUnequal(v.vorschrift_bezeichnung, mg.rev_title), emano_util.fIsUnequal(v.titel_kurz, mg.rev_short_title), 
+            emano_util.fIsUnequal(vs.mapping_getex,mg.rev_v_status), emano_util.fIsUnequal(em.mapping_getex,nvl(mg.timelinedatetype,'EU')),
+            v.vorschrift_typid
+            into
+            lCompareVorschriftNummer, lCompareDocumentDate, lCompareDocumentType, 
+            lCompareTitleLong, lCompareTitleShort,
+            lCompareStatus, lCompareEinsatzdatumModell,
+            lRegIndexVorschriftTypID
+        from t_vorschrift v
+        left outer join t_document_type dt on (v.document_typeid = dt.document_typeid)
+        left outer join t_vorschrift_status vs on (v.vorschrift_statusid = vs.vorschrift_statusid)
+        left outer join t_einsatzdatum_modell em on (v.einsatzdatum_modellid = em.einsatzdatum_modellid)
+        join mv_getex_vorschrift mg on (v.regindexid = mg.reg_id)
+        where v.vorschriftid = aVorschriftID;
+        
+        lBitMask := emano_util.fBitMaskSet(lBitMask,0,lCompareVorschriftNummer);
+        lBitMask := emano_util.fBitMaskSet(lBitMask,1,lCompareDocumentDate);
+        lBitMask := emano_util.fBitMaskSet(lBitMask,2,lCompareDocumentType);
+        lBitMask := emano_util.fBitMaskSet(lBitMask,3,lCompareTitleShort);
+        lBitMask := emano_util.fBitMaskSet(lBitMask,4,lCompareTitleLong);
+        lBitMask := emano_util.fBitMaskSet(lBitMask,5,lCompareStatus);
+        lBitMask := emano_util.fBitMaskSet(lBitMask,6,lCompareEinsatzdatumModell);
+        lBitMask := emano_util.fBitMaskSet(lBitMask,7,emano_util.fIsUnequal(lRegIndexVorschriftTypID,fCalcVorschriftTypID(lGetexKey)));
+        
+        -- Antriebsarten (Bit 8)
+        select count(vra.antriebsartid) into lDiffAntriebsart 
+        from t_vorschrift_ref_antriebsart vra
+        join t_antriebsart aa on (aa.antriebsartid = vra.antriebsartid)
+        where vra.vorschriftid = avorschriftid 
+        and geloescht =0
+        and aa.mapping_GETEX not in (select antriebsart from mv_GETEX_vorschrift_antriebsart where v_id = lGetexKey);
+
+        if (lDiffAntriebsart > 0) then
+            lBitMask := emano_util.fBitMaskSet(lBitMask,8,1);
+        end if;
+        
+        -- reverse
+        select count(antriebsart) into lDiffAntriebsart 
+        from mv_GETEX_vorschrift_antriebsart
+        where v_id = lGetexKey
+        and antriebsart not in (select aa.mapping_GETEX from t_antriebsart aa 
+                             join t_vorschrift_ref_antriebsart vra on (aa.antriebsartid = vra.antriebsartid)
+                             where vra.vorschriftid = avorschriftid and geloescht =0);
+
+        if (lDiffAntriebsart > 0) then
+            lBitMask := emano_util.fBitMaskSet(lBitMask,8,1);
+        end if;        
+        
+        -- Fahrzeugklassen (Bit 9)
+        select count(vrf.fahrzeugklasseid) into lDiffFzTyp 
+        from t_vorschrift_ref_fahrzeugklasse vrf
+        where vrf.vorschriftid =  avorschriftid 
+        and vrf.fahrzeugklasseid not in (select fahrzeugklasseid from mv_GETEX_vorschrift_FZ_TYP where v_id = lGetexKey);
+    
+        if (lDiffFzTyp > 0) then
+            lBitMask := emano_util.fBitMaskSet(lBitMask,9,1);
+        end if;
+    
+        -- reverse check
+        select count(fahrzeugklasseid) into lDiffFzTyp
+        from mv_GETEX_vorschrift_FZ_TYP 
+        where v_id = lGetexKey
+        and fahrzeugklasseid not in (select vrf.fahrzeugklasseid 
+                                    from t_vorschrift_ref_fahrzeugklasse vrf  
+                                     where vrf.vorschriftid = avorschriftid );
+        if (lDiffFzTyp > 0) then
+            lBitMask := emano_util.fBitMaskSet(lBitMask,9,1);
+        end if;        
+        
+        -- Länder (Bit 10)
+        select count( REGINDEX_LANDID) into lDiffLand 
+        from mV_GETEX_VORSCHRIFT_LAND 
+        where v_id = lGetexKey 
+        and REGINDEX_LANDID not in (select landid from t_vorschrift_ref_land  where vorschriftid = avorschriftid and geloescht =0);
+    
+        if (lDiffLand > 0) then
+            lBitMask := emano_util.fBitMaskSet(lBitMask,10,1);
+        end if;
+    
+         --  reverse  check ----
+        select count(*)  into lDiffLand
+        from t_vorschrift_ref_land 
+        where vorschriftid = avorschriftid 
+        and geloescht =0 and landid is not null
+        and landid not in (select regindex_landid  from mV_GETEX_VORSCHRIFT_LAND 
+                         where v_id = lGetexKey
+        );
+    
+        if (lDiffLand > 0) then
+            lBitMask := emano_util.fBitMaskSet(lBitMask,10,1);
+        end if;     
+        
+        -- Themen (Bit 11)
+        select count( REGINDEX_THEMAID)  into lDiffThema 
+        from mV_GETEX_VORSCHRIFT_THEMA 
+        where v_id = lGetexKey 
+        and regindex_themaid is not null
+        and REGINDEX_THEMAID not in (  select themaid from t_vorschrift_ref_Thema 
+                                where vorschriftid =  avorschriftid  and geloescht =0);
+
+        if (lDiffThema > 0) then
+            lBitMask := emano_util.fBitMaskSet(lBitMask,11,1);
+        end if;
+        
+        -- reverse check 
+        select count(themaid) into lDiffThema 
+        from t_vorschrift_ref_Thema 
+        where vorschriftid =  avorschriftid 
+        and geloescht =0
+        and themaid not in (select REGINDEX_THEMAID  from mV_GETEX_VORSCHRIFT_THEMA 
+                           where v_id = lGetexKey and regindex_themaid is not null);
+                           
+        if (lDiffThema > 0) then
+            lBitMask := emano_util.fBitMaskSet(lBitMask,11,1);
+        end if;    
+        
+        -- Inkraftsetzungsdatum (Bit 12)
+        select emano_util.fIsUnequal(trunc(gv.rev_inforce_datum), vret.einsatzdatum) into lCompareInkraftsetzungsdatum
+        from mv_getex_vorschrift gv
+        left outer join t_vorschrift_ref_einsatzdatum_typ vret on (vret.einsatzdatum_typid = 1000 and vret.vorschriftid = aVorschriftID)
+        where gv.reg_id = lGetexKey;
+        
+        lBitMask := emano_util.fBitMaskSet(lBitMask,12,lCompareInkraftsetzungsdatum);
+        
+        -- Einsatzdaten (Bit 13)
+        if ( fcheckDiffGetexVorschriftEinsatzDaten(lGetexKey, avorschriftID ) != 0) then
+           lBitMask := emano_util.fBitMaskSet(lBitMask,13,1);
+        else
+           lBitMask := emano_util.fBitMaskSet(lBitMask,13,0);
+        end if;
+        --relations (Bit 14)
+        if (fCheckDifference_to_Getex_relations(avorschriftID) != 0) then
+            lBitMask := emano_util.fBitMaskSet(lBitMask,14,1);
+        else
+           lBitMask := emano_util.fBitMaskSet(lBitMask,14,0);
+        end if;
+        
+        update t_vorschrift set getex_vergleich_bitmaske = lBitMask, status_update_getex = case when lBitMask > 0 then 20 else 10 end
+        where vorschriftid = aVorschriftID;
+    
+    
+    end pCompareVorschrift;
+    
+ 
+   /*
+  *
+  */
+  FUNCTION fTimestampToDate(aInput varchar2) RETURN DATE IS
+    BEGIN
+        RETURN CAST(to_timestamp_tz(aInput, 'yyyy-mm-dd"T"hh24:mi:ss.ff3+TZH:TZM') at time zone DBTIMEZONE as date) ;   
+    END fTimestampToDate;
+    
+    /*
+    **
+    */
+   PROCEDURE pactualiseVorschriftKerndaten(aregindexid varchar2, avorschriftid number)
+    AS
+        l_VorschriftNummer varchar2(500);
+        l_DocumentDate date;
+        l_DocumentType number;
+        l_TitleLong  varchar2(2000);
+        l_TitleShort  varchar2(500);
+        l_Status number;
+        l_EinsatzdatumModell number;
+       -- l_Inkraftsetzungsdatum number;
+        l_RegIndexVorschriftTypID number;
+        l_duppl_vorhanden number :=0;
+        vorschrift_nummmer_exist EXCEPTION;
+        --l_prev_modelid number :=0;
+    BEGIN
+    
+    SELECT  reg_num, rev_doc_datum, gdt.document_typeid, rev_title, rev_short_title, vst.VORSCHRIFT_STATUSID, --reg_status, 
+      case when timelinedatetype = 'EU' then 10 
+            when timelinedatetype = 'CHINA' THEN 20 
+             when timelinedatetype = 'MODELYEAR' then 30
+            else 10 end
+    INTO l_VorschriftNummer, l_DocumentDate, l_DocumentType, l_TitleLong, l_TitleShort, l_Status, l_EinsatzdatumModell
+    FROM MV_GETEX_VORSCHRIFT gv
+    join mv_getex_vorschrift_document_type gdt on (gdt.reg_id = gv.reg_id)
+    --join t_Document_type dt on (dt.document_type = gv.rev_documenttype)
+    join T_VORSCHRIFT_STATUS vst on (vst.mapping_getex = gv.rev_v_status)
+            where gv.reg_id =  aregindexid --'650c239d80925e68c5cad0df'
+            and rev_current = 'true';
+    -- check if rahmenrichtlin
+      l_RegIndexVorschriftTypID := fCalcVorschriftTypID(aregindexid); 
+      
+    -- check dupplicates 
+ /*   select count(*) into l_duppl_vorhanden
+    from T_VORSCHRIFT where trim(VORSCHRIFT_NUMMER) = trim(l_VorschriftNummer)
+    and ((l_DocumentDate is null and dokumentendatum is null) OR trunc(l_DocumentDate) = trunc(dokumentendatum));
+    if( l_duppl_vorhanden>0) then
+        RAISE vorschrift_nummmer_exist;  --exception to application
+    end if;
+    */
+    -- einsatzmodel changed ??
+    --select EINSATZDATUM_MODELLID into l_prev_modelid
+   -- from t_vorschrift WHERE vorschriftID = avorschriftid ;
+    
+    pactualiseVorschriftEinsatzmodel(aregindexid , avorschriftid);
+    --desc t_vorschrift
+    UPDATE t_vorschrift
+    SET VORSCHRIFT_NUMMER = l_VorschriftNummer, DOKUMENTENDATUM = trunc(l_DocumentDate), DOCUMENT_TYPEID =l_DocumentType, 
+        VORSCHRIFT_BEZEICHNUNG = l_TitleLong, titel_kurz = l_TitleShort, VORSCHRIFT_STATUSID = l_Status,
+        VORSCHRIFT_TYPID =l_RegIndexVorschriftTypID --, EINSATZDATUM_MODELLID =l_EinsatzdatumModell, 
+    WHERE vorschriftID = avorschriftid ;
+    
+    EXCEPTION
+   /* when vorschrift_nummmer_exist then
+      debug('pactualiseVorschriftKerndaten: exception: vorschrift nummer existiert bereits ');
+      RAISE;*/
+    when OTHERS then
+      RAISE;
+    END pactualiseVorschriftKerndaten;
+
+  /*
+  *
+  */
+  procedure pactualiseVorschriftThema(aregindexid varchar2, avorschriftid number) as
+  --  l_th_ids varchar2(2000);
+  BEGIN
+   /* select listagg(t.themaid, ':') within group (order by t.themaid) into l_th_ids 
+      from V_GETEX_VORSCHRIFT_THEMA gvt 
+      join T_thema t on t.nummer = trim(substr(gvt.thema_name, 1, instr(gvt.thema_name, ' ')) )
+     where V_id = aregindexid; -- '652f96a34880f53d523f5dee'
+     */
+        -- change state of existing       
+        UPDATE  t_vorschrift_ref_THEMA set geloescht = 0 
+         where vorschriftID = avorschriftid  and geloescht =1
+          and themaid in (select regindex_themaid from V_GETEX_VORSCHRIFT_THEMA 
+        where v_id = aregindexid and regindex_themaid is not null );
+           -- and ( themaid in ( select column_value from table(apex_string.split_numbers(l_th_ids, ':'))) );
+          -- 
+       UPDATE  t_vorschrift_ref_THEMA set geloescht = 1 
+         where vorschriftID = avorschriftid  and geloescht =0
+           and  themaid not in ( select regindex_themaid from MV_GETEX_VORSCHRIFT_THEMA 
+                                 where v_id = aregindexid and regindex_themaid is not null);
+    -- add not existing
+      MERGE into t_vorschrift_ref_THEMA dest
+           USING ( select avorschriftid as vorschriftID, regindex_themaid as themaid
+                    from MV_GETEX_VORSCHRIFT_THEMA 
+                    where v_id = aregindexid and regindex_themaid is not null) src
+           on (src.vorschriftID = dest.vorschriftID 
+               and src.themaid = dest.themaid)
+          WHEN NOT MATCHED THEN
+           insert (vorschriftID,    themaid,   geloescht) --, bemerkung)
+           values (src.vorschriftID, src.themaid, 0);
+  END;
+
+  /*
+  *
+  */
+  procedure pactualiseVorschriftAntriebsart(aregindexid varchar2, avorschriftid number) as
+    --l_aa_ids varchar2(100);
+  BEGIN
+
+  /*select listagg(aa.antriebsartid, ':') within group (order by aa.antriebsartid)  into l_aa_ids 
+    from V_GETEX_VORSCHRIFT_ANTRIEBSART gva 
+    join t_antriebsart aa on (aa.mapping_getex = gva.ANTRIEBSART )
+   where  gva.v_id = aregindexid;
+   */
+     UPDATE  t_vorschrift_ref_ANTRIEBSART set geloescht = 0 
+      where vorschriftID = avorschriftid  and geloescht =1
+        and ( ANTRIEBSARTid in ( select regindex_antriebsartid from V_GETEX_VORSCHRIFT_ANTRIEBSART where v_id = aregindexid) );
+      -- select column_value from table(apex_string.split_numbers(l_aa_ids, ':'))
+      UPDATE  t_vorschrift_ref_ANTRIEBSART set geloescht = 1 
+         where vorschriftID = avorschriftid  and geloescht =0
+           and ( ANTRIEBSARTid not in ( select regindex_antriebsartid from V_GETEX_VORSCHRIFT_ANTRIEBSART where v_id = aregindexid ) );
+
+      MERGE into t_vorschrift_ref_ANTRIEBSART dest
+           USING ( select avorschriftid as vorschriftID, regindex_antriebsartid as antriebsartid 
+                     from V_GETEX_VORSCHRIFT_ANTRIEBSART where v_id = aregindexid ) src
+           on (src.vorschriftID = dest.vorschriftID 
+               and src.antriebsartid = dest.antriebsartid)
+          WHEN NOT MATCHED THEN
+           INSERT (vorschriftID,    antriebsartid,   geloescht) --, bemerkung)
+           values (src.vorschriftID, src.antriebsartid, 0);
+END;
+
+/*
+  *
+  */
+procedure pactualiseVorschriftFahrzeugklasse(aregindexid varchar2, avorschriftid number) as
+    --l_fz_class_ids varchar2(100);
+  BEGIN
+  --select * from t_Fahrzeugklasse
+  /*select listagg(fk.Fahrzeugklasseid, ':') within group (order by fk.Fahrzeugklasseid)  into l_fz_class_ids 
+    from V_GETEX_VORSCHRIFT_FZ_TYP gvfz 
+    join t_fahrzeugKlasse fk on (fk.mapping_getex = gvfz.fahrzeug_typ )
+   where  gvfz.v_id = aregindexid;
+   */
+     delete from  t_vorschrift_ref_fahrzeugKlasse 
+      where vorschriftID = avorschriftid
+       and ( fahrzeugKlasseid not in (select FAHRZEUGKLASSEID from V_GETEX_VORSCHRIFT_FZ_TYP  where v_id = aregindexid) );
+       -- and ( fahrzeugKlasseid not in ( select column_value from table(apex_string.split_numbers(l_fz_class_ids, ':'))) );
+
+      MERGE into t_vorschrift_ref_fahrzeugKlasse dest
+           USING ( select avorschriftid as vorschriftID, fahrzeugKlasseid 
+                     from V_GETEX_VORSCHRIFT_FZ_TYP  where v_id = aregindexid ) src
+           on (src.vorschriftID = dest.vorschriftID 
+               and src.fahrzeugKlasseid = dest.fahrzeugKlasseid)
+          WHEN NOT MATCHED THEN
+           INSERT (vorschriftID,    fahrzeugKlasseid) 
+           values (src.vorschriftID, src.fahrzeugKlasseid);
+END;
+
+/*
+*
+*/
+  procedure pactualiseVorschriftLand(aregindexid varchar2, avorschriftid number) as
+   -- l_land_ids varchar2(2000);
+  BEGIN
+
+   /* select listagg(l.landid, ':') within group (order by l.landid)  into l_land_ids 
+      from V_GETEX_VORSCHRIFT_LAND gvl 
+      join t_land l on (l.iso_Code_3 = gvl.iso_Code3 )
+     where  gvl.v_id = aregindexid and gvl.typ = 'COUNTRY';
+   */
+     UPDATE  T_VORSCHRIFT_REF_LAND set geloescht = 0 
+      where vorschriftID = avorschriftid  and geloescht =1
+       and landid in (select regindex_landid from V_GETEX_VORSCHRIFT_LAND where v_id = aregindexid);
+       -- and ( landid in ( select column_value from table(apex_string.split_numbers(l_land_ids, ':'))) );
+
+      UPDATE  T_VORSCHRIFT_REF_LAND set geloescht = 1 
+         where vorschriftID = avorschriftid  and geloescht =0
+           and  landid not in ( select regindex_landid from V_GETEX_VORSCHRIFT_LAND where v_id = aregindexid) ;
+
+      MERGE into T_VORSCHRIFT_REF_LAND dest
+           USING ( select avorschriftid as vorschriftID, regindex_landid as landid from V_GETEX_VORSCHRIFT_LAND where v_id = aregindexid ) src
+           on (src.vorschriftID = dest.vorschriftID 
+               and src.landid = dest.landid)
+          WHEN NOT MATCHED THEN
+           INSERT (  vorschriftID,      landid,    geloescht) --, bemerkung)
+           values (src.vorschriftID, src.landid,   0);
+  End;
+
+  /*
+  *
+  */
+ /* procedure pactualiseVorschriftCluster(aregindexid varchar2, acreated_vorschriftid number)
+  AS
+      l_cluster_ids varchar2(2000);
+  BEGIN
+     NULL;
+     -- to do
+     select listagg(kc.Konzern_clusterid, ':') within group (order by kc.Konzern_clusterid)  into l_cluster_ids 
+      from V_GETEX_VORSCHRIFT_CLUSTER gvc 
+      join t_Konzern_cluster kc on (trim(kc.bezeichnung) = trim(substr(gvc.clust_name_en, instr(gvc.clust_name_en, ' '))) )
+     where  gvc.v_id = aregindexid;
+
+  END pactualiseVorschriftCluster;
+  */
+
+  PROCEDURE pactualiseVorschriftEinsatzmodel(aregindexid IN varchar2, avorschriftid IN number) as
+    l_timelineDatetype varchar2(64);
+    l_modellid number :=0;
+    l_previous_modellid number :=0;
+  BEGIN
+    select decode(TIMELINEDATETYPE, 'EU', 10, 'CHINA', 20, 'MODELYEAR', 30, null, 10, 10) into  l_modellid 
+    from v_getex_vorschrift   where reg_id = aregindexid;
+      
+    select EINSATZDATUM_MODELLID into l_previous_modellid 
+    from  t_vorschrift 
+    where vorschriftid = avorschriftid and regindexid = aregindexid;
+    
+    
+     -- remove not used datumangaben
+    if(l_modellid != l_previous_modellid ) then 
+        UPDATE t_vorschrift set EINSATZDATUM_MODELLID = l_modellid
+        where  vorschriftid = avorschriftid 
+        and regindexid = aregindexid
+        and l_timelineDatetype is not null 
+        and EINSATZDATUM_MODELLID != l_modellid;
+        if(l_previous_modellid = 20) then
+            -- delete 
+            delete  from t_Vorschrift_ref_einsatzdatum_typ 
+            where vorschriftid = avorschriftid 
+            and einsatzdatum_typid in (1020,1021,1022,1023,1060,1063);
+        elsif (l_previous_modellid = 30) then
+            delete  from t_Vorschrift_ref_einsatzdatum_typ 
+            where vorschriftid = avorschriftid 
+            and einsatzdatum_typid in (1030,1031);
+        elsif (l_previous_modellid = 10) then
+            delete  from t_Vorschrift_ref_einsatzdatum_typ 
+            where vorschriftid = avorschriftid 
+            and einsatzdatum_typid in (1010,1011);
+        end if;
+    end if;
+  END;
 
 
 
-## EMANO UTIL 
+  PROCEDURE pactualiseVorschriftEinsatzDaten(aregindexid IN varchar2, avorschriftid IN number) as
+    l_getex_einsatzdat_Typids varchar2(300);
+    l_neue_einsatzdat_Typids varchar2(300);
+    l_reginex_einsatzdat_Typ varchar2(300);
+    l_sc_datum date;
+    --l_ch_datum varchar2(64);
+    l_einsatzdatum_model varchar2(64);
+	l_datum_as_mj number:=0;
+    l_modelyear number:= null;
 
--- SPECIFICATION
+  BEGIN
+   --select  * from T_einsatzdatum_typ;
+   select timelinedatetype  into l_einsatzdatum_model  from v_getex_vorschrift 
+   where reg_id = aregindexid and rev_current ='true';
+
+ -- collect alle sc_typeid over all thema for getex Vorschrift
+   with e_l as ( select sc_fahrzeug_typ, sc_datum, sc_year,
+            edt.Einsatzdatum_typid as  ed_typeid
+                from V_GETEX_THEMA_SCENARIO vsc
+                join T_Einsatzdatum_typ edt on (edt.mapping_getex = vsc.sc_type ) 
+            where vsc.sc_themaid is not null and vsc.sc_type is not null
+                and vsc.v_id = aregindexid  
+   )
+   select listagg( distinct e_l.ed_typeid, ':' )  into l_getex_einsatzdat_Typids
+     from e_l;
+
+    select listagg(EINSATZDATUM_TYPID, ':') into l_reginex_einsatzdat_Typ
+      from T_VORSCHRIFT_REF_EINSATZDATUM_TYP where vorschriftid = avorschriftid;  
+
+    select listagg(column_value, ':' ) into l_neue_einsatzdat_Typids
+      from table (apex_string.split_numbers(l_getex_einsatzdat_Typids, ':'))
+     where column_value not in (select column_value from table (apex_string.split_numbers(l_reginex_einsatzdat_Typ, ':')) );
+
+     --select * from T_VORSCHRIFT_REF_EINSATZDATUM_TYP
+      select min(sc_datum) into l_sc_datum from V_GETEX_THEMA_SCENARIO
+      where sc_fahrzeug_typ ='PCV' and v_id = aregindexid;  -- and sc_thema =   -- over all thema
+      if(l_sc_datum is null) then
+        select min(sc_datum) into l_sc_datum from V_GETEX_THEMA_SCENARIO
+        where sc_fahrzeug_typ ='INDEPENDENT' and v_id = aregindexid;
+      end if;
+      if(l_sc_datum is null) then
+        if(l_einsatzdatum_model = 'MODELYEAR') then
+         --
+            select min(sc_year) into l_modelyear from V_GETEX_THEMA_SCENARIO
+            where  sc_fahrzeug_typ ='PCV' and v_id = aregindexid;
+            if(l_modelyear is null) then
+                select min(sc_year) into l_modelyear from V_GETEX_THEMA_SCENARIO
+                where sc_fahrzeug_typ ='INDEPENDENT' and v_id = aregindexid;
+            end if;           
+            if (l_modelyear is not null) then
+               l_datum_as_mj := 1;
+               update t_Vorschrift set mj_schalter_status =1 where vorschriftid = avorschriftid;
+            end if;
+        else
+           select min(sc_datum) into l_sc_datum from V_GETEX_THEMA_SCENARIO
+            where sc_fahrzeug_typ ='PCV' and v_id = aregindexid;
+        end if;
+      end if;
+
+      if (l_sc_datum is not null) then
+         if (l_einsatzdatum_model = 'MODELYEAR') then
+           update  T_VORSCHRIFT_REF_EINSATZDATUM_TYP 
+            set einsatzdatum = 
+            (case when (einsatzdatum_typid in (1031) and l_modelyear is not null and l_modelyear !=0) then  to_date('31.12.'|| l_modelyear , 'dd.mm.yyyy')
+                WHEN  (einsatzdatum_typid in (1030 ) and l_modelyear is not null and l_modelyear !=0) then to_date('02.01.'|| (l_modelyear -1), 'dd.mm.yyyy') 
+                WHEN  (einsatzdatum_typid in (1030 ) and (l_modelyear is null or l_modelyear =0) and l_datum_as_mj =1 ) then null
+              else l_sc_datum
+               end  )
+              , modeljahr = ( case when (einsatzdatum_typid in ( 1030,1031) and l_modelyear is not null and l_modelyear !=0 )
+                                   then to_date(l_modelyear , 'yyyy')
+                              else null 
+                              end  )
+              , MANUELLE_EINTRAGUNG =  20 
+            where vorschriftid = avorschriftid 
+              and  einsatzdatum_typid in ( select column_value from table( apex_string.split_numbers(l_getex_einsatzdat_Typids, ':')) )
+              and einsatzdatum != l_sc_datum;
+         else
+          update  T_VORSCHRIFT_REF_EINSATZDATUM_TYP set einsatzdatum = l_sc_datum 
+           where vorschriftid = avorschriftid 
+             and  einsatzdatum_typid in ( select column_value from table( apex_string.split_numbers(l_getex_einsatzdat_Typids, ':')) )
+             and einsatzdatum != l_sc_datum;
+         end if;
+      end if;
+     delete from T_VORSCHRIFT_REF_EINSATZDATUM_TYP 
+         where vorschriftID = avorschriftid
+         and einsatzdatum_typid not in (1000,1041, 1060, 1063) -- -- In_Kraft /Ausser Kraft
+          and einsatzdatum_typid  not in ( select column_value from table( apex_string.split_numbers(l_getex_einsatzdat_Typids, ':')) );
+    -- add new typen
+     if ( l_einsatzdatum_model = 'MODELYEAR') then
+       if (l_neue_einsatzdat_Typids is not null) then
+          insert into T_VORSCHRIFT_REF_EINSATZDATUM_TYP (Vorschriftid,  einsatzdatum,  modeljahr, MANUELLE_EINTRAGUNG, EINSATZDATUM_TYPID )
+          select avorschriftid, 
+           case when (column_value in (1031)  and l_modelyear is not null and l_modelyear !=0) then  to_date('31.12.'||l_modelyear , 'dd.mm.yyyy')
+            WHEN  (column_value in (1030 ) and l_modelyear is not null and l_modelyear !=0) then to_date('02.01.'||(l_modelyear -1), 'dd.mm.yyyy') 
+            when (column_value in (1030 ) and (l_modelyear is null or l_modelyear =0) and l_datum_as_mj =1) then null
+            else l_sc_datum
+           end  as einsatzdatum,
+           case when (column_value in ( 1030,1031) and l_modelyear is not null and l_modelyear !=0) 
+               then  to_date(l_modelyear, 'yyyy')
+              else null 
+              end as modeljahr 
+           ,  20  as  MANUELLE_EINTRAGUNG
+          , column_value  
+          from table(apex_string.split_numbers(l_neue_einsatzdat_Typids, ':'));   -- l_neue_einsatzdat_Typids
+       end if;
+       -- update empty dates
+          if (l_modelyear is not null and l_modelyear !=0) then 
+             update T_VORSCHRIFT_REF_EINSATZDATUM_TYP set einsatzdatum = to_date('31.12.'||l_modelyear , 'dd.mm.yyyy'),
+                    modeljahr = to_date(l_modelyear, 'yyyy')
+             where Vorschriftid = avorschriftid 
+             and EINSATZDATUM_TYPID  in (select column_value from table (apex_string.split_numbers(l_getex_einsatzdat_Typids, ':')) )
+             and  einsatzdatum is null   and EINSATZDATUM_TYPID =1031;
+             --
+             update T_VORSCHRIFT_REF_EINSATZDATUM_TYP set einsatzdatum = to_date('02.01.'||(l_modelyear -1), 'dd.mm.yyyy'),
+                   modeljahr = to_date(l_modelyear, 'yyyy')
+             where Vorschriftid = avorschriftid 
+             and EINSATZDATUM_TYPID  in (select column_value from table (apex_string.split_numbers(l_getex_einsatzdat_Typids, ':')) )
+             and  einsatzdatum is null   and EINSATZDATUM_TYPID =1030;
+         else
+           update T_VORSCHRIFT_REF_EINSATZDATUM_TYP set einsatzdatum = (select case l_datum_as_mj when 0 then l_sc_datum else null end from dual),
+                modeljahr = null
+             where Vorschriftid = avorschriftid 
+             and EINSATZDATUM_TYPID  in (select column_value from table (apex_string.split_numbers(l_getex_einsatzdat_Typids, ':')) )
+             and  einsatzdatum is null   and EINSATZDATUM_TYPID =1030;
+
+         end if;
+    else
+      if (l_neue_einsatzdat_Typids is not null) then
+          insert into T_VORSCHRIFT_REF_EINSATZDATUM_TYP (Vorschriftid,  einsatzdatum, EINSATZDATUM_TYPID )
+          select avorschriftid, l_sc_datum, column_value  from table(apex_string.split_numbers(l_neue_einsatzdat_Typids, ':'));
+      end if;  
+        -- update empty date
+        update T_VORSCHRIFT_REF_EINSATZDATUM_TYP set einsatzdatum = l_sc_datum 
+        where Vorschriftid = avorschriftid 
+         and EINSATZDATUM_TYPID in (select column_value from table (apex_string.split_numbers(l_getex_einsatzdat_Typids, ':')) )
+         and ( einsatzdatum is null or to_char(einsatzdatum, 'dd.mm.yyyy') != to_char(l_sc_datum, 'dd.mm.yyyy') );
+    end if;
+     --
+  END pactualiseVorschriftEinsatzDaten;
+
+ procedure paktualise_In_Kraft_Datum(avorschriftid in number) as
+
+ --declare 
+    l_co number  :=0;
+     l_getex_key varchar2(64);
+begin
+    select count(*) into l_co  --Vorschriftid, einsatzdatum_typid, einsatzdatum  
+    from t_Vorschrift_ref_einsatzdatum_typ
+    where Vorschriftid = avorschriftid --:P29_VORSCHRIFTID 
+    and einsatzdatum_typid = 1000;
+    -- go over getex key,  some getex jsons do not have rev_regIndexId
+    select regindexid  into  l_getex_key  
+    from T_VORSCHRIFT
+    where  vorschriftid = avorschriftid;  
+
+     if (l_co > 0 ) then
+        update t_Vorschrift_ref_einsatzdatum_typ set einsatzdatum = 
+                           (select rev_inForce_datum  from V_GETEX_VORSCHRIFT
+                            where   reg_id = l_getex_key)
+            where Vorschriftid = avorschriftid 
+            and einsatzdatum_typid = 1000; 
+     else
+
+        insert into t_Vorschrift_ref_einsatzdatum_typ (Vorschriftid, einsatzdatum_typid, einsatzdatum   ) 
+        select  avorschriftid,  1000, rev_inForce_datum  from V_GETEX_VORSCHRIFT
+        where   reg_id = l_getex_key;     
+
+     end if;
+end;
+
+ /**
+ * --  alle neue  Voschr from Getex in Regindex anlegen
+*/
+procedure pCreateNewRegulationFromGetex AS
+
+  areg_imp_id   NUMBER := 0;
+     l_current_vorschriftid NUMBER :=0;
+     l_regindex_key VARCHAR2(64);      -- getex_schluessel
+     l_rev_regindexid NUMBER(16) :=0;  --    vorschriftid
+     l_reg_nummer VARCHAR2(128);
+     l_reg_status VARCHAR2(64);  -- convert to VORSCHRIFT_STATUSID     "IN_FORCE",
+     l_reg_displayUrl VARCHAR2(512);
+     l_rev_title VARCHAR2(1024);   -- VORSCHRIFT_BEZEICHNUNG_ENG
+     l_doc_datum      DATE;           --ERSTELLUNG_DATUM
+     l_inForce_datum  DATE;
+     l_inForce_estimated  VARCHAR2(8);    -- ja/ nein  convert
+     l_rev_document_type  VARCHAR2(64);    -- convert to  VORSCHRIFT_TYPID  "BASE_REGULATION",    ?DOCUMENT_TYPE	VARCHAR2(250 CHAR)
+     l_rev_import_datum DATE;
+     l_publisher      VARCHAR2(250);  --  PUBLISHER
+     --l_model_type  VARCHAR2(64) := 'All types';   -- Timeline Datetype
+     l_timelineDateType VARCHAR2(64) ;    -- l_model_type    := 'EU Directive';    -- "EU",    
+     l_inhalt_geprueft NUMBER :=10; -- default "nicht gepr."
+     l_scenarioDate DATE;
+     l_regul_exists number :=0;
+     l_regul_schluessel_exists number :=0;
+    l_th_ids varchar2(2000) :=0;
+    l_getex_importid NUMBER :=0;
+    l_v_exists number :=0;
+    l_titel_kurz varchar2(500);
+    l_vorschrift_typid number:= 0;
+  BEGIN
+        FOR cur_j IN (  WITH imp_line AS ( 
+                    select DATEN, getex_importid, vorschriftid from T_X_GETEX_IMPORT 
+                    where getex_schluessel is not null      --GETEX_IMPORTID = agetex_import_id and
+                    and getex_schluessel not in (select regindexid from t_VORSCHRIFT where regindexid is not null)
+                   -- and  vorschriftid in (29141)--(198,285,289,290,296,298,303,309,313,315)  
+                    --and getex_schluessel in ('65c1f2c99f9cdd7cb92fd09f') --'65e9634aca8f5a1461f82750') -- '65a508799f69c920ec473a4b')
+                  )
+            SELECT  imp_l.getex_importid, reg_id , reg_num , reg_status   --, publ_id , publ_type 
+             , timelineDateType   --  , rev_id   --rev_regulationNumber as rev_v_nummer, rev_regulatoryStatus as rev_v_status 
+             , reg_displayUrl
+            , rev_title ,rev_shortTitle, rev_current ,   rev_documentDate 
+            , inForceDate  , inForceEstimated 
+            , listagg(document_type,':') within group (order by document_type) rev_documentTypes    -- rev_sourceType 
+            , rev_importDate 
+            , rev_regIndexId
+            , publisher -- , scenarioDate 
+            ,  rownum as rn
+            FROM imp_line imp_l, JSON_TABLE (  imp_l.DATEN ,     
+               '$' COLUMNS( reg_id VARCHAR2(32)    PATH '$.id'
+              , reg_num VARCHAR2(128)    PATH '$.regulationNumber'
+              , reg_status  VARCHAR2(64)  PATH '$.regulatoryStatus' -- IN_FORCE
+              ,  timelineDateType VARCHAR2(64)  PATH '$.timelineDateType'   --"EU",
+              , reg_displayUrl VARCHAR2(512)    PATH '$.displayUrl'
+              , NESTED PATH '$.revisions[*]'  COLUMNS (
+                    rev_id       VARCHAR2(32)  PATH '$.id'   --, correctionCounter NUMBER(4) PATH '$.correctionCounter'
+                  , rev_publishedDate   VARCHAR2(32) PATH '$.publishedDate'
+                  , rev_regulationNumber  VARCHAR2(64)  PATH '$.regulationNumber'
+                  , rev_title       VARCHAR2(1024) PATH '$.title'
+                  , rev_shortTitle VARCHAR2(500) PATH '$.shortTitle'
+                  , rev_regulatoryStatus  VARCHAR2(64)  PATH '$.regulatoryStatus'  -- IN_FORCE, DRAFT, PUBLISHED
+                  , rev_current     VARCHAR2(8) PATH '$.current'
+                  , rev_documentDate    VARCHAR2(64) PATH '$.documentDate'
+                  , inForceDate     VARCHAR2(64) PATH '$.inForce'
+                  , inForceEstimated VARCHAR2(8) PATH '$.inForceEstimated'
+                  --, rev_documentTypes VARCHAR2(64) PATH '$.documentTypes[*]'
+                  ,  NESTED  PATH '$.documentTypes[*]'    columns (
+                                      document_type varchar2(30) path '$'
+                                    )
+                  --  , rev_vehicleTypes VARCHAR2(64)  PATH '$.vehicleTypes[*]'  -- , rev_driveTypes VARCHAR2(32)  PATH '$.driveTypes[*]'
+                  , rev_sourceType VARCHAR2(32)  PATH '$.sourceInfo.sourceType' --REGINDEX
+                  , rev_importDate VARCHAR2(32)  PATH '$.sourceInfo.importDate'
+                  , rev_regIndexId  NUMBER(16) PATH '$.sourceInfo.regindexId'
+                  -- , NESTED PATH '$.dateScenarios[*]'  COLUMNS ( scenarioDate  VARCHAR2(64) PATH '$.date'
+                   --  )
+                )
+              , publisher VARCHAR2(250)  PATH '$.publisher.name.de'
+            ))
+            where rev_current = 'true'  --and rownum <20
+            group by imp_l.getex_importid, reg_id , reg_num , reg_status   
+             , timelineDateType   
+             , reg_displayUrl
+            , rev_title ,rev_shortTitle, rev_current ,   rev_documentDate 
+            , inForceDate  , inForceEstimated , rev_importDate 
+            , rev_regIndexId
+            , publisher -- , scenarioDate 
+            ,  rownum
+        )
+        LOOP
+            l_getex_importid := cur_j.getex_importid;
+            l_regindex_key := cur_j.reg_id;        -- getex schluessel
+            l_rev_regindexid := cur_j.rev_regIndexId;  -- vorschriftid
+            l_reg_nummer  :=  cur_j.reg_num;
+            l_reg_status  := cur_j.reg_status;
+            l_timelineDateType := cur_j.timelineDateType;
+            l_reg_displayUrl := cur_j.reg_displayUrl;
+            l_rev_title :=  cur_j.rev_title; 
+            l_titel_kurz := cur_j.rev_shortTitle;
+            l_doc_datum := trunc(emano_util.fTimestampToDate(cur_j.rev_documentDate));
+            l_inForce_datum := emano_util.fTimestampToDate(cur_j.inForceDate); 
+            l_inForce_estimated := cur_j.inForceEstimated;
+            l_rev_document_type := cur_j.rev_documentTypes;
+            l_rev_import_datum := emano_util.fTimestampToDate(cur_j.rev_importDate);
+            l_publisher := cur_j.publisher;
+            l_current_vorschriftid := null;
+
+            -- when ein Vorschrift mid dem geliefertem Id existiert ->> überspringe.  Sollte nicht vorkommen
+            select count(*) into l_regul_exists 
+            from t_vorschrift where vorschriftid = l_rev_regindexid;
+
+            IF (  l_regul_exists > 0 ) then
+               continue; 
+            end if;
+            -- check duplicates
+            select count(*) into l_regul_exists
+            from t_vorschrift 
+            where vorschrift_nummer = l_reg_nummer 
+            and (l_doc_datum is null or l_doc_datum = dokumentendatum );
+            IF (  l_regul_exists > 0 ) then
+             -- may be raise vorschrift_nummer_exists; exception
+               continue; -- may be  status in T_X_GETEX_IMPORT  'Duplicate
+            end if;
+            
+            IF ( l_rev_regindexid is not null
+                 and l_reg_nummer is not null ) THEN
+                 
+               -- l_vorschrift_typid := fCalcVorschriftTypID(l_regindex_key);
+                
+                INSERT INTO T_VORSCHRIFT (vorschriftid, Regindexid, VORSCHRIFT_NUMMER, VORSCHRIFT_FREIGABESTATUSID, VORSCHRIFT_BEZEICHNUNG_ENG,
+                            ERSTELLUNG_DATUM, DOKUMENTENDATUM, URL_GETEX_VORSCHRIFT, 
+                            NORMID, WITHOUT_NORM_VALIDATION, VORSCHRIFT_STATUSID, VORSCHRIFT_TYPID, EINSATZDATUM_MODELLID, 
+                        PUBLISHER, INHALTLICH_SACHLICH_GEPRUEFT, DOCUMENT_TYPEID, TITEL_KURZ 
+                )
+                VALUES (                  l_rev_regindexid, l_regindex_key,     l_reg_nummer,     -1,                   l_rev_title,        
+                            sysdate,         l_doc_datum,      l_reg_displayUrl,
+                    decode (l_timelineDateType, 'EU', 1171, 1171),   -- normid
+                    1,    --WITHOUT_NORM_VALIDATION
+                    decode( l_reg_status, 'IN_FORCE', 40, 'DRAFT', 20, 'FINAL_DOCUMENT', 30, 'EXPIRED', 100,  20),
+                 -- look at 'CHANGES'
+                   -- l_vorschrift_typid,
+                    case when l_publisher = 'UNECE' then    --supplement      CONSOLIDATED_VERSION,
+                        decode( l_rev_document_type, 'BASE_REGULATION', 10, 'CHANGE_REGULATION', 20, 'Rahmenverordnung', 30, 'Norm zwingend für Homologation notwendig', 40 ,   10)
+                    else       -- amendment
+                        decode( l_rev_document_type, 'BASE_REGULATION', 10, 'CHANGE_REGULATION', 50, 'Rahmenverordnung', 30, 'Norm zwingend für Homologation notwendig', 40,  10)
+                    end,
+                    decode( l_timelineDateType, 'EU', 10, 'CHINA', 20, 'MODELYEAR', 30, 10),
+                    l_publisher,  l_inhalt_geprueft,
+                    decode( l_rev_document_type, 'BASE_REGULATION', 1002, 'CHANGE_REGULATION', 1001, 'BASE_REGULATION:CHANGE_REGULATION', 1003, 'CONSOLIDATED_VERSION', 1000, 1002 ),
+                    l_titel_kurz
+                );
+                l_current_vorschriftid := l_rev_regindexid;
+
+            ELSIF (  l_rev_regindexid is null
+                   and l_reg_nummer is not null) then
+                 -- l_vorschrift_typ := fCalcVorschriftTypID(l_regindex_key);
+                INSERT INTO T_VORSCHRIFT (Regindexid, VORSCHRIFT_NUMMER, VORSCHRIFT_FREIGABESTATUSID, VORSCHRIFT_BEZEICHNUNG_ENG,
+                     ERSTELLUNG_DATUM, DOKUMENTENDATUM, URL_GETEX_VORSCHRIFT,
+                   NORMID, WITHOUT_NORM_VALIDATION, VORSCHRIFT_STATUSID, VORSCHRIFT_TYPID, EINSATZDATUM_MODELLID, 
+                   PUBLISHER, INHALTLICH_SACHLICH_GEPRUEFT, DOCUMENT_TYPEID, TITEL_KURZ
+                 )
+                 VALUES (             l_regindex_key,       l_reg_nummer,     -1,                   l_rev_title,        
+                          sysdate,     l_doc_datum,     l_reg_displayUrl,
+                 decode (l_timelineDateType, 'EU', 1171, 1171),   -- normid
+                  1,    --WITHOUT_NORM_VALIDATION
+                 decode( l_reg_status, 'IN_FORCE', 40, 'DRAFT', 20, 'FINAL_DOCUMENT', 30, 'EXPIRED', 100,  20),
+                 -- look at 'CHANGES'
+                  -- l_vorschrift_typid,
+                 case when l_publisher = 'UNECE' then    --supplement      CONSOLIDATED_VERSION,
+                    decode( l_rev_document_type, 'BASE_REGULATION', 10, 'CHANGE_REGULATION', 20, 'Rahmenverordnung', 30, 'Norm zwingend für Homologation notwendig', 40 ,   10)
+                 else       -- amendment
+                   decode( l_rev_document_type, 'BASE_REGULATION', 10, 'CHANGE_REGULATION', 50, 'Rahmenverordnung', 30, 'Norm zwingend für Homologation notwendig', 40,  10)
+                 end,
+                 decode( l_timelineDateType, 'EU', 10, 'CHINA', 20, 'MODELYEAR', 30, 10),
+                 l_publisher,  l_inhalt_geprueft,
+                 decode( l_rev_document_type, 'BASE_REGULATION', 1002, 'CHANGE_REGULATION', 1001, 'BASE_REGULATION:CHANGE_REGULATION', 1003, 'CONSOLIDATED_VERSION', 1000,  1002 ),
+                 l_titel_kurz
+                 )  returning VORSCHRIFTID into l_current_vorschriftid;
+
+            END IF;   
+
+            IF (l_current_vorschriftid is not null) THEN
 
 
--- BODY
+                UPDATE T_X_GETEX_IMPORT SET status = 2 WHERE getex_importid = l_getex_importid;
+                -- Kerndaten
+                pactualiseVorschriftKerndaten(l_regindex_key, l_current_vorschriftid);
+                -- einsatzdatum_typen
+                pactualiseVorschriftEinsatzDaten(l_regindex_key, l_current_vorschriftid);
+                -- In_Kraft_Datum
+                paktualise_In_Kraft_Datum(l_current_vorschriftid);
+
+                -- themen
+                pactualiseVorschriftThema(l_regindex_key, l_current_vorschriftid);
+
+                -- Antriebsarten
+                pactualiseVorschriftAntriebsart(l_regindex_key, l_current_vorschriftid);
+
+                -- Land --
+                pactualiseVorschriftLand(l_regindex_key, l_current_vorschriftid);
+
+                -- FZ Klasse --
+                pactualiseVorschriftFahrzeugklasse(l_regindex_key, l_current_vorschriftid);
+                -- relation --
+                pActualisiereVorschriftVerknuepfungen_vomGetex(l_current_vorschriftid);
+                -- set status_update_getex  --
+                update T_Vorschrift set status_update_getex =  10
+                where vorschriftid = l_current_vorschriftid;
+            END IF;
+        END LOOP;
+ END;
+
+ /*
+*  returns 0 if dates are equal,     returns  != 0 if not equal
+**/
+function fCheckdiff_in_Kraft_datum(avorschriftid IN NUMBER) RETURN NUMBER
+AS
+    l_ret number:=0;
+    l_co number  :=0;
+    l_getex_key varchar2(64);
+    l_in_force_date_gx date;
+    l_in_kraft_datum_regindex varchar2(32);
+BEGIN
+    select count(*) into l_co   
+    from t_Vorschrift_ref_einsatzdatum_typ
+    where Vorschriftid = avorschriftid --:P29_VORSCHRIFTID 
+    and einsatzdatum_typid = 1000;
+    -- go over getex key,
+    select regindexid  into  l_getex_key  
+    from T_VORSCHRIFT
+    where  vorschriftid = avorschriftid;  
+    if (l_getex_key is null) then
+        return 0;  -- keine daten von Getex
+    end if;
+
+    select REV_INFORCE_DATUM into l_in_force_date_gx
+    from V_GETEX_VORSCHRIFT 
+    where  reg_id = l_getex_key
+    and rev_current ='true' ;
+
+    if (l_co > 0 ) then
+     select to_char(einsatzdatum, 'dd.mm.yyyy') into l_in_kraft_datum_regindex
+            from t_Vorschrift_ref_einsatzdatum_typ
+            where Vorschriftid = avorschriftid 
+            and einsatzdatum_typid = 1000 and rownum < 2;
+    end if;
+
+    if (l_in_force_date_gx is null and l_in_kraft_datum_regindex is null) then
+        return 0;
+    elsif ( l_in_force_date_gx is null and l_in_kraft_datum_regindex is not null
+         or l_in_force_date_gx is not null and l_in_kraft_datum_regindex is null
+         or to_char(l_in_force_date_gx, 'dd.mm.yyyy') != l_in_kraft_datum_regindex
+    ) then
+        return 1;
+    end if;
+
+    return l_ret;
+END;
+
+
+/*
+*
+*/
+FUNCTION fcheckDiffGetexVorschriftEinsatzDaten(aregindexid IN varchar2, avorschriftid IN number) RETURN NUMBER
+AS
+    l_ret number:=0;
+    l_einsatzdat_Typids varchar2(200);
+    l_neue_einsatzdat_Typids varchar2(200);
+    l_alte_einsatzdat_Typ varchar2(200);
+    l_sc_datum date;
+    l_diff_ed number  :=0;
+
+BEGIN
+   --select  * from T_einsatzdatum_typ;
+ -- alle sc_typeid over all thema for getex Vorschrift
+    with e_l as ( select edt.Einsatzdatum_typid as  ed_typeid
+             from MV_GETEX_THEMA_SCENARIO vts
+             join T_Einsatzdatum_typ edt on (edt.mapping_getex = vts.sc_type )
+            where sc_themaid is not null and sc_type is not null and sc_datum is not null
+            and sc_fahrzeug_typ in ( 'PCV')
+              and vts.v_id = aregindexid 
+    )
+    select listagg( distinct e_l.ed_typeid, ':' )  into l_einsatzdat_Typids
+    from e_l;
+    if(l_einsatzdat_Typids is null) then
+        with e_l as ( select edt.Einsatzdatum_typid as  ed_typeid
+                 from MV_GETEX_THEMA_SCENARIO vts
+                 join T_Einsatzdatum_typ edt on (edt.mapping_getex = vts.sc_type )
+                where sc_themaid is not null and sc_type is not null and sc_datum is not null
+                and sc_fahrzeug_typ in ( 'INDEPENDENT')
+                  and vts.v_id = aregindexid 
+        )
+        select listagg( distinct e_l.ed_typeid, ':' )  into l_einsatzdat_Typids
+        from e_l;
+    end if;
+    select listagg(EINSATZDATUM_TYPID, ':') into l_alte_einsatzdat_Typ
+    from T_VORSCHRIFT_REF_EINSATZDATUM_TYP where vorschriftid = avorschriftid
+    and einsatzdatum is not null;
+
+    select listagg(column_value, ':' )  into l_neue_einsatzdat_Typids
+    from table (apex_string.split_numbers(l_einsatzdat_Typids, ':'))
+    where column_value not in (select column_value from table (apex_string.split_numbers(l_alte_einsatzdat_Typ, ':')) );
+
+    if (l_neue_einsatzdat_Typids is not null) then
+        return 1;
+    end if;
+
+     -- einsatzdatum
+    select min(sc_datum) into l_sc_datum from MV_GETEX_THEMA_SCENARIO
+    where sc_fahrzeug_typ ='PCV' and v_id = aregindexid;
+
+    if(l_sc_datum is null) then
+        select min(sc_datum) into l_sc_datum from MV_GETEX_THEMA_SCENARIO
+        where sc_fahrzeug_typ ='INDEPENDENT' and v_id = aregindexid;
+    end if;
+      -- check getex
+    select count(*) into l_diff_ed 
+    from T_VORSCHRIFT_REF_EINSATZDATUM_TYP   --set einsatzdatum = l_sc_datum 
+    where vorschriftid = avorschriftid 
+    and ( ( einsatzdatum_typid not in ( select column_value from table( apex_string.split_numbers(l_einsatzdat_Typids, ':')) ) 
+            and einsatzdatum_typid not in (1000, 1041, 1060, 1063) and einsatzdatum is not null
+          )
+          OR
+          ( einsatzdatum_typid in ( select column_value from table( apex_string.split_numbers(l_einsatzdat_Typids, ':')) )
+            and (
+            (l_sc_datum is null and einsatzdatum is not null) or (l_sc_datum is not null and einsatzdatum is null)
+              or (einsatzdatum is not null and l_sc_datum is not null 
+                   and to_char(einsatzdatum, 'dd.mm.yyyy') != to_char(l_sc_datum, 'dd.mm.yyyy') )
+            )
+          )
+    ); 
+
+    if (l_diff_ed >0) then
+        return 2;
+    end if;
+    -- reverse check
+    select count(column_value) into l_diff_ed from table ( apex_string.split_numbers(l_einsatzdat_Typids, ':')) 
+    where  column_value not in (select EINSATZDATUM_TYPID from T_VORSCHRIFT_REF_EINSATZDATUM_TYP 
+                                 where vorschriftid = avorschriftid and EINSATZDATUM is not null);
+
+    if (l_diff_ed >0) then
+        return 3;
+    end if;
+
+    return l_ret;
+ END fcheckDiffGetexVorschriftEinsatzDaten;
+
+procedure pRefreshMViews is
+begin
+
+        dbms_mview.refresh('mv_getex_vorschrift');
+        dbms_mview.refresh('mv_getex_vorschrift_document_type');
+        dbms_mview.refresh('mv_getex_vorschrift_antriebsart');
+        dbms_mview.refresh('mv_getex_vorschrift_cluster');
+        dbms_mview.refresh('mv_getex_vorschrift_fz_typ');
+        dbms_mview.refresh('mv_getex_vorschrift_land');
+        dbms_mview.refresh('mv_getex_vorschrift_relation');
+        dbms_mview.refresh('mv_getex_vorschrift_thema');
+        dbms_mview.refresh('mv_getex_thema_scenario');
+
+end pRefreshMViews;
+
+/*
+*
+*/
+ PROCEDURE pVergleichAttributevonGetex(avorschriftid IN number )
+as
+    l_difference number :=0;
+    l_getex_schluessel varchar2(64);
+    l_upd_status number := 30;  --  getex vorsch. nicht vorhanden
+    l_diff_einsatzmod number :=0;
+    l_diff_thema number :=0;
+    l_diff_land number :=0;
+    l_diff_fz_typ number :=0;
+    l_diff_antriebsart number :=0;
+    l_diff_einsatzdaten number :=0;
+    --l_diff_ number :=0;
+    --l_thema_lst varchar2(1000);
+    l_co number :=0;
+    cStatusUnterschiedlich constant number := 20;
+    cStatusIdentisch constant number := 10;
+    cStatusKeinSchluessel constant number := 30;
+
+ BEGIN
+
+    -- In den GETEX Daten nach Datensätzen suchen, welche die Vorschriften-ID aus RegIndex zugeordnet haben
+    select count(*) into l_co
+    from mv_getex_vorschrift 
+    where reg_id = (select REGINDEXID from t_vorschrift where vorschriftid = avorschriftid 
+                        and REGINDEXID is not null);
+
+    -- Wenn der Schlüssel mehrfach vorkommt, dann Fehler
+    if (l_co > 1) then 
+     update t_vorschrift set status_update_getex = cStatusKeinSchluessel  
+      where vorschriftid = avorschriftid and ( status_update_getex is null OR status_update_getex != cStatusKeinSchluessel ); --- letzte Bedingung verhindet unnötiges update
+      return;
+    end if;
+
+    -- Schlüssel kommt genau einmal vor
+    if (l_co = 1) then
+      select  reg_id into l_getex_schluessel
+        from mv_getex_vorschrift 
+       where reg_id = (select REGINDEXID from t_vorschrift where vorschriftid = avorschriftid 
+                        and REGINDEXID is not null);
+    else
+      -- Schlüssel kommt gar nicht vor
+      update t_vorschrift set status_update_getex = cStatusKeinSchluessel  
+      where vorschriftid = avorschriftid and ( status_update_getex is null OR status_update_getex != cStatusKeinSchluessel); --- letzte Bedingung verhindet unnötiges update
+      return;
+    end if;
+
+
+   /* Einsatzdatums Modell wird jetzt noch nicht geprüft, da es in der Update-Prozedur (noch) nicht enthalten ist */
+   /* select count(*) into l_diff_einsatzmod   --g.v_id, v.vorschrift_nummer,  v.document_typeid, g.rev_documenttype, g.v_timelinedatetype,v.einsatzdatum_modellid
+     from t_Vorschrift v
+     join v_getex_vorschrift g on (v.regindexid is not null and g.reg_id = v.regindexid)
+    where v.Vorschriftid  = avorschriftid
+      and decode (g.timelinedatetype, 'MODELYEAR',30, 'CHINA',20 , 'EU',10, 10) != v.einsatzdatum_modellid
+      and (v.document_typeid is null or v.document_typeid != 1000);
+
+    if (l_diff_einsatzmod > 0) then
+      update t_vorschrift set status_update_getex = cStatusUnterschiedlich  
+       where vorschriftid = avorschriftid and ( status_update_getex is null OR status_update_getex != cStatusUnterschiedlich); --- letzte Bedingung verhindet unnötiges update
+        return;
+     end if;   */   
+
+    /* Länder */
+    select count( REGINDEX_LANDID) into l_diff_land 
+    from mV_GETEX_VORSCHRIFT_LAND 
+    where v_id = l_getex_schluessel 
+    and REGINDEX_LANDID not in (select landid from t_vorschrift_ref_land  where vorschriftid = avorschriftid and geloescht =0);
+
+    if (l_diff_land > 0) then
+        update t_vorschrift set status_update_getex = cStatusUnterschiedlich 
+        where vorschriftid = avorschriftid and ( status_update_getex is null OR status_update_getex != cStatusUnterschiedlich); --- letzte Bedingung verhindet unnötiges update
+        return;
+    end if;
+
+     --  reverse  check ----
+    select count(*)  into l_diff_land
+    from t_vorschrift_ref_land 
+    where vorschriftid = avorschriftid 
+    and geloescht =0 and landid is not null
+    and landid not in (select regindex_landid  from mV_GETEX_VORSCHRIFT_LAND 
+                     where v_id = l_getex_schluessel
+    );
+
+    if (l_diff_land > 0) then
+        update t_vorschrift set status_update_getex = cStatusUnterschiedlich 
+        where vorschriftid = avorschriftid and ( status_update_getex is null OR status_update_getex != cStatusUnterschiedlich); --- letzte Bedingung verhindet unnötiges update; 
+        return;
+    end if;
+
+
+    /* Themen */
+   select count( REGINDEX_THEMAID)  into l_diff_thema 
+     from mV_GETEX_VORSCHRIFT_THEMA 
+    where v_id = l_getex_schluessel 
+    and regindex_themaid is not null
+     and REGINDEX_THEMAID not in (  select themaid from t_vorschrift_ref_Thema 
+                                where vorschriftid =  avorschriftid  and geloescht =0);
+
+    if (l_diff_thema > 0) then
+      update t_vorschrift set status_update_getex = cStatusUnterschiedlich 
+       where vorschriftid = avorschriftid and ( status_update_getex is null OR status_update_getex != cStatusUnterschiedlich); --- letzte Bedingung verhindet unnötiges update; 
+      return;
+    end if;
+   -- reverse check ---    --select * from T_THEMA where themaid in ( 1191)
+   select count(themaid) into l_diff_thema 
+     from t_vorschrift_ref_Thema 
+    where vorschriftid =  avorschriftid 
+      and geloescht =0
+      and themaid not in (select REGINDEX_THEMAID  from mV_GETEX_VORSCHRIFT_THEMA 
+                           where v_id =  l_getex_schluessel and regindex_themaid is not null);
+   if (l_diff_thema > 0) then  --      l_difference:= l_difference+1;
+      update t_vorschrift set status_update_getex = cStatusUnterschiedlich 
+       where vorschriftid = avorschriftid and ( status_update_getex is null OR status_update_getex != cStatusUnterschiedlich); --- letzte Bedingung verhindet unnötiges update; 
+      return;
+   end if;
+
+    /* Antriebsarten */
+   select count(vra.antriebsartid) into l_diff_antriebsart 
+    from t_vorschrift_ref_antriebsart vra
+    join t_antriebsart aa on (aa.antriebsartid = vra.antriebsartid)
+   where vra.vorschriftid = avorschriftid 
+     and geloescht =0
+     and aa.mapping_GETEX not in (select antriebsart from mv_GETEX_vorschrift_antriebsart where v_id =  l_getex_schluessel);
+
+    if (l_diff_antriebsart > 0) then
+       update t_vorschrift set status_update_getex = cStatusUnterschiedlich 
+        where vorschriftid = avorschriftid and ( status_update_getex is null OR status_update_getex != cStatusUnterschiedlich); --- letzte Bedingung verhindet unnötiges update; 
+       return;
+    end if;
+    -- reverse
+    select count(antriebsart) into l_diff_antriebsart 
+    from mv_GETEX_vorschrift_antriebsart where v_id =  l_getex_schluessel
+    and antriebsart not in (select aa.mapping_GETEX from t_antriebsart aa 
+                         join t_vorschrift_ref_antriebsart vra on (aa.antriebsartid = vra.antriebsartid)
+                         where vra.vorschriftid = avorschriftid and geloescht =0);
+
+    if (l_diff_antriebsart > 0) then
+        update t_vorschrift set status_update_getex = cStatusUnterschiedlich 
+        where vorschriftid = avorschriftid and ( status_update_getex is null OR status_update_getex != cStatusUnterschiedlich); --- letzte Bedingung verhindet unnötiges update; 
+        return;
+    end if;
+
+
+    /* Fahrzeugklassen */
+    select count(vrf.fahrzeugklasseid) into l_diff_fz_typ 
+    from t_vorschrift_ref_fahrzeugklasse vrf
+    --join t_fahrzeugklasse fk on (fk.fahrzeugklasseid = vrf.fahrzeugklasseid)
+    where vrf.vorschriftid =  avorschriftid 
+    --and vrf.geloescht =0
+    and vrf.fahrzeugklasseid not in (select fahrzeugklasseid from mv_GETEX_vorschrift_FZ_TYP where v_id =  l_getex_schluessel);
+
+    if (l_diff_fz_typ > 0) then
+        update t_vorschrift set status_update_getex = cStatusUnterschiedlich 
+        where vorschriftid = avorschriftid and ( status_update_getex is null OR status_update_getex != cStatusUnterschiedlich); --- letzte Bedingung verhindet unnötiges update; 
+        return;
+    end if;
+
+    -- reverse check
+    select count(fahrzeugklasseid) into l_diff_fz_typ
+    from mv_GETEX_vorschrift_FZ_TYP 
+    where v_id = l_getex_schluessel
+    and fahrzeugklasseid not in (select vrf.fahrzeugklasseid 
+                                from t_vorschrift_ref_fahrzeugklasse vrf  
+                                 where vrf.vorschriftid = avorschriftid );
+    if (l_diff_fz_typ > 0) then
+        update t_vorschrift set status_update_getex = cStatusUnterschiedlich 
+        where vorschriftid = avorschriftid and ( status_update_getex is null OR status_update_getex != cStatusUnterschiedlich);
+        return;
+    end if;
+
+   -- einsatzdaten check diff
+    if( 0 < fcheckDiffGetexVorschriftEinsatzDaten(l_getex_schluessel, avorschriftid )) then
+        update t_vorschrift set status_update_getex = cStatusUnterschiedlich 
+        where vorschriftid = avorschriftid 
+        --and status_update_getex != cStatusUnterschiedlich
+        ; --- letzte Bedingung verhindet unnötiges update 
+        return;
+    end if;
+    
+   -- in_kraft datum check diff
+    if( 0 < fCheckdiff_in_Kraft_datum( avorschriftid )) then
+        update t_vorschrift set status_update_getex = cStatusUnterschiedlich 
+        where vorschriftid = avorschriftid 
+        --and status_update_getex != cStatusUnterschiedlich
+        ; 
+        return;
+    end if;
+    
+    -- relations
+    if( 0 < fCheckDifference_to_Getex_relations(avorschriftid )) then
+        update t_vorschrift set status_update_getex = cStatusUnterschiedlich 
+        where vorschriftid = avorschriftid ;
+        return;
+    end if;
+    
+    update t_vorschrift set status_update_getex = cStatusIdentisch
+     where vorschriftid = avorschriftid and ( status_update_getex is null OR status_update_getex  != cStatusIdentisch );
+
+ END pVergleichAttributevonGetex;
+
+  /*
+  * deletes all from t_x_getex_import
+  * inserts into t_x_getex_import  daten from t_x_getex_zip
+  */
+  procedure pImportFromZip AS
+        l_files apex_zip.t_files;  
+        l_unzipped_file blob;
+   BEGIN
+
+        delete from t_x_getex_import;
+
+        for zipfile in (
+            select getex_zipid, daten
+            from t_x_getex_zip
+        ) loop
+
+            debug('start zipfile',zipfile.getex_zipid);
+
+            l_files := apex_zip.get_files (
+                p_zipped_blob => zipfile.daten
+            );                
+
+            for i in 1 .. l_files.count loop
+                l_unzipped_file := apex_zip.get_file_content (
+                    p_zipped_blob => zipfile.daten,
+                    p_file_name   => l_files(i)
+                );          
+                insert into t_x_getex_import(daten)
+                values (emano_util.fBlobToClob(l_unzipped_file,nls_charset_id('AL32UTF8'))); 
+
+            end loop;   
+
+            debug('ende zipfile',zipfile.getex_zipid);
+            commit;
+
+        end loop;
+
+   END pImportFromZip;
+
+   /*
+   *  inserts into t_x_getex_import a snippet of data from t_x_getex_zip
+   */
+   procedure pImportFromZip_snippet(aGetexZIPId number, askipfiles number, aimportfiles number) AS
+     l_zip_file      blob;
+        l_files apex_zip.t_files;  
+        l_unzipped_file blob;
+        l_readNum number :=0;
+        l_startNum number :=0;
+   BEGIN
+        l_startNum :=askipfiles+1;   
+        select daten  into l_zip_file  from t_x_getex_zip
+        where getex_zipid = aGetexZIPID;
+
+        l_files := apex_zip.get_files (
+            p_zipped_blob => l_zip_file
+        );
+        --debug ('Getex proc: files in zip: ' || l_files.count);
+        if(l_files.count < (askipfiles + aimportfiles)) then
+          l_readNum := l_files.count;
+        else
+            l_readNum :=  askipfiles + aimportfiles;
+        end if;
+        for i in l_startNum .. l_readNum loop
+            l_unzipped_file := apex_zip.get_file_content (
+                p_zipped_blob => l_zip_file,
+                p_file_name   => l_files(i)
+            );   
+            insert into T_X_GETEX_IMPORT(daten)
+            values (emano_util.fBlobToClob(l_unzipped_file, nls_charset_id('AL32UTF8'))); 
+
+        end loop;
+        --debug ('GETEX proc: files inserted: ' || aimportfiles);
+   END;
+
+   /*
+   *
+   */
+ procedure pSetAttributesForGetexImport as
+
+        l_co number :=0;
+        l_doppelt number :=0;
+    begin
+        for cur in (
+            WITH imp_line AS (
+                select getex_importid, DATEN from T_X_GETEX_IMPORT
+            )
+            SELECT reg_id, regindex_id, il.getex_importid
+            FROM  imp_line il, JSON_TABLE (
+                il.DATEN,   '$'
+                COLUMNS (
+                    reg_id VARCHAR2(32) PATH '$.id',
+                    reg_num VARCHAR2(128) PATH '$.regulationNumber', 
+                    NESTED PATH '$.revisions[*]' columns (
+                        regindex_id NUMBER(16) PATH '$.sourceInfo.regindexId'
+                    )        
+                )
+            )
+        )
+        loop
+
+            if(cur.reg_id is null) then
+                update T_X_GETEX_IMPORT
+                set status =3 
+                where getex_importid = cur.getex_importid 
+                and (status is null );
+            else
+                select count(*) into l_doppelt
+                from T_X_GETEX_IMPORT
+                where getex_schluessel = cur.reg_id ;
+                if ( l_doppelt >0) then 
+                    update T_X_GETEX_IMPORT  set status =3 
+                    where getex_importid = cur.getex_importid 
+                    and (status is null );
+                else
+                    update T_X_GETEX_IMPORT 
+                    set getex_schluessel = cur.reg_id,
+                        status = 1,
+                        vorschriftid  = cur.regindex_id
+                    where getex_importid = cur.getex_importid 
+                    and getex_schluessel is null 
+                    and status is null;
+                end if;
+            end if;
+            l_co:= l_co+1;
+
+        end loop;
+
+        merge into t_vorschrift v
+        using (
+            select rev_regindexid, reg_id, reg_displayUrl, count(distinct reg_id) over (partition by rev_regindexid) x 
+            from V_Getex_Vorschrift vgv
+            join t_vorschrift v on (vgv.rev_regindexid = v.vorschriftid)
+            where rev_regindexid is not null and rev_current ='true'
+        ) u
+        on (v.vorschriftid = u.rev_regindexid and u.x = 1)
+        when matched then update set v.regindexid = nvl(v.regindexid,u.reg_id), v.URL_GETEX_VORSCHRIFT = u.reg_displayurl;      
+
+  end pSetAttributesForGetexImport;
+
+/*
+   *
+   **/
+ /*  procedure  pInitialCreation_regulationFromGetex
+ as
+
+      l_co NUMBER :=0;
+      l_getex_imp_ID number :=0;
+	  l_any_exists number :=0;
+   begin
+	    select count(GETEX_IMPORTid) into l_any_exists 
+		  from T_X_GETEX_IMPORT 
+		  where getex_schluessel not in (select regindexid from t_vorschrift where regindexid is not null)
+			and status is not null and status in (1);
+			--debug('new regulations (GETEX) to process: '|| l_any_exists );
+			l_co:= 0;
+		while (l_any_exists>0) loop	
+
+		   FOR  cur in (select GETEX_IMPORTid from T_X_GETEX_IMPORT where 
+					getex_schluessel not in (select regindexid from t_vorschrift where regindexid is not null)  -- 857   --832 801
+					and status is not null and status in (1)
+			    )    
+		   LOOP
+			   l_getex_imp_ID := cur.getex_importid;
+				pck_ri_getex.pCreateRegulationFromGetexImport( l_getex_imp_ID);
+
+			 --if (remainder(l_co,50) = 0) then
+              -- debug('new regulations processed: '|| l_co );
+			-- end if;
+			 l_co:= l_co+1;
+		  END LOOP;
+		 -- debug('new regulations processed: '|| l_co );
+		  select count(GETEX_IMPORTid) into l_any_exists 
+		  from T_X_GETEX_IMPORT 
+		  where getex_schluessel not in (select regindexid from t_vorschrift where regindexid is not null)
+			and status is not null and status in (1);
+	   -- debug('new regulations (GETEX) to process: '|| l_any_exists );
+	  END LOOP;
+   END pInitialCreation_regulationFromGetex;
+ */
+  /*
+   *  
+  **/
+ /* PROCEDURE  pInitialComparing_existingWithregulationFromGetex
+  as
+       l_co NUMBER :=0;
+      l_getex_imp_ID number :=0;
+	  l_any_exists number :=0;
+  BEGIN
+   		select count(GETEX_IMPORTid) 
+        into l_any_exists 
+		  from T_X_GETEX_IMPORT 
+		  where --getex_schluessel in (select regindexid from t_vorschrift where regindexid is not null) and
+			 status is not null and status=1;
+		--	debug('existing regulations to oompare with (GETEX): '|| l_any_exists );
+       -- while (l_any_exists>0) loop
+          l_co :=0;
+		-- take all of because status does not changes
+		   FOR  cur in (select GETEX_IMPORTid from T_X_GETEX_IMPORT where 
+					--getex_schluessel in (select regindexid from t_vorschrift where regindexid is not null) and  -- 1839
+					 status is not null and status =1
+			   )    
+		   LOOP
+			 --if (l_co < 20) then
+			   l_getex_imp_ID := cur.getex_importid;
+				pck_ri_getex.pCreateRegulationFromGetexImport( l_getex_imp_ID);
+			  -- if (remainder(l_co,50) = 0) then
+               --  debug('regulations processed: '|| l_co );
+              -- end if;
+             --end if;
+			 l_co:= l_co+1;
+		  END LOOP;
+		 -- debug('existing regulations compared with GETEX: '|| l_co );
+		  l_any_exists :=0;
+	 -- END LOOP;
+  END;
+  */ 
+ /*
+* vergleich aenderung in länder list v. Vorschriften
+* unabhängig von "master" status  ( ISO3 )
+**/
+ FUNCTION fIsLandListChanging(avorschriftid number, alandids varchar2) return number
+ is
+   l_co number :=0;
+    l_co_previous number :=0;
+ BEGIN
+
+  select count(distinct column_value) into l_co  -- new list 
+    from table (apex_string.split_numbers (alandids, ':')) ;  -- alandids
+
+  select count(distinct landid) into l_co_previous
+    from T_VORSCHRIFT_REF_LAND 
+   WHERE VORSCHRIFTid = avorschriftid 
+     and geloescht =0 
+     and landid is not null ;
+  if (l_co != l_co_previous) then 
+       return 1;  -- Differenz in der Anzahl
+  end if;
+
+     -- select diff
+  select count(distinct landid) into l_co
+    from T_VORSCHRIFT_REF_LAND 
+   WHERE VORSCHRIFTid = avorschriftid 
+     and geloescht =0 
+     and landid is not null 
+     and landid not in ( select column_value from table (apex_string.split_numbers (alandids, ':')) ) ; --
+  if (l_co >0) then 
+       return 2; -- differ in ids in der Liste
+  end if;
+
+   return 0;
+ END fIsLandListChanging;
+  /*
+ *  TemaListChanging
+ **/
+ FUNCTION fIsThemaListChanging(avorschriftid number, athemaids varchar2) return number
+ is
+   l_co number :=0;
+   l_co_previous number :=0;
+
+ BEGIN
+  select count(distinct column_value) into l_co  -- new list 
+    from table (apex_string.split_numbers (athemaids, ':')) ;  -- athemaids
+
+  select count(distinct themaid) into l_co_previous
+    from T_VORSCHRIFT_REF_THEMA 
+   WHERE VORSCHRIFTid = avorschriftid 
+     and geloescht = 0 
+     and themaid is not null;
+  if (l_co != l_co_previous) then 
+       return 1;  -- Differenz in der Anzahl 
+  end if;
+
+     -- select diff
+  select count(distinct themaid) into l_co
+    from T_VORSCHRIFT_REF_THEMA 
+   WHERE VORSCHRIFTid = avorschriftid 
+     and geloescht =0 
+     and themaid is not null 
+     and themaid not in ( select column_value from table (apex_string.split_numbers (athemaids, ':')) ) ; --athemaids
+  if (l_co >0) then 
+       return 2; -- differ in ids in der Liste
+  end if;
+
+   return 0;
+ END fIsThemaListChanging;
+
+
+  /*
+ *  antribsart changing
+ **/
+ FUNCTION fIsAntriebsartListChanging(avorschriftid number, aantriebsartds varchar2) return number
+ is
+   l_co number :=0;
+    l_co_previous number :=0;
+
+ BEGIN
+  select count(distinct column_value) into l_co  -- new list 
+    from table (apex_string.split_numbers (aantriebsartds, ':')) ;  -- aantriebsartds
+
+  select count(distinct ANTRIEBSARTID) into l_co_previous
+    from T_VORSCHRIFT_REF_ANTRIEBSART 
+   WHERE VORSCHRIFTid = avorschriftid 
+     and ANTRIEBSARTID is not null ;
+  if (l_co != l_co_previous) then 
+       return 1;  -- Differenz in der Anzahl 
+  end if;
+
+     -- select diff
+  select count(distinct ANTRIEBSARTID) into l_co
+    from T_VORSCHRIFT_REF_ANTRIEBSART 
+   WHERE VORSCHRIFTid = avorschriftid 
+     and ANTRIEBSARTID is not null 
+     and ANTRIEBSARTID not in ( select column_value from table (apex_string.split_numbers (aantriebsartds, ':')) ) ; --aantriebsartds
+  if (l_co >0) then 
+       return 2; -- differ in ids in der Liste
+  end if;
+
+   return 0;
+ END fIsAntriebsartListChanging;
+
+ /*
+ *  FzgKlass changing
+ **/
+ FUNCTION fIsFzgKlasseListChanging(avorschriftid number, afzgklasseds varchar2) return number
+ is
+   l_co number :=0;
+   l_co_previous number :=0;
+
+ BEGIN
+  select count(distinct column_value) into l_co  -- new list 
+    from table (apex_string.split_numbers (afzgklasseds, ':')) ;  -- afzgklasseds
+
+  select count(distinct FAHRZEUGKLASSEID) into l_co_previous
+    from T_VORSCHRIFT_REF_FAHRZEUGKLASSE 
+   WHERE VORSCHRIFTid = avorschriftid 
+     and FAHRZEUGKLASSEID is not null ;
+  if (l_co != l_co_previous) then 
+       return 1;  -- Differenz in Anzahl 
+  end if;
+     -- select diff
+  select count(distinct FAHRZEUGKLASSEID) into l_co
+    from T_VORSCHRIFT_REF_FAHRZEUGKLASSE
+   WHERE VORSCHRIFTid = avorschriftid 
+     and FAHRZEUGKLASSEID is not null 
+     and FAHRZEUGKLASSEID not in ( select column_value from table (apex_string.split_numbers (afzgklasseds, ':')) ) ; --afzgklasseds
+  if (l_co >0) then 
+       return 2; -- differ in ids in der Liste
+  end if;
+
+   return 0;
+ END fIsFzgKlasseListChanging;
+
+/*
+ *  Einsatzdatum Model changing - 
+ **/
+FUNCTION fIsEinsatzdatumModelChanging(avorschriftid in number, aEinsatzdatumModel in number) return number
+ is
+   l_einsatzmodelid number :=0;
+
+ BEGIN
+    select einsatzdatum_modellid into l_einsatzmodelid
+    from T_VORSCHRIFT
+    WHERE VORSCHRIFTid = avorschriftid ;
+
+    if (l_einsatzmodelid != aEinsatzdatumModel) then 
+        return 1;  
+    end if;
+     -- select diff
+    return 0;
+ END fIsEinsatzdatumModelChanging;
+
+ /*
+ *  Einsatzdatum_Typ changing 
+ **/
+ FUNCTION fIsEinsatzdatum_TypChanging(avorschriftid in number, aEinsatzdatumTypid in number, aEinsatzdatum in varchar2) return number
+ is
+    l_co number :=0;
+    l_co_previous number :=0;
+    l_typid number :=0;
+    l_datum date;
+
+ BEGIN
+    -- asure that the Typ is not one of  "AU?ER Kraft " 
+    if ( aEinsatzdatumTypid =1041 or aEinsatzdatumTypid =1060 or aEinsatzdatumTypid =1063 ) then
+        return 0;
+    end if;
+    -- check one typ that is updating 
+    select count(distinct Einsatzdatum_TypID) into l_co_previous
+    from T_VORSCHRIFT_REF_EINSATZDATUM_TYP
+    WHERE VORSCHRIFTid = avorschriftid
+    and Einsatzdatum_TypID not in ( 1041, 1060, 1063)
+    and Einsatzdatum_TypID = aEinsatzdatumTypid;
+
+    if (0 = l_co_previous) then 
+       return 1;  -- Differenz : Einsatzdaten for this typ and Vorschrift does not exist in DB table 
+    end if;
+    -- check datum --
+    select distinct Einsatzdatum_TypID, einsatzdatum into l_typid, l_datum
+    from T_VORSCHRIFT_REF_EINSATZDATUM_TYP
+    WHERE VORSCHRIFTid = avorschriftid
+    and Einsatzdatum_TypID not in ( 1041, 1060, 1063)
+    and Einsatzdatum_TypID =  aEinsatzdatumTypid;
+
+    if( to_char(l_datum, 'dd.mm.yyyy') != aEinsatzdatum) then
+        return 2;
+    end if;
+
+    return 0;
+ END fIsEinsatzdatum_TypChanging;
+
+/*
+ *  Einsatzdatum_Types_ changing - 
+ **/
+FUNCTION fIsEinsatzdatum_Types_Changing(avorschriftid in number, aEinsatzdatumTypids in varchar2, aEinsatzdatums in varchar2) return number
+ is
+    l_co number :=0;
+    l_co_previous number :=0;
+    l_datum varchar2(32);
+
+ BEGIN
+  -- einsatzdatentyp in v_thema_scenario
+    select count(distinct column_value) into l_co  -- new list 
+    from table (apex_string.split_numbers (aEinsatzdatumTypids, ':')) ;  -- aEinsatzdatumTypids
+
+    select count(distinct Einsatzdatum_TypID)  into l_co_previous
+    from T_VORSCHRIFT_REF_EINSATZDATUM_TYP
+    WHERE VORSCHRIFTid = avorschriftid
+    and Einsatzdatum_TypID not in (1000, 1041, 1060,1063);
+    if (l_co != l_co_previous) then 
+       return 1;  -- Differenz in Anzahl 
+    end if;
+     -- select diff
+    select count(distinct Einsatzdatum_TypID) into l_co
+    from T_VORSCHRIFT_REF_EINSATZDATUM_TYP
+    WHERE VORSCHRIFTid = avorschriftid 
+    and EINSATZDATUM_TYPID not in (1000, 1041, 1060,1063)
+    and EINSATZDATUM_TYPID not in ( select column_value from table (apex_string.split_numbers (aEinsatzdatumTypids, ':')) ) ;
+
+    if (l_co >0) then 
+       return 2; -- differ in ids in der Liste
+    end if;
+
+    -- vergleich datum as char 
+    for c in (  select et.v etypid,  edat.v edatum from 
+      (  select column_value v, rownum rn from table(apex_string.split_numbers (aEinsatzdatumTypids, ':'))  ) et ,
+      (  select column_value v, rownum rn from table(apex_string.split (aEinsatzdatums, ':'))  ) edat 
+      where  et.rn = edat.rn 
+      )
+    LOOP
+      select nvl(to_char(einsatzdatum, 'dd.mm.yyyy'),'null')  into l_datum
+        from T_VORSCHRIFT_REF_EINSATZDATUM_TYP 
+       where vorschriftid = avorschriftid
+         and EINSATZDATUM_TYPID = c.etypid;  
+
+     if( l_datum != c.edatum) then
+       return 3;
+     end if;
+
+    END LOOP;
+   return 0;
+ END fIsEinsatzdatum_Types_Changing;
+
+  /*
+  **
+  */
+  procedure pAbgleichRegindexVorschriftVomGetex(avorschriftid in NUMBER)
+  as
+    l_regindex_key varchar2(64);
+    l_count number :=0;
+  BEGIN
+  
+    SELECT REGINDEXID INTO l_regindex_key
+    FROM T_VORSCHRIFT WHERE VORSCHRIFTID = avorschriftid;
+    
+    if ( l_regindex_key is not null) then  
+        UPDATE T_X_GETEX_IMPORT SET status = 2 WHERE getex_schluessel = l_regindex_key;
+     
+        -- Kerndaten
+        pactualiseVorschriftKerndaten(l_regindex_key, avorschriftid);
+        -- einsatzdatum Model wird actualis mit Kerndaten
+          
+        -- einsatzdatum_typen
+        pactualiseVorschriftEinsatzDaten(l_regindex_key, avorschriftid);
+         -- in_Kraft_dat  actualise extra, weil in JSON data an gesonderter Stelle
+        paktualise_In_Kraft_Datum(avorschriftid);       
+        -- themen
+        pactualiseVorschriftThema(l_regindex_key, avorschriftid);
+    
+        -- Antriebsarten
+        pactualiseVorschriftAntriebsart(l_regindex_key, avorschriftid);
+    
+        -- Land --
+        pactualiseVorschriftLand(l_regindex_key, avorschriftid);
+    
+        -- FZ Klasse --
+        pactualiseVorschriftFahrzeugklasse(l_regindex_key, avorschriftid);
+    
+        --  relations --
+        pActualisiereVorschriftVerknuepfungen_vomGetex(avorschriftid);
+        -- set status_update_getex  --
+        -- pVergleichAttributevonGetex(avorschriftid);
+    
+        update T_Vorschrift set status_update_getex = 10
+        where vorschriftid = avorschriftid and (status_update_getex is null OR status_update_getex != 10);
+    
+    end if;
+    
+  END pAbgleichRegindexVorschriftVomGetex;
+
+/*
+Speicherung von Einsatzdatumsangaben differenziert nach Themengebieten
+-- This procedure inserts data from v_getex_thema_scenario into T_vorschrift_ref_thema_ref_einsatzdatum_typ for a specific VORSCHRIFTID.
+
+*/
+
+PROCEDURE tpFilltheThemaEinsatzdaten_from_getex(aVorschriftid IN NUMBER)
+AS
+BEGIN
+  FOR c IN (
+    SELECT g.V_ID, g.SC_THEMAID, g.SC_TYPE, TO_DATE(g.SC_DATUM, 'DD-MM-YYYY') AS EINSATZDATUM,
+           t.THEMAID,
+           e.EINSATZDATUM_TYPID,
+           g.sc_fahrzeug_typ,
+           v.VORSCHRIFTID
+    FROM v_getex_thema_scenario g
+    INNER JOIN t_vorschrift v ON g.V_ID = v.REGINDEXID
+    INNER JOIN t_thema t ON g.regindex_THEMAID = t.THEMAID  -- Updated JOIN condition as per new requirement
+    INNER JOIN t_einsatzdatum_typ e ON g.SC_TYPE = e.MAPPING_GETEX
+    WHERE v.VORSCHRIFTID = aVorschriftid
+      AND (g.sc_fahrzeug_typ = 'PCV'  -- Filtering to include only records of type 'PCV'
+           --OR g.sc_fahrzeug_typ = 'INDEPENDENT'
+      )
+  ) LOOP
+    INSERT INTO T_VORSCHRIFT_REF_THEMA_REF_EINSATZDATUM_TYP (
+      VORSCHRIFTID, 
+      THEMAID, 
+      EINSATZDATUM_TYPID, 
+      EINSATZDATUM,
+      --MODELJAHR,
+      LETZTE_AENDERUNG_DATUM
+     -- KOMMENTAR
+    )
+    VALUES (
+      aVorschriftid, 
+      c.THEMAID, 
+      c.EINSATZDATUM_TYPID, 
+      c.EINSATZDATUM,
+      --null,  -- considering if MODELJAHR or KOMMENTAR need to be populated from new fields
+      SYSDATE
+      --'' -- considering  if MODELJAHR or KOMMENTAR need to be populated from new fields
+    );
+  END LOOP;
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    RAISE;
+END tpFilltheThemaEinsatzdaten_from_getex;
+
+
+
+/** script zum Füllen die regindexid in t_Vorschrift mit reg_id vom 
+* view V_GETEX_VORSCHRIFT.
+* Es werden die  a_anzahl Vorschriften mit leeren 
+* regindexid gefüllt , fuer die in v_getex_vorschrift entsprechende 
+*   rev_regindexid = vorschriftid
+* Parameter a_anzahl kann beliebig gewäht werden
+* Empfolen ist a_anzahl =901  und dann den script zum Beispiel 4 mal ausführen. 
+* Sosmit sind  maximal 4*900 vorschriften gefüllt
+* Ausführung dauert nur einige Sekunden
+*/       
+  procedure pfill_Getex_key_in_regindex_vorschrift(a_anzahl in number) as
+
+  l_row T_id_row;
+  l_tbl T_id_tbl := t_id_tbl();
+   i number :=1;
+   l_prev_schluessel VARCHAR2(64);
+ BEGIN
+
+   for cur in (select rev_regindexid, reg_id, reg_displayUrl
+                from V_Getex_Vorschrift 
+               where rev_regindexid is not null and rev_current ='true'
+                 and (select count(*) from t_vorschrift where vorschriftid = V_Getex_Vorschrift.rev_regindexid and regindexid is null )>0 
+                 --and rownum < a_anzahl+1 
+              order by rev_regindexid) -- ist wichtig !!  zum ignorieren doppelter Einträge in V_Getex_Vorschrift
+   loop
+     if (i=1) then
+        l_prev_schluessel := cur.reg_id;
+     elsif (l_prev_schluessel = cur.reg_id) then
+      continue;
+     else
+       l_prev_schluessel := cur.reg_id;
+     end if;
+
+     l_tbl.extend;
+     l_row := T_id_row(cur.reg_id, cur.reg_displayUrl, cur.rev_regindexid);
+     l_tbl(i)  := l_row;
+     i :=i+1;
+  end loop;
+   update t_vorschrift  set 
+       regindexid = (select reg_id from TABLE(l_tbl) where rev_regindexid = t_vorschrift.vorschriftid),
+    URL_GETEX_VORSCHRIFT = (select reg_displayUrl from TABLE(l_tbl) where rev_regindexid = t_vorschrift.vorschriftid)
+    where regindexid is null;
+   commit;
+end;
+
+/**
+*
+*/
+  procedure pLoad_Vorschrift_Thema_Einsatzdatum_typ_fromGetex as
+  BEGIN
+
+    delete from T_VORSCHRIFT_REF_THEMA_REF_EINSATZDATUM_TYP;
+    commit;
+
+   INSERT INTO T_VORSCHRIFT_REF_THEMA_REF_EINSATZDATUM_TYP (
+      VORSCHRIFTID, 
+      THEMAID, 
+      EINSATZDATUM_TYPID, 
+      EINSATZDATUM,
+      LETZTE_AENDERUNG_DATUM
+    )
+   SELECT   v.VORSCHRIFTID,  --  g.V_ID, g.SC_THEMAID, g.SC_TYPE,   --g.sc_year as jahr,
+           t.THEMAID,
+           e.EINSATZDATUM_TYPID,
+           g.SC_DATUM  AS EINSATZDATUM,
+           SYSDATE
+    FROM v_getex_thema_scenario g 
+    INNER JOIN t_vorschrift v ON g.V_ID = v.REGINDEXID
+    INNER JOIN t_thema t ON g.regindex_THEMAID = t.THEMAID  -- Updated JOIN condition as per new requirement
+    INNER JOIN t_einsatzdatum_typ e ON g.SC_TYPE = e.MAPPING_GETEX
+    WHERE ( g.sc_fahrzeug_typ = 'PCV'  
+         OR  g.sc_fahrzeug_typ = 'INDEPENDENT'
+         ) 
+    ORDER BY v.vorschriftid, t.themaid, e.EINSATZDATUM_TYPID ;
+
+  END pLoad_Vorschrift_Thema_Einsatzdatum_typ_fromGetex;
+
+/*
+** ermittelt die Datums für verknüpfungen aus Getex für alle Fahrzeuge und für neue Typen
+*/
+  FUNCTION  fgetRelationDates_Getex(avorschriftid IN NUMBER, atarget_key IN VARCHAR2, 
+                                        arelationtype IN VARCHAR2,           
+                            adate_all_vehicles OUT DATE, adate_new_types OUT DATE  ) RETURN NUMBER
+  AS
+    l_ret number :=0;
+    l_count number :=0;
+    l_type_all_new varchar2(32);
+  BEGIN
+    SELECT count(*) into l_count
+    FROM MV_GETEX_VORSCHRIFT_RELATION
+    WHERE vorschriftid = avorschriftid   -- vorgänger
+    and TARGETID = atarget_key
+    and relationtype = arelationtype
+    and (SC_TYPE ='All Vehicles' )
+    and SC_VEHICLETYPE = 'PCV';
+
+    if(l_count > 0) then
+        SELECT SC_TYPE, min(SC_DATE) into l_type_all_new, adate_all_vehicles
+        FROM MV_GETEX_VORSCHRIFT_RELATION
+        WHERE vorschriftid = avorschriftid   -- vorgänger
+        and TARGETID = atarget_key
+        and relationtype = arelationtype
+        and (SC_TYPE ='All Vehicles' )
+        and SC_VEHICLETYPE = 'PCV'
+        group by SC_TYPE;
+    end if;
+
+    if(adate_all_vehicles is null) then
+        SELECT count(*) into l_count
+        FROM MV_GETEX_VORSCHRIFT_RELATION
+        WHERE vorschriftid = avorschriftid   -- vorgänger
+        and TARGETID = atarget_key
+        and relationtype = arelationtype
+        and (SC_TYPE ='All Vehicles' )
+        and SC_VEHICLETYPE = 'INDEPENDENT';
+
+        if(l_count > 0) then        
+            SELECT SC_TYPE, min(SC_DATE) into l_type_all_new, adate_all_vehicles
+            FROM MV_GETEX_VORSCHRIFT_RELATION
+            WHERE vorschriftid = avorschriftid   -- vorgänger
+            and TARGETID = atarget_key
+            and relationtype = arelationtype  --'IS_DEMANDED_BY_MULTI'
+            and (SC_TYPE ='All Vehicles' )
+            and SC_VEHICLETYPE = 'INDEPENDENT'
+            group by SC_TYPE;
+        end if;
+    end if;
+    -- new types
+    SELECT count(*) into l_count
+    FROM MV_GETEX_VORSCHRIFT_RELATION
+    WHERE vorschriftid = avorschriftid   -- vorgänger
+    and TARGETID = atarget_key
+    and relationtype = arelationtype
+    and (SC_TYPE = 'New Types' )
+    and SC_VEHICLETYPE = 'PCV';
+
+    if(l_count > 0) then
+        SELECT SC_TYPE, min(SC_DATE) into l_type_all_new, adate_new_types
+        FROM MV_GETEX_VORSCHRIFT_RELATION
+        WHERE vorschriftid = avorschriftid   -- vorgänger
+        and TARGETID = atarget_key
+        and relationtype =  arelationtype
+        and (SC_TYPE = 'New Types')
+        and SC_VEHICLETYPE = 'PCV'
+        group by SC_TYPE;       --and targetid = l_tar_vorschriftid 
+    end if;
+
+
+    if(adate_new_types is null) then
+        SELECT count(*) into l_count
+        FROM MV_GETEX_VORSCHRIFT_RELATION
+        WHERE vorschriftid = avorschriftid   -- vorgänger
+        and TARGETID = atarget_key
+        and relationtype = arelationtype
+        and (SC_TYPE = 'New Types' )
+        and SC_VEHICLETYPE = 'INDEPENDENT';
+        if(l_count > 0) then
+            SELECT SC_TYPE, min(SC_DATE) into l_type_all_new, adate_new_types
+            FROM MV_GETEX_VORSCHRIFT_RELATION
+            WHERE vorschriftid = avorschriftid   -- vorgänger
+            and TARGETID = atarget_key
+            and relationtype =  arelationtype
+            and (SC_TYPE = 'New Types')
+            and SC_VEHICLETYPE = 'INDEPENDENT'
+            group by SC_TYPE;
+        end if;
+    end if;
+
+    if (adate_new_types is null and adate_all_vehicles is null) then
+        RETURN 1; -- keine daten
+    end if;
+
+     RETURN 0;
+  END fgetRelationDates_Getex;
+
+   /*
+  * returns 0 if no differences
+  **/
+   FUNCTION fCheckDifference_to_Getex_relations(avorschriftid IN NUMBER) RETURN NUMBER
+  AS
+        l_tar_vorschriftid number := 0;
+        l_target_key varchar2(50);
+
+        l_relationtype varchar2(50);
+        l_beziehung_artid number := 0;
+        l_min_date_all_vehicles date;
+        l_min_date_new_types date;
+        l_type_all_new varchar2(32);
+        lst_rel_type varchar2(250);
+        l_count number := 0;
+        l_homolog_serie number :=0;
+        l_getex_v_key varchar2(50);
+        l_target_reg_number varchar2(250);
+        l_reg_number varchar2(250);
+  BEGIN
+     -- für alle  verknüpfungen in Getex  vergleich existenz in Regindex 
+    FOR cur in ( select distinct vr.vorschriftid, vr.targetid, vr.relationtype relationtype, vr.reg_number, vr.target_reg_number,
+                     --vr.SC_TYPE,  vr.SC_VEHICLETYPE,  vr.SC_DATE,
+                        tv.vorschriftid as tar_vorschriftid
+                     FROM mV_GETEX_VORSCHRIFT_RELATION vr
+                     join t_vorschrift tv on (tv.regindexid = vr.targetid)
+                     where vr.vorschriftid = avorschriftid  --436 
+                      and vr.relationtype not in ( 'CONSOLIDATES', 'IS_CONSOLIDATED_IN', 'SUCCESSOR', 'CHANGES', 
+                      'EQUIVALENT_TO', 'EQUIVALENT_TO_MULTI', 'DEMANDS', 'DEMANDS_MULTI') --
+                     order by tv.vorschriftid, vr.relationtype
+    )
+    LOOP
+        l_tar_vorschriftid := cur.tar_vorschriftid;
+        l_target_key := cur.targetid;
+        l_relationtype := cur.relationtype;
+        l_target_reg_number := cur.target_reg_number;
+        l_reg_number := cur.reg_number;
+        -- vergleiche für die Verknüfungen, die keine Datums angaben haben
+        if(l_relationtype = 'LINKED') then -- sonderbehandlung
+            select count(*) into l_count 
+            from T_VORSCHRIFT_REF_VORSCHRIFT 
+            where (vorgaenger_vorschriftID = avorschriftid and nachfolger_vorschriftid = l_tar_vorschriftid
+                   or nachfolger_vorschriftID = avorschriftid and vorgaenger_vorschriftid = l_tar_vorschriftid)
+            and beziehung_art = 60;
+            if (l_count = 0) then
+               return 60;       -- beziehung_artid 60 f. gegebene id ist nicht in Regindex verknuepfung
+            end if;
+        end if;
+        if( l_relationtype = 'IS_CHANGED_BY' OR l_relationtype = 'PREDECESSOR' 
+            OR l_relationtype = 'SEEN_AS_EQUIVALENT_BY' OR l_relationtype = 'IS_SEEN_EQUIVALENT_BY_MULTI') then
+            -- check if the same exists in Regindex
+            select count(*) --avorschriftid as vorgaenger_vorschriftID,   --l_tar_vorschriftid  as nachfolger_vorschriftid
+            into l_count
+              from T_VORSCHRIFT_REF_VORSCHRIFT 
+              where vorgaenger_vorschriftID = avorschriftid 
+              and nachfolger_vorschriftid = l_tar_vorschriftid
+              and ( beziehung_art = decode(l_relationtype , 'PREDECESSOR', 10, 
+                    'SEEN_AS_EQUIVALENT_BY', 102,  'IS_SEEN_EQUIVALENT_BY_MULTI', 102, 0)
+                    OR 
+                    ( l_relationtype = 'IS_CHANGED_BY' and ( instr(upper(l_target_reg_number),'UN-R')=1 and beziehung_art =30 or  beziehung_art =20 ))
+                   );
+            if (l_count = 0) then
+                   return 1;  -- keine verknüpfungen dieser art in regindex vorhanden
+            elsif (l_relationtype = 'IS_SEEN_EQUIVALENT_BY_MULTI' OR l_relationtype = 'SEEN_AS_EQUIVALENT_BY'  ) then
+                select count(*) into l_count 
+                from T_VORSCHRIFT_REF_VORSCHRIFT 
+                where vorgaenger_vorschriftID = avorschriftid 
+                and nachfolger_vorschriftid = l_tar_vorschriftid
+                and beziehung_art = 102;
+                if (l_count = 0) then
+                   return 102;       -- 102 not in Regindex
+                elsif (l_relationtype = 'IS_SEEN_EQUIVALENT_BY_MULTI') then
+                    select HOMOLOGATION_SERIE into l_homolog_serie
+                    from T_VORSCHRIFT_REF_VORSCHRIFT 
+                    where vorgaenger_vorschriftID = avorschriftid 
+                    and nachfolger_vorschriftid = l_tar_vorschriftid
+                    and beziehung_art = 102;
+                    if (l_homolog_serie is null or l_homolog_serie !=10) then
+                        return 121; -- homolog_serie !=10 in regindex   (not _multi)
+                    end if;
+                end if;
+            elsif (l_relationtype = 'IS_CHANGED_BY'   ) then
+                select count(*) into l_count 
+                from T_VORSCHRIFT_REF_VORSCHRIFT 
+                where vorgaenger_vorschriftID = avorschriftid 
+                and nachfolger_vorschriftid = l_tar_vorschriftid
+                and ( (instr(upper(l_target_reg_number),'UN-R')=1 and beziehung_art =30) or beziehung_art =20 );
+                if (l_count = 0) then
+                   return 30;       -- 30 not in Reg
+                end if;
+            elsif (l_relationtype = 'PREDECESSOR'   ) then
+                select count(*) into l_count 
+                from T_VORSCHRIFT_REF_VORSCHRIFT 
+                where vorgaenger_vorschriftID = avorschriftid 
+                and nachfolger_vorschriftid = l_tar_vorschriftid
+                and beziehung_art = 10;
+                if (l_count = 0) then
+                   return 10;       --beziehung_artid 10 not in Regindex
+                end if;
+            end if;
+        end if;
+
+        -- vergleiche für die Verknüfungen mit Datums angaben **********
+        -- vergleich mit  is DEMANDED_BY
+        if( l_relationtype = 'IS_DEMANDED_BY_MULTI' or l_relationtype = 'IS_DEMANDED_BY') then
+          -- gibt es diese Verknüpfung in Regindex ---
+            select count(*) into l_count 
+            from T_VORSCHRIFT_REF_VORSCHRIFT 
+            where vorgaenger_vorschriftID = avorschriftid 
+            and nachfolger_vorschriftid = l_tar_vorschriftid
+            and beziehung_art = 40;
+            if (l_count = 0) then
+                return 40;       -- beziehung_artid 40 not in Regindex
+            else
+                if (l_relationtype = 'IS_DEMANDED_BY_MULTI') then
+                    select HOMOLOGATION_SERIE into l_homolog_serie
+                    from T_VORSCHRIFT_REF_VORSCHRIFT 
+                    where vorgaenger_vorschriftID = avorschriftid 
+                    and nachfolger_vorschriftid = l_tar_vorschriftid
+                    and beziehung_art = 40;
+                    if (l_homolog_serie is null or l_homolog_serie != 10) then
+                        return 41; -- homolog_serie !=10 in regindex  for beziehung_artid 40 (not _multi)
+                    end if; -- fütr multi
+                end if;
+             -- vergleiche Datum  für  typen
+                   -- hole datum von Getex
+               if(0 = fgetRelationDates_Getex( avorschriftid , l_target_key, l_relationtype ,
+                                               l_min_date_all_vehicles, l_min_date_new_types )
+                 ) then
+                 -- Mindestens ein datum ist nicht null
+                 -- vergleich mit datum in regindex. 
+
+                    select count(*)  into l_count
+                    from T_VORSCHRIFT_REF_VORSCHRIFT 
+                    where vorgaenger_vorschriftID = avorschriftid  
+                    and nachfolger_vorschriftid = l_tar_vorschriftid 
+                    and beziehung_art = 40
+                    and ( ( datum_alle_typen is null and l_min_date_all_vehicles is not null
+                           OR datum_alle_typen is not null and l_min_date_all_vehicles is null
+                           OR (datum_alle_typen is not null and l_min_date_all_vehicles is not null 
+                               and to_char(datum_alle_typen, 'dd.mm.yyyy') != to_char(l_min_date_all_vehicles, 'dd.mm.yyyy') )
+                           )
+                        OR
+                           ( datum_neue_typen is null and l_min_date_new_types is not null
+                            OR datum_neue_typen is not null and l_min_date_new_types is null
+                            OR (datum_neue_typen is not null and l_min_date_new_types is not null 
+                                and to_char(datum_neue_typen, 'dd.mm.yyyy') != to_char(l_min_date_new_types, 'dd.mm.yyyy') )
+                           )
+                    );
+                    if(l_count >0 ) then
+                        return  42;   -- datums verstimmung
+                    end if;
+
+                end if;
+
+             -- l_min_date_all_vehicles date; -- l_min_date_new_types date; -- l_type_all_new varchar2(32);       
+            end if;
+
+        end if;
+
+    END LOOP;
+
+    -- 2: Reverse check: für alle Verknüpfungen in Regindex vergleich Existenz in Getex  
+    FOR curs in ( select distinct vrv.vorgaenger_vorschriftid, vrv.nachfolger_vorschriftid, vrv.beziehung_art, 
+                     datum_alle_typen, datum_neue_typen, homologation_serie
+                 FROM T_VORSCHRIFT_REF_VORSCHRIFT vrv
+                 where vrv.vorgaenger_vorschriftid = avorschriftid
+                 and vrv.beziehung_art in (10, 30, 40, 60, 102)
+                 order by vrv.nachfolger_vorschriftid, vrv.beziehung_art
+    )
+    LOOP 
+
+        l_tar_vorschriftid := curs.nachfolger_vorschriftid;
+
+        l_beziehung_artid := curs.beziehung_art;
+        l_homolog_serie := curs.homologation_serie;    
+        l_min_date_all_vehicles := curs.datum_alle_typen;
+        l_min_date_new_types := curs.datum_neue_typen;
+
+        select regindexid  into l_target_key 
+        from T_VORSCHRIFT where VORSCHRIFTID = curs.nachfolger_vorschriftid;
+
+        if(l_beziehung_artid in (10, 30, 20, 60, 102) )  then
+                -- check if the same exists in Regindex
+                 select count(*) into l_count
+                FROM mV_GETEX_VORSCHRIFT_RELATION vr
+                where vr.vorschriftid = avorschriftid
+                and targetid = l_target_key
+                and (l_beziehung_artid =  decode(vr.relationtype , 'PREDECESSOR', 10, 
+                       'SEEN_AS_EQUIVALENT_BY', 102,  'IS_SEEN_EQUIVALENT_BY_MULTI', 102, 'LINKED', 60,
+                       'IS_DEMANDED_BY_MULTI', 40, 'IS_DEMANDED_BY', 40, 0)
+                       OR
+                     ( vr.relationtype = 'IS_CHANGED_BY' and ( (instr(upper(vr.target_reg_number),'UN-R')=1 and l_beziehung_artid =30) OR l_beziehung_artid =20 ))  
+                );
+
+                if (l_count = 0) then
+                    return 2001;  -- entsprechende Verknüpfung in GETEX nicht vorhanden
+                end if;
+
+                -- Wenn Verknüpfung vorhanden , dann
+                 -- ein Vergleich der Unterschiede in Werten ist nicht notwendig, 
+                -- weil es in vorherigen LOOP durchgeführt wurde.
+        end if;
+
+    END LOOP;
+  --***************** Erweiterung   ********************** --
+    
+    -- 3: wenn Vorschrift in einigen relations IN Getex als  Nachfolger 
+    FOR cur_r in ( select distinct vr.v_id, vr.vorschriftid, vr.targetid as targetid, vr.relationtype relationtype, vr.reg_number, vr.target_reg_number,
+                        --vr.SC_TYPE,  vr.SC_VEHICLETYPE, vr.SC_TOPICID, vr.SC_DATE,
+                        tv.vorschriftid as tar_vorschriftid
+                     FROM MV_GETEX_VORSCHRIFT_RELATION vr
+                     join t_vorschrift tv on (tv.regindexid = vr.targetid)
+                     where vr.vorschriftid = avorschriftid -- 1109 --26240 
+                      and vr.relationtype  in (  'SUCCESSOR', --'IS_CONSOLIDATED_IN',--'CONSOLIDATES',
+                      'EQUIVALENT_TO', 'EQUIVALENT_TO_MULTI', 'CHANGES', 'DEMANDS', 'DEMANDS_MULTI') --
+                     order by tv.vorschriftid, vr.relationtype
+        )
+    LOOP
+            l_getex_v_key := cur_r.v_id;
+            l_target_key := cur_r.targetid;
+            l_tar_vorschriftid := cur_r.tar_vorschriftid;
+            l_relationtype := cur_r.relationtype;
+            l_target_reg_number := cur_r.target_reg_number;
+            l_reg_number := cur_r.reg_number;
+        -- v_id                     vorschriftid    targetid                              Tar_vorschriftid
+         -- 650c3dd380925e68c5cad396	1109	       650c3cff80925e68c5cad376   	CHANGES	 436
+         -- select * from t_vorschrift_ref_vorschrift where nachfolger_vorschriftID = 1109
+            if( l_relationtype = 'CHANGES' OR l_relationtype = 'SUCCESSOR' 
+                OR l_relationtype = 'EQUIVALENT_TO' ) then
+                
+               select count(*) --avorschriftid as vorgaenger_vorschriftID,   --l_tar_vorschriftid  as nachfolger_vorschriftid
+                into l_count
+                from T_VORSCHRIFT_REF_VORSCHRIFT 
+               where nachfolger_vorschriftID = avorschriftid 
+               and vorgaenger_vorschriftid = l_tar_vorschriftid
+               and (beziehung_art =  decode(l_relationtype, 'SUCCESSOR', 10, 'EQUIVALENT_TO', 102,  0)
+                     OR
+                    ( l_relationtype = 'CHANGES' and ( (instr(upper(l_target_reg_number),'UN-R')=1 and beziehung_art =30) or  beziehung_art =20 ))
+               );
+               if (l_count = 0) then
+                   return 1000;  
+               end if;  
+                   
+            elsif (l_relationtype = 'EQUIVALENT_TO_MULTI') then  
+                 select count(*) --avorschriftid as vorgaenger_vorschriftID,   --l_tar_vorschriftid  as nachfolger_vorschriftid
+                    into l_count
+                    from T_VORSCHRIFT_REF_VORSCHRIFT 
+                   where nachfolger_vorschriftID = avorschriftid 
+                   and vorgaenger_vorschriftid = l_tar_vorschriftid
+                   and beziehung_art = 102 and homologation_serie is not null and homologation_serie = 10;
+                   if (l_count = 0) then
+                       return 1102;   -- nicht vorhanden oder Homologation  falsch
+                   end if;  
+             
+             
+            elsif (l_relationtype = 'LINKED'   ) then
+                select count(*) into l_count 
+                from T_VORSCHRIFT_REF_VORSCHRIFT 
+                where nachfolger_vorschriftID = avorschriftid 
+                and vorgaenger_vorschriftid = l_tar_vorschriftid
+                and beziehung_art = 60;
+                if (l_count = 0) then
+                   return 61;       --beziehung_artid 60 not in Regindex
+                end if;
+            end if;
+        -- vergleiche für die Verknüfungen mit Datums angaben **********
+        -- vergleich mit   DEMANDEDS
+        if( l_relationtype = 'DEMANDS_MULTI' or l_relationtype = 'DEMANDS') then
+          -- gibt es diese Verknüpfung in Regindex ---
+            select count(*) into l_count 
+            from T_VORSCHRIFT_REF_VORSCHRIFT 
+            where nachfolger_vorschriftID = avorschriftid 
+            and vorgaenger_vorschriftid = l_tar_vorschriftid
+            and beziehung_art = 40;
+            if (l_count = 0) then
+                return 43;       -- beziehung_artid 40 not in Regindex
+            else
+                if (l_relationtype = 'DEMANDS_MULTI') then
+                    select HOMOLOGATION_SERIE into l_homolog_serie
+                    from T_VORSCHRIFT_REF_VORSCHRIFT 
+                    where nachfolger_vorschriftID = avorschriftid 
+                    and vorgaenger_vorschriftid = l_tar_vorschriftid
+                    and beziehung_art = 40;
+                    if (l_homolog_serie is null or l_homolog_serie != 10) then
+                        return 44; -- homolog_serie !=10 in regindex  for beziehung_artid 40 (not _multi)
+                    end if; -- fütr multi
+                end if;
+            end if;
+            -- check datumsangaben!!
+            if(0 = pck_ri_getex.fgetRelationDates_Getex( avorschriftid , l_target_key, l_relationtype ,
+                                           l_min_date_all_vehicles, l_min_date_new_types )
+            ) then
+             -- Mindestens ein datum ist nicht null   -- vergleich mit datum in regindex. 
+                select count(*)  into l_count
+                from T_VORSCHRIFT_REF_VORSCHRIFT 
+                where nachfolger_vorschriftID = avorschriftid  
+                and vorgaenger_vorschriftid = l_tar_vorschriftid 
+                and beziehung_art = 40
+                and ( ( datum_alle_typen is null and l_min_date_all_vehicles is not null
+                       OR datum_alle_typen is not null and l_min_date_all_vehicles is null
+                       OR (datum_alle_typen is not null and l_min_date_all_vehicles is not null 
+                           and to_char(datum_alle_typen, 'dd.mm.yyyy') != to_char(l_min_date_all_vehicles, 'dd.mm.yyyy') )
+                       )
+                    OR
+                       ( datum_neue_typen is null and l_min_date_new_types is not null
+                        OR datum_neue_typen is not null and l_min_date_new_types is null
+                        OR (datum_neue_typen is not null and l_min_date_new_types is not null 
+                            and to_char(datum_neue_typen, 'dd.mm.yyyy') != to_char(l_min_date_new_types, 'dd.mm.yyyy') )
+                       )
+                );
+                if(l_count >0 ) then
+                    return  45;   -- datums verstimmung bei check in erweiterung
+                end if;
+
+            end if;
+           
+        end if;
+        
+      END LOOP;
+    
+    -- 4:  Reverse check: für alle Verknüpfungen mit --S  in Regindex,  vergleich Existenz in Getex  
+    FOR curs in ( select distinct vrv.vorgaenger_vorschriftid, vrv.nachfolger_vorschriftid, vrv.beziehung_art, 
+                     datum_alle_typen, datum_neue_typen, homologation_serie
+                 FROM T_VORSCHRIFT_REF_VORSCHRIFT vrv
+                 where vrv.nachfolger_vorschriftid = avorschriftid
+                 and vrv.beziehung_art in (10, 30, 20, 40, 60, 102)
+                 order by vrv.nachfolger_vorschriftid, vrv.beziehung_art
+    )
+    LOOP 
+
+        l_tar_vorschriftid := curs.vorgaenger_vorschriftid;
+
+        l_beziehung_artid := curs.beziehung_art;
+        l_homolog_serie := curs.homologation_serie;    
+        l_min_date_all_vehicles := curs.datum_alle_typen;
+        l_min_date_new_types := curs.datum_neue_typen;
+
+        select regindexid  into l_target_key 
+        from T_VORSCHRIFT where VORSCHRIFTID =  curs.vorgaenger_vorschriftid;  
+        
+        if(l_beziehung_artid in (10, 30, 20,  60, 102) )  then
+          -- check if the same exists in Regindex
+             select count(*) into l_count
+            FROM MV_GETEX_VORSCHRIFT_RELATION vr
+            where vr.vorschriftid = avorschriftid
+            and targetid = l_target_key
+            and (l_beziehung_artid =  decode(vr.relationtype , 'SUCCESSOR', 10, 
+                   'EQUIVALENT_TO', 102,  'EQUIVALENT_TO_MULTI', 102, 'LINKED', 60,
+                   'DEMANDS_MULTI', 40, 'DEMANDS', 40, 0)
+                   OR
+                   ( vr.relationtype = 'CHANGES' AND
+                     ( (instr(upper(l_target_reg_number),'UN-R')=1 and l_beziehung_artid =30) or l_beziehung_artid =20 ) 
+                   )
+            ) ;      --'IS_CONSOLIDATED_IN'
+            
+            if (l_count = 0) then
+                return 3005;  -- entsprechende Verknüpfung in GETEX nicht vorhanden
+            end if;
+           -- Wenn Verknüpfung vorhanden , dann
+                 -- ein Vergleich der Unterschiede in Werten ist nicht notwendig, 
+                -- weil es in vorherigen LOOP durchgeführt wurde.
+        end if;
+         
+    END LOOP;     
+  
+    return 0;
+  END fCheckDifference_to_Getex_relations;
+
+
+
+  PROCEDURE pActualisiereVorschriftVerknuepfungen_vomGetex(avorschriftid IN NUMBER)
+  AS
+        l_target_key varchar2(64);
+        l_tar_vorschriftid number := 0;
+        l_prev_tar_vorschriftid number := 0;
+        l_relationtype varchar2(50);
+        l_getex_v_key varchar2(64);
+        
+        l_min_date_all_vehicles date;
+        l_min_date_new_types date;
+        l_type_all_new varchar2(32);
+        lst_rel_type varchar2(250);
+        lst_rel_type_rev varchar2(250);
+        l_ret_datum number :=0;
+        l_target_reg_number varchar2(250);
+        l_reg_number varchar2(250);
+    BEGIN
+
+        FOR cur in ( select distinct vr.vorschriftid, vr.targetid as targetid, vr.relationtype relationtype, vr.reg_number, vr.target_reg_number,
+                        --vr.SC_TYPE,  vr.SC_VEHICLETYPE,  vr.SC_DATE,
+                        tv.vorschriftid as tar_vorschriftid
+                     FROM MV_GETEX_VORSCHRIFT_RELATION vr
+                     join t_vorschrift tv on (tv.regindexid = vr.targetid)
+                     where vr.vorschriftid = avorschriftid  --436 
+                      and vr.relationtype not in ( 'SUCCESSOR',  'CONSOLIDATES', 'IS_CONSOLIDATED_IN',
+                      'EQUIVALENT_TO', 'EQUIVALENT_TO_MULTI', 'CHANGES', 'DEMANDS', 'DEMANDS_MULTI') --
+                     order by tv.vorschriftid, vr.relationtype
+        )
+        LOOP
+         --  select instr('', 'IS_CHANGED_BY')  from dual; 
+            l_target_key := cur.targetid;
+            l_tar_vorschriftid := cur.tar_vorschriftid;
+            l_relationtype := cur.relationtype;
+            l_target_reg_number := cur.target_reg_number;
+            l_reg_number := cur.reg_number;
+            if( l_relationtype = 'IS_CHANGED_BY' OR l_relationtype = 'PREDECESSOR' or l_relationtype = 'LINKED'
+                OR l_relationtype = 'SEEN_AS_EQUIVALENT_BY' ) then
+                --OR cur.relationtype = 'CONSOLIDATES'
+               MERGE INTO t_vorschrift_ref_vorschrift dest
+                 USING ( select avorschriftid as vorgaenger_vorschriftID, 
+                 decode(l_relationtype , 'IS_CHANGED_BY', 
+                            case when instr(upper(l_target_reg_number),'UN-R')=1  then 30 
+                                else 20 end , 
+                    'PREDECESSOR', 10, 'SEEN_AS_EQUIVALENT_BY', 102, 'LINKED', 60,
+                     0)  as beziehung_art ,
+                 l_tar_vorschriftid  as nachfolger_vorschriftid
+                         from dual ) src
+                    on (src.vorgaenger_vorschriftID = dest.vorgaenger_vorschriftID 
+                        and src.nachfolger_vorschriftid = dest.nachfolger_vorschriftid
+                        and src.beziehung_art = dest.beziehung_art)
+                  WHEN NOT MATCHED THEN
+                   INSERT (vorgaenger_vorschriftID,      nachfolger_vorschriftid,    beziehung_art    ) 
+                   values (src.vorgaenger_vorschriftID, src.nachfolger_vorschriftid, src.beziehung_art);
+
+            elsif (l_relationtype = 'IS_SEEN_EQUIVALENT_BY_MULTI') then
+               MERGE INTO t_vorschrift_ref_vorschrift dest
+                 USING ( select avorschriftid as vorgaenger_vorschriftID, 102  as beziehung_art ,  
+                         l_tar_vorschriftid  as nachfolger_vorschriftid,   10 as HOMOLOGATION_SERIE
+                         from dual ) src
+                    on (src.vorgaenger_vorschriftID = dest.vorgaenger_vorschriftID 
+                        and src.nachfolger_vorschriftid = dest.nachfolger_vorschriftid
+                        and src.beziehung_art = dest.beziehung_art)
+                  WHEN MATCHED THEN
+                    UPDATE SET HOMOLOGATION_SERIE = 10 where (HOMOLOGATION_SERIE is null or HOMOLOGATION_SERIE != 10)
+                  WHEN NOT MATCHED THEN
+                   INSERT (vorgaenger_vorschriftID,      nachfolger_vorschriftid,    beziehung_art,    HOMOLOGATION_SERIE) 
+                   VALUES (src.vorgaenger_vorschriftID, src.nachfolger_vorschriftid, src.beziehung_art, src.HOMOLOGATION_SERIE);
+             end if;
+
+              -- IS_DEMANDED_BY :
+            if( l_relationtype = 'IS_DEMANDED_BY' OR l_relationtype = 'IS_DEMANDED_BY_MULTI') then
+                --bestimme datum für PCV, wenn null dann für INDEPENDENT
+                l_ret_datum := fgetRelationDates_Getex(avorschriftid , l_target_key,
+                       l_relationtype , l_min_date_all_vehicles, l_min_date_new_types   );
+
+                MERGE INTO t_vorschrift_ref_vorschrift dest
+                 USING ( select avorschriftid as vorgaenger_vorschriftID, 40  as beziehung_art ,  
+                         l_tar_vorschriftid  as nachfolger_vorschriftid,  
+                         case when 'IS_DEMANDED_BY_MULTI' = l_relationtype 
+                              then 10 
+                              else 0 end as HOMOLOGATION_SERIE
+                         from dual 
+                 ) src
+                  ON (src.vorgaenger_vorschriftID = dest.vorgaenger_vorschriftID 
+                        and src.nachfolger_vorschriftid = dest.nachfolger_vorschriftid
+                        and src.beziehung_art = dest.beziehung_art) 
+                  WHEN MATCHED THEN
+                    UPDATE SET HOMOLOGATION_SERIE = src.HOMOLOGATION_SERIE , datum_neue_typen = l_min_date_new_types, 
+                         datum_alle_typen = l_min_date_all_vehicles
+                  WHEN NOT MATCHED THEN
+                    INSERT (vorgaenger_vorschriftID,      nachfolger_vorschriftid,    beziehung_art,    HOMOLOGATION_SERIE,
+                            datum_neue_typen,   datum_alle_typen) 
+                    VALUES (src.vorgaenger_vorschriftID, src.nachfolger_vorschriftid, src.beziehung_art, src.HOMOLOGATION_SERIE,
+                            l_min_date_new_types, l_min_date_all_vehicles );
+           end if;
+
+          end LOOP;
+        -- vorschrift  changes or successor or demands 
+        FOR cur_r in ( select distinct vr.v_id, vr.vorschriftid, vr.targetid as targetid, vr.relationtype relationtype, vr.reg_number, vr.target_reg_number,
+                        --vr.SC_TYPE,  vr.SC_VEHICLETYPE, vr.SC_TOPICID, vr.SC_DATE,
+                        tv.vorschriftid as tar_vorschriftid
+                     FROM MV_GETEX_VORSCHRIFT_RELATION vr
+                     join t_vorschrift tv on (tv.regindexid = vr.targetid)
+                     where vr.vorschriftid = avorschriftid  --436 
+                      and vr.relationtype  in ( 'SUCCESSOR', -- 'CONSOLIDATES', 'IS_CONSOLIDATED_IN',
+                      'EQUIVALENT_TO', 'EQUIVALENT_TO_MULTI', 'CHANGES', 'DEMANDS', 'DEMANDS_MULTI') --
+                     order by tv.vorschriftid, vr.relationtype
+        )
+        LOOP
+            l_getex_v_key := cur_r.v_id;
+            l_target_key := cur_r.targetid;
+            l_tar_vorschriftid := cur_r.tar_vorschriftid;
+            l_relationtype := cur_r.relationtype;
+            l_target_reg_number := cur_r.target_reg_number;
+            l_reg_number := cur_r.reg_number;
+            if( l_relationtype = 'CHANGES' OR l_relationtype = 'SUCCESSOR' 
+                OR l_relationtype = 'EQUIVALENT_TO' ) then
+                MERGE INTO t_vorschrift_ref_vorschrift dest
+                 USING ( select avorschriftid as nachfolger_vorschriftID, 
+                    decode(l_relationtype ,'CHANGES', case when instr(upper(l_target_reg_number),'UN-R')=1  then 30 
+                                                                 else 20 end ,
+                    'SUCCESSOR', 10, 'EQUIVALENT_TO', 102, 
+                     0)  as beziehung_art ,
+                 l_tar_vorschriftid  as vorgaenger_vorschriftid
+                         from dual ) src
+                    on (src.vorgaenger_vorschriftID = dest.vorgaenger_vorschriftID 
+                        and src.nachfolger_vorschriftid = dest.nachfolger_vorschriftid
+                        and src.beziehung_art = dest.beziehung_art)
+                  WHEN NOT MATCHED THEN
+                   INSERT (vorgaenger_vorschriftID,      nachfolger_vorschriftid,    beziehung_art    ) 
+                   values (src.vorgaenger_vorschriftID, src.nachfolger_vorschriftid, src.beziehung_art);
+                   
+             elsif (l_relationtype = 'EQUIVALENT_TO_MULTI') then
+               MERGE INTO t_vorschrift_ref_vorschrift dest
+                 USING ( select avorschriftid as nachfolger_vorschriftID, 102  as beziehung_art ,  
+                         l_tar_vorschriftid  as vorgaenger_vorschriftid,   10 as HOMOLOGATION_SERIE
+                         from dual ) src
+                    on (src.vorgaenger_vorschriftID = dest.vorgaenger_vorschriftID 
+                        and src.nachfolger_vorschriftid = dest.nachfolger_vorschriftid
+                        and src.beziehung_art = dest.beziehung_art)
+                  WHEN MATCHED THEN
+                    UPDATE SET HOMOLOGATION_SERIE = 10 where HOMOLOGATION_SERIE is null or HOMOLOGATION_SERIE != 10
+                  WHEN NOT MATCHED THEN
+                   INSERT (vorgaenger_vorschriftID,      nachfolger_vorschriftid,    beziehung_art,    HOMOLOGATION_SERIE) 
+                   VALUES (src.vorgaenger_vorschriftID, src.nachfolger_vorschriftid, src.beziehung_art, src.HOMOLOGATION_SERIE);
+             end if;
+             
+            -- DEMANDS :
+            if( l_relationtype = 'DEMANDS' OR l_relationtype = 'DEMANDS_MULTI') then
+                --bestimme datum für PCV, wenn null dann für INDEPENDENT
+                l_ret_datum := fgetRelationDates_Getex(l_tar_vorschriftid , l_getex_v_key,
+                       l_relationtype , l_min_date_all_vehicles, l_min_date_new_types   );
+
+                MERGE INTO t_vorschrift_ref_vorschrift dest
+                 USING ( select avorschriftid as nachfolger_vorschriftID, 40  as beziehung_art ,  
+                         l_tar_vorschriftid  as vorgaenger_vorschriftid,  
+                         case when 'DEMANDS_MULTI' = l_relationtype 
+                              then 10 
+                              else 0 end as HOMOLOGATION_SERIE
+                         from dual 
+                 ) src
+                  ON (src.vorgaenger_vorschriftID = dest.vorgaenger_vorschriftID 
+                        and src.nachfolger_vorschriftid = dest.nachfolger_vorschriftid
+                        and src.beziehung_art = dest.beziehung_art) 
+                  WHEN MATCHED THEN
+                    UPDATE SET HOMOLOGATION_SERIE = src.HOMOLOGATION_SERIE , datum_neue_typen = l_min_date_new_types, 
+                         datum_alle_typen = l_min_date_all_vehicles
+                  WHEN NOT MATCHED THEN
+                    INSERT (vorgaenger_vorschriftID,      nachfolger_vorschriftid,    beziehung_art,    HOMOLOGATION_SERIE,
+                            datum_neue_typen,   datum_alle_typen) 
+                    VALUES (src.vorgaenger_vorschriftID, src.nachfolger_vorschriftid, src.beziehung_art, src.HOMOLOGATION_SERIE,
+                            l_min_date_new_types, l_min_date_all_vehicles );
+            
+             
+            end if;
+                
+        END LOOP;
+
+        -- delete aus der Regindex nicht vorhandene Verknüpf. ----
+        select listagg(distinct decode(relationtype,   'IS_CHANGED_BY', case when instr(upper(l_target_reg_number),'UN-R')=1  then 30 
+                                                                 else 20 end,
+        'IS_DEMANDED_BY_MULTI', 40, 'IS_DEMANDED_BY', 40, 'LINKED', 60, 'PREDECESSOR', 10, 'SEEN_AS_EQUIVALENT_BY',102,
+        'IS_SEEN_EQUIVALENT_BY_MULTI', 102, 0),  ':') into lst_rel_type
+        FROM MV_GETEX_VORSCHRIFT_RELATION vr
+        where vorschriftid = avorschriftid
+        and relationtype not in ('CONSOLIDATES', 'IS_CONSOLIDATED_IN', 'SUCCESSOR', 'EQUIVALENT_TO', 'EQUIVALENT_TO_MULTI',
+                      'CHANGES',  'DEMANDS', 'DEMANDS_MULTI');
+              -- wenn 20 and 30 enthalten         
+  
+         
+         DELETE from t_vorschrift_ref_vorschrift
+         where vorgaenger_vorschriftID = avorschriftid  --436 
+         and beziehung_art not in (
+            select x.column_value  
+            --decode ( x.column_value, 'IS_CHANGED_BY', 30 , 'IS_DEMANDED_BY_MULTI', 40, 'IS_DEMANDED_BY', 40, 
+                 --   'LINKED', 60, 'PREDECESSOR', 10, 'SEEN_AS_EQUIVALENT_BY',102,  'IS_SEEN_EQUIVALENT_BY_MULTI', 102, 60)
+            from table ( apex_string.split(lst_rel_type , ':')  ) x  
+         );
+         
+        select listagg(distinct decode(relationtype, 'CHANGES', case when instr(upper(l_target_reg_number),'UN-R')=1  then 30 
+                                                                 else 20 end, 
+                    'DEMANDS_MULTI', 40, 'DEMANDS', 40, 'SUCCESSOR', 10, 'EQUIVALENT_TO',102,  'EQUIVALENT_TO_MULTI', 102, 'LINKED', 60, 0),
+                    ':')  into lst_rel_type_rev
+        FROM MV_GETEX_VORSCHRIFT_RELATION vr
+        where   vorschriftid = avorschriftid   -- v_id= '65f3e55329fdcf5349b2d2b5'
+        and relationtype  in ( 'SUCCESSOR', 'EQUIVALENT_TO', 'EQUIVALENT_TO_MULTI', --'CONSOLIDATES', 'IS_CONSOLIDATED_IN',
+                      'CHANGES',  'DEMANDS', 'DEMANDS_MULTI');
+       
+          --!!!!!!!!
+         DELETE  from t_vorschrift_ref_vorschrift
+         where nachfolger_vorschriftID = avorschriftid
+         and beziehung_art not in (select  y.column_value 
+             -- decode ( y.column_value, 'CHANGES', 30, 'DEMANDS_MULTI', 40, 'DEMANDS', 40, 
+               --      'SUCCESSOR', 10, 'EQUIVALENT_TO',102,  'EQUIVALENT_TO_MULTI', 102, 60)
+            from table ( apex_string.split(lst_rel_type_rev, ':')  ) y    
+         );
+         
+    END pActualisiereVorschriftVerknuepfungen_vomGetex;
+    
+END PCK_RI_GETEX;
+
+```
+
+
+## PCK_RI_HISTORY
+
+### SPECIFICATION
+
+```sql
+create or replace PACKAGE PCK_RI_HISTORY AS 
+
+
+-- Prozedur für die bearbeitung aller Zuordnungen zu einer Vorschrift
+  PROCEDURE pInsertVorschriftAlleRelation(avorschriftid in number, aThemaIds in varchar2, aLandids in varchar2,aBemerkung in varchar2, aloeschmarker in number default 0);
+--Prozedur für das bearbeiten einer Vorschrift + ein Thema
+PROCEDURE pInsertVorschriftThemaRelation(avorschriftid in number, aThemaId in number, aLandids in varchar2,aBemerkung in varchar2, aloeschmarker in number default 0);
+--Prozedur für das bearbeiten einer Vorschrift + ein Land
+PROCEDURE pInsertVorschriftLandRelation(avorschriftid in number, aThemaIds in varchar2, aLandid in number,aBemerkung in varchar2, aloeschmarker in number default 0);
+
+PROCEDURE pInsertVorschriftThemaRelationkeinLand(avorschriftid in number, aThemaId in number,aBemerkung in varchar2, aloeschmarker in number default 0) ;
+ PROCEDURE pInsertVorschriftLandRelationkeinThema(avorschriftid in number, aLandid in number,aBemerkung in varchar2, aloeschmarker in number default 0);
+ -- Berechnung des Ende Datums bei Vorgängervorschriften
+  procedure psetEndDateVorgaenger(avorschriftid number, anotvorschriftid number default 0);
+  
+  /*
+  Gibt einen html-String zurück, der die Unterschiede der beiden Eingabestrings
+  als zur Anzeige in einer Tabelle darstellt
+  */
+  function fDiff(aCurrent in varchar2, aPrevious in varchar2, aAktion in number default 20) return varchar2;
+  
+  
+  procedure pSetEndDateVorschrift(avorschriftid number);
+  
+END PCK_RI_HISTORY;
+```
+
+### BODY
+
+```sql
+
+create or replace PACKAGE BODY                      "PCK_RI_HISTORY" AS
+
+  PROCEDURE pInsertVorschriftAlleRelation(avorschriftid in number, aThemaIds in varchar2, aLandids in varchar2,aBemerkung in varchar2, aloeschmarker in number default 0) AS
+  BEGIN
+    --Ausmultiplizieren der Übergebenen Werte und Vergleich mit den bereits vorhandenen Eintragungen
+    merge into T_VORSCHRIFT_REF_THEMA_REF_LAND tvr
+    using (
+            with cte1 as (
+
+            Select avorschriftid as vorschriftid, aTh.column_value Themaid,   aL.column_value landid,aBemerkung as Bemerkung, aloeschmarker as geloescht
+            from table(apex_string.split(aThemaIds,':')) aTh
+            cross join table(apex_string.split(aLandids,':')) aL
+            ), cte2 as (
+                            Select * from  
+                            T_VORSCHRIFT_REF_THEMA_REF_LAND tvrtrl 
+                            where tvrtrl.vorschriftid = avorschriftid
+
+
+            )
+            Select distinct nvl(t1.vorschriftid, tvrtrl.vorschriftid ) vorschriftid, nvl(  t1.Themaid ,tvrtrl.Themaid)themaid,nvl(t1.landid , tvrtrl.landid)landid,
+            t1.bemerkung, case when t1.vorschriftid is null then 1 else aloeschmarker end as geloescht
+
+            from cte1 t1
+            full outer join cte2 tvrtrl on (t1.vorschriftid = tvrtrl.vorschriftid and 
+                                                                            t1.Themaid =tvrtrl.Themaid and
+                                                                            t1.landid = tvrtrl.landid and 
+                                                                            tvrtrl.vorschriftid = avorschriftid
+                                                                            )
+
+            where not exists (Select 1 from t_thema tt where t1.themaid = tt.parentid)
+    )u
+    on (tvr.vorschriftid = u.vorschriftid
+        and ( tvr.landid = u.landid or( tvr.landid is null and u.landid is null)) 
+        and  ( tvr.Themaid = u.Themaid or( tvr.Themaid is null and u.Themaid is null))
+        )
+    when matched then update set
+    tvr.bemerkung = u.bemerkung,
+    tvr.geloescht = u.geloescht,
+    tvr.letzte_aenderung_datum = sysdate
+    when not matched then INSERT  (vorschriftid, THEMAID, LANDID, 
+                                        GELOESCHT, BEMERKUNG, LETZTE_AENDERUNG_DATUM
+                                        )
+
+    values (u.vorschriftid, u.THEMAID, u.LANDID, 
+            u.GELOESCHT, u.BEMERKUNG, sysdate);
+
+
+
+  END pInsertVorschriftAlleRelation;
+
+
+
+  PROCEDURE pInsertVorschriftThemaRelation(avorschriftid in number, aThemaId in number, aLandids in varchar2,aBemerkung in varchar2, aloeschmarker in number default 0) AS
+  BEGIN
+    --Ausmultiplizieren der Übergebenen Werte und Vergleich mit den bereits vorhandenen Eintragungen
+    merge into T_VORSCHRIFT_REF_THEMA_REF_LAND tvr
+    using (
+            with cte1 as (
+
+                            Select avorschriftid as vorschriftid, aThemaId Themaid,   aL.column_value landid,aBemerkung as Bemerkung, aloeschmarker as geloescht
+                            from  dual
+                            cross join table(apex_string.split(aLandids,':')) aL
+            ), cte2 as (
+                            Select * from  
+                            T_VORSCHRIFT_REF_THEMA_REF_LAND tvrtrl 
+                            where tvrtrl.vorschriftid = avorschriftid and
+                                  tvrtrl.Themaid =  aThemaId
+
+
+            )
+            Select distinct nvl(t1.vorschriftid, tvrtrl.vorschriftid ) vorschriftid, nvl(  t1.Themaid ,tvrtrl.Themaid)themaid,nvl(t1.landid , tvrtrl.landid)landid,
+            t1.bemerkung, case when t1.vorschriftid is null then 1 else aloeschmarker end as geloescht
+
+            from cte1 t1
+            full outer join cte2 tvrtrl on (     t1.vorschriftid = tvrtrl.vorschriftid and 
+                                                t1.Themaid =tvrtrl.Themaid and
+                                                t1.landid = tvrtrl.landid 
+                                                                            )
+            where not exists (Select 1 from t_thema tt where t1.themaid = tt.parentid)
+    )u
+    on (tvr.vorschriftid = u.vorschriftid
+        and ( tvr.landid = u.landid or( tvr.landid is null and u.landid is null)) 
+        and  ( tvr.Themaid = u.Themaid or( tvr.Themaid is null and u.Themaid is null))
+        )
+    when matched then update set
+    tvr.bemerkung = u.bemerkung,
+    tvr.geloescht = u.geloescht,
+    tvr.letzte_aenderung_datum = sysdate
+    when not matched then INSERT  (vorschriftid, THEMAID, LANDID, 
+                                        GELOESCHT, BEMERKUNG, LETZTE_AENDERUNG_DATUM
+                                        )
+
+    values (u.vorschriftid, u.THEMAID, u.LANDID, 
+            u.GELOESCHT, u.BEMERKUNG, sysdate);
+
+
+
+  END pInsertVorschriftThemaRelation;
+
+  PROCEDURE pInsertVorschriftThemaRelationkeinLand(avorschriftid in number, aThemaId in number,aBemerkung in varchar2, aloeschmarker in number default 0) AS
+  BEGIN
+    --Ausmultiplizieren der Übergebenen Werte und Vergleich mit den bereits vorhandenen Eintragungen
+    merge into T_VORSCHRIFT_REF_THEMA_REF_LAND tvr
+    using (
+            with cte1 as (
+
+                            Select avorschriftid as vorschriftid, aThemaId Themaid,   aBemerkung as Bemerkung, aloeschmarker as geloescht
+                            from  dual
+
+            ), cte2 as (
+                            Select * from  
+                            T_VORSCHRIFT_REF_THEMA_REF_LAND tvrtrl 
+                            where tvrtrl.vorschriftid = avorschriftid and
+                                  tvrtrl.Themaid =  aThemaId and case when nvl(aloeschmarker,0) =0  then 0 else geloescht end = geloescht
+
+
+            )
+            Select distinct nvl(t1.vorschriftid, tvrtrl.vorschriftid ) vorschriftid, nvl(  t1.Themaid ,tvrtrl.Themaid)themaid, tvrtrl.landid landid,
+            t1.bemerkung, case when t1.vorschriftid is null then 1 else aloeschmarker end as geloescht
+
+            from cte1 t1
+            left outer join cte2 tvrtrl on (t1.vorschriftid = tvrtrl.vorschriftid and 
+                                            t1.Themaid =tvrtrl.Themaid and                                                                          
+                                            tvrtrl.vorschriftid = avorschriftid and
+                                            tvrtrl.Themaid =  aThemaId
+
+                                            )
+           where not exists (Select 1 from t_thema tt where t1.themaid = tt.parentid)
+    )u
+    on (tvr.vorschriftid = u.vorschriftid
+        and ( tvr.landid = u.landid or( tvr.landid is null and u.landid is null)) 
+        and  ( tvr.Themaid = u.Themaid or( tvr.Themaid is null and u.Themaid is null))
+        )
+    when matched then update set
+    tvr.bemerkung = u.bemerkung,
+    tvr.geloescht = u.geloescht,
+    tvr.letzte_aenderung_datum = sysdate
+    when not matched then INSERT  (vorschriftid, THEMAID, LANDID, 
+                                        GELOESCHT, BEMERKUNG, LETZTE_AENDERUNG_DATUM
+                                        )
+
+    values (u.vorschriftid, u.THEMAID, u.LANDID, 
+            u.GELOESCHT, u.BEMERKUNG, sysdate);
+
+
+
+  END pInsertVorschriftThemaRelationkeinLand;
+
+  PROCEDURE pInsertVorschriftLandRelation(avorschriftid in number, aThemaIds in varchar2, aLandid in number,aBemerkung in varchar2, aloeschmarker in number default 0) AS
+  BEGIN
+    --Ausmultiplizieren der Übergebenen Werte und Vergleich mit den bereits vorhandenen Eintragungen
+    merge into T_VORSCHRIFT_REF_THEMA_REF_LAND tvr
+    using (
+            with cte1 as (
+
+            Select avorschriftid as vorschriftid, aTh.column_value Themaid,   aLandid landid,aBemerkung as Bemerkung, aloeschmarker as geloescht
+            from table(apex_string.split(aThemaIds,':')) aTh
+
+            ), cte2 as (
+                            Select * from  
+                            T_VORSCHRIFT_REF_THEMA_REF_LAND tvrtrl 
+                            where tvrtrl.vorschriftid = avorschriftid and
+                                  tvrtrl.landid =  aLandid 
+
+
+            )
+            Select distinct nvl(t1.vorschriftid, tvrtrl.vorschriftid ) vorschriftid, nvl(  t1.Themaid ,tvrtrl.Themaid)themaid,nvl(t1.landid , tvrtrl.landid)landid,
+            t1.bemerkung, case when t1.vorschriftid is null then 1 else aloeschmarker end as geloescht, tvrtrl.VORSCHRIFT_REF_THEMA_REF_LANDID
+
+            from cte1 t1
+            full outer join cte2 tvrtrl on (t1.vorschriftid = tvrtrl.vorschriftid and 
+                                                                            t1.Themaid =tvrtrl.Themaid and
+                                                                            t1.landid = tvrtrl.landid and
+                                                                            tvrtrl.vorschriftid = avorschriftid and
+                                                                            tvrtrl.Landid =  aLandId
+                                                                            )
+
+    )u
+    on (tvr.vorschriftid = u.vorschriftid
+        and ( tvr.landid = u.landid or( tvr.landid is null and u.landid is null)) 
+        and  ( tvr.Themaid = u.Themaid or( tvr.Themaid is null and u.Themaid is null))
+        )
+    when matched then update set
+    tvr.bemerkung = u.bemerkung,
+    tvr.geloescht = u.geloescht,
+    tvr.letzte_aenderung_datum = sysdate
+    when not matched then INSERT  (vorschriftid, THEMAID, LANDID, 
+                                        GELOESCHT, BEMERKUNG, LETZTE_AENDERUNG_DATUM
+                                        )
+
+    values (u.vorschriftid, u.THEMAID, u.LANDID, 
+            u.GELOESCHT, u.BEMERKUNG, sysdate);
+
+
+
+  END pInsertVorschriftLandRelation; 
+
+
+
+   PROCEDURE pInsertVorschriftLandRelationkeinThema(avorschriftid in number, aLandid in number,aBemerkung in varchar2, aloeschmarker in number default 0) AS
+  BEGIN
+    --Ausmultiplizieren der Übergebenen Werte und Vergleich mit den bereits vorhandenen Eintragungen
+    merge into T_VORSCHRIFT_REF_THEMA_REF_LAND tvr
+    using (
+            with cte1 as (
+
+            Select avorschriftid as vorschriftid,    aLandid landid,aBemerkung as Bemerkung, aloeschmarker as geloescht
+            from dual
+
+            ), cte2 as (
+                            Select * from  
+                            T_VORSCHRIFT_REF_THEMA_REF_LAND tvrtrl 
+                            where tvrtrl.vorschriftid = avorschriftid and
+                                  tvrtrl.landid =  aLandid and case when nvl(aloeschmarker,0) =0  then 0 else geloescht end = geloescht
+
+
+            )
+            Select distinct nvl(t1.vorschriftid, tvrtrl.vorschriftid ) vorschriftid, nvl(t1.landid , tvrtrl.landid)landid,
+            t1.bemerkung, case when t1.vorschriftid is null then 1 else aloeschmarker end as geloescht, tvrtrl.VORSCHRIFT_REF_THEMA_REF_LANDID
+
+            from cte1 t1
+            full outer join cte2 tvrtrl on (t1.vorschriftid = tvrtrl.vorschriftid and 
+                                                                            t1.landid = tvrtrl.landid and
+                                                                            tvrtrl.vorschriftid = avorschriftid and
+                                                                            tvrtrl.Landid =  aLandId
+
+                                                                            )
+
+    )u
+    on (tvr.VORSCHRIFT_REF_THEMA_REF_LANDID = u.VORSCHRIFT_REF_THEMA_REF_LANDID
+          )
+    when matched then update set
+    tvr.bemerkung = u.bemerkung,
+    tvr.geloescht = u.geloescht,
+    tvr.letzte_aenderung_datum = sysdate
+    when not matched then INSERT  (vorschriftid,  LANDID, 
+                                        GELOESCHT, BEMERKUNG, LETZTE_AENDERUNG_DATUM
+                                        )
+
+    values (u.vorschriftid,u.LANDID, 
+            u.GELOESCHT, u.BEMERKUNG, sysdate);
+
+
+
+  END pInsertVorschriftLandRelationkeinThema; 
+
+
+  procedure psetEndDateVorgaenger(avorschriftid number, anotvorschriftid number ) as
+
+  begin
+  -- Ermittelt Alle Vorgänger und holt sich die Datumsangaben Alle Fahrzeuge und neue Typen und vergleicht diese mit dem aktuellen Datum
+          merge into t_vorschrift_ref_einsatzdatum_typ ret
+          using ( with cte1 as (
+          Select tvrv.vorgaenger_vorschriftid
+          from t_vorschrift_ref_vorschrift tvrv
+          where tvrv.beziehung_art = 10 and tvrv.nachfolger_vorschriftid = avorschriftid 
+          and  ( anotvorschriftid is null or tvrv.vorgaenger_vorschriftid != anotvorschriftid) -- exclude vorgänger, which date  may be is set currently  
+          -- ermitteln der vorgängervorschriften
+          ),
+          -- alle nachfolger der betroffen vorgänger vorschriften 
+          cte2 as (
+           Select tvrv.vorgaenger_vorschriftid, tre.einsatzdatum as einsatzdatum,tre2.einsatzdatum as neue_typen, tre.einsatzdatum_typid
+          from t_vorschrift_ref_vorschrift tvrv
+          join cte1 t1 on (tvrv.vorgaenger_vorschriftid = t1.vorgaenger_vorschriftid )
+          left outer join t_vorschrift_ref_einsatzdatum_typ tre on (tvrv.nachfolger_vorschriftid = tre.vorschriftid and tre.einsatzdatum_typid in(1021,1023,1031,1011))
+          left outer join t_vorschrift_ref_einsatzdatum_typ tre2 on (tvrv.nachfolger_vorschriftid = tre2.vorschriftid and tre2.einsatzdatum_typid in(1020,1022,1030,1010))
+          where tvrv.beziehung_art = 10 
+          -- ermitteln des niedrigsten datum
+          ), cte3 as ( Select vorgaenger_vorschriftid, min(einsatzdatum) as einsatzdatum,min(neue_typen) neue_typen,
+          -- unterteilung der unterschiedlichen datumsangaben
+                        case when  einsatzdatum_typid in (1023) then 1060 
+                             when  einsatzdatum_typid in (1021) then 1063
+                             else 1041
+                        end as Datum_type
+                        from cte2
+                        group by vorgaenger_vorschriftid,case when  einsatzdatum_typid in (1023) then 1060 
+                             when  einsatzdatum_typid in (1021) then 1063
+                             else 1041
+                        end 
+
+          )
+
+          Select vorgaenger_vorschriftid as vorschriftid,  nvl2(t1.einsatzdatum,t1.einsatzdatum-1,null ) as einsatzdatum,
+          case when nvl2(t1.einsatzdatum,t1.einsatzdatum-1,sysdate )< sysdate then '' 
+               when nvl2(neue_typen,neue_typen-1, sysdate) < sysdate then 'Achtung für neue Typen darf diese Vorschrift nicht mehr verwendet werden siehe Nachfolger Vorschrift' else '' end as hinweis,
+               Datum_type
+          from cte3 t1
+          left outer join t_vorschrift_ref_einsatzdatum_typ tre on (t1.vorgaenger_vorschriftid = tre.vorschriftid and tre.einsatzdatum_typid = t1.Datum_type)
+          where (nvl(tre.MANUELLE_EINTRAGUNG,20) = 20) --or (tre.einsatzdatum is null)
+          )u
+          on (ret.einsatzdatum_typid = u.Datum_type and ret.vorschriftid = u.vorschriftid)
+          when matched then update set
+          ret.EINSATZDATUM = u.EINSATZDATUM,
+          ret.EINSATZDATUM_TEXT = 'System Berechnung über Nachfolger',
+          ret.hinweis = u.hinweis
+          when not matched then insert (vorschriftid, EINSATZDATUM_TYPID, EINSATZDATUM, EINSATZDATUM_TEXT,MANUELLE_EINTRAGUNG)
+          values(u.vorschriftid,u.Datum_type,u.einsatzdatum, 'System Berechnung über Nachfolger', 20);
+
+
+  end psetEndDateVorgaenger;
+  
+  procedure pSetEndDateVorschrift(avorschriftid number) as
+  
+  begin 
+  for c in (Select avorschriftid as vorschriftid from dual
+            union 
+            Select nachfolger_vorschriftid from t_vorschrift_ref_vorschrift tvrv
+          where tvrv.beziehung_art = 10 and VORGAENGER_VORSCHRIFTID =avorschriftid )
+  loop
+  psetEndDateVorgaenger(c.vorschriftid, anotvorschriftid => avorschriftid);
+  end loop;
+  
+  end;
+
+  function fDiff(aCurrent in varchar2, aPrevious in varchar2, aAktion in number default 20) return varchar2 AS
+  BEGIN
+
+    return 
+    case when aCurrent = aPrevious and aAktion = 20 then
+        apex_escape.html(aCurrent)
+    when aCurrent is null and aPrevious is null then
+        null
+    when aCurrent is null or aAktion = 0 then
+        '<span style="color:red;text-decoration:line-through;background-color:pink;">' 
+           || apex_escape.html(aPrevious) || '</span>'
+    when aPrevious is null or aAktion = 10 then
+        '<span style="color:green; background-color:palegreen">' 
+           || apex_escape.html(aCurrent) || '</span>'
+    else
+        '<span style="color:green; background-color:palegreen">' || apex_escape.html(aCurrent) 
+           || '</span> <span style="color:red;text-decoration:line-through;background-color:pink;">' 
+           || apex_escape.html(aPrevious) || '</span>'        
+    end;
+
+
+/*    return case(aCurrent) -- ohne null-Erkennung
+    when aPrevious then
+        apex_escape.html(aCurrent)
+    else 
+        '<span style="color:green; background-color:palegreen">' || apex_escape.html(aCurrent) 
+           || '</span> <span style="color:red;text-decoration:line-through;background-color:pink;">' 
+           || apex_escape.html(aPrevious) || '</span>'
+    end;*/
+
+  END fDiff;
+
+END PCK_RI_HISTORY;
+```
+
+
+## PCK RI IMPORT
+
+### SPECIFICATION
+
+```sql
+create or replace PACKAGE PCK_RI_IMPORT AS 
+
+  procedure pImport_MFVS;
+
+END PCK_RI_IMPORT;
+```
+
+
+### BODY
+
+
+```sql
+create or replace PACKAGE BODY PCK_RI_IMPORT AS
+
+  procedure pImport_MFVS AS
+  BEGIN
+   
+Merge into T_MFV mf
+using ( with cte1 as (
+
+                        SELECT
+                            tx.mfv_id as mfv_name,   replace( tx.mfv_teil, 'MfV Teil ','') as mfv_teil,    tx.vorschtift,
+                            tx.kommentar_zur_vorschrift,  tx.thema_der_mfv,     tx.audi_oe_1,
+                            tx.link_zur_ablage_in_dms,  tx.et_arbeitskreis,     tx.link as jira_link
+                        FROM
+                            t_x_mfv tx
+                            where regexp_count(tx.mfv_teil,';') = 0
+                       union
+                       SELECT
+                            tx.mfv_id as mfv_name,   substr(replace( tx.mfv_teil, 'MfV Teil ',''),0,1) as mfv_teil,    tx.vorschtift,
+                            tx.kommentar_zur_vorschrift,  tx.thema_der_mfv,     tx.audi_oe_1,
+                            tx.link_zur_ablage_in_dms,  tx.et_arbeitskreis,     tx.link as jira_link
+                        FROM
+                            t_x_mfv tx
+                            where regexp_count(tx.mfv_teil,';') > 0
+
+            )
+        
+        
+        Select mfv.mfvid, t1.audi_oe_1,mt.mfv_teilid, t1.et_arbeitskreis,t1.link_zur_ablage_in_dms,t1.jira_link,t1.thema_der_mfv,t1.mfv_name
+        from cte1 t1
+        left outer join t_mfv mfv on (t1.mfv_name = mfv.mfv_name)
+        join t_mfv_teil mt on (t1.mfv_teil = mt.teil)
+        
+
+
+)u on (mf.mfvid =u.mfvid)
+when not matched then insert (mfv_teilid, SCHLAGWORTE, VORSCHRIFTENVERANTWORTLICHER, BETEILIGTE_OES, 
+                                LINK_MFV_DMS, JIRA_TICKET, MFV_THEMA, MFV_NAME)
+values(u.mfv_teilid, null, u.et_arbeitskreis, u.audi_oe_1,
+       u.link_zur_ablage_in_dms,u.jira_link,u.thema_der_mfv,u.mfv_name
+        
+        
+        );
+        
+        
+--mit bestehenden vorschriften verknüpfen
+
+Merge into T_MFV_REF_VORSCHRIFT mf
+using ( with cte1 as (
+
+                        SELECT
+                            tx.mfv_id as mfv_name,   replace( tx.mfv_teil, 'MfV Teil ','') as mfv_teil,    tx.vorschtift
+                        FROM
+                            t_x_mfv tx
+                            where regexp_count(tx.mfv_teil,';') = 0
+          ), cte2 as ( select distinct mfv_name,  mfv_teil,
+            trim(regexp_substr(t.vorschtift,'[^;]+',1, levels.column_value)) as vorschrift_einzel  , 
+            levels.column_value
+            
+            from cte1 t,
+            table( cast( multiset
+            (select level from dual 
+                    connect by level <= regexp_count(t.vorschtift,';')+1
+            ) as sys.OdciNumberList ) ) levels
+            
+            order by t.mfv_name, levels.column_value
+        )
+        
+        Select mfv.mfvid,tv.vorschriftid, tmrv.MFV_REF_VORSCHRIFTID, t1.vorschrift_einzel  as vorschrift
+        from cte2 t1 
+        join t_mfv_teil mt on (t1.mfv_teil = mt.teil)
+        join t_mfv mfv on (t1.mfv_name = mfv.mfv_name and mt.mfv_teilid = mfv.mfv_teilid)
+        left outer join t_vorschrift tv on (t1.vorschrift_einzel = tv.vorschrift_nummer)
+        left outer join T_MFV_REF_VORSCHRIFT tmrv on (mfv.mfvid = tmrv.mfvid and tv.vorschriftid = tmrv.vorschriftid)
+        where t1.vorschrift_einzel is not null and tv.vorschriftid is not null
+
+
+)u on (mf.MFV_REF_VORSCHRIFTID =u.MFV_REF_VORSCHRIFTID)
+when not matched then insert (mfvid, VORSCHRIFTID)
+values(u.mfvid, u.VORSCHRIFTID);
+  END pImport_MFVS;
+
+END PCK_RI_IMPORT;
+```
+
+
+
+
+## PCK RI IMPORTEUR
+
+### SPECIFICATION
+
+```sql
+create or replace PACKAGE PCK_RI_IMPORTEUR AS 
+
+    function fGenMatrixSQL(aLandId in number) return varchar2;
+    function fGenMatrixExport(aLandID in number) return blob;    
+    function fGenMatrixSQLExcel(aLandID in number) return varchar2;    
+    function fZipExports return blob; 
+    function fGetMatrixData(aLandID in number) return clob;
+    function fGenMatrixSQLJSON(aLandID in number) return varchar2;
+    PROCEDURE HTPPRN(PCLOB IN OUT NOCOPY CLOB) ;  
+    function fGetImporteurMetaData(aLandID in number) return clob;    
+
+END PCK_RI_IMPORTEUR;
+```
+
+
+### BODY
+
+
+```sql
+create or replace PACKAGE BODY PCK_RI_IMPORTEUR AS
+
+
+    function fZipExports return blob is
+        lZipFile blob;
+    begin
+    
+        for i in (
+            select distinct l.b_nummer, l.land, l.landid
+            from t_land l
+            join t_importeur_ref_land irl on (l.landid = irl.landid)
+            join t_importeur i on (irl.importeurid = i.importeurid and i.is_deleted = 0)
+            where l.status_datenstand = 10
+        ) loop
+            
+            apex_zip.add_file(
+                p_zipped_blob => lZipFile,
+                p_file_name => i.b_nummer || '_' || i.land || '.xlsx',
+                p_content => fGenMatrixExport(i.landid)
+            );
+            
+        end loop;
+        
+        apex_zip.finish(lZipFile);
+        
+        return lZipFile;
+        
+    end fZipExports;
+
+    function fGetMatrixData(aLandID in number) return clob as
+    
+        lClob clob;
+    
+    begin
+    
+        execute immediate fGenMatrixSQLJSON(aLandId) into lClob;
+        return lClob;
+    
+    
+    
+    end fGetMatrixData;
+
+    function fGenMatrixExport(aLandID in number) return blob as
+    
+            l_context apex_exec.t_context; 
+            l_export  apex_data_export.t_export;
+            lTitle varchar2(250);
+            lPrintConfig apex_data_export.t_print_config;  
+            lColumns apex_data_export.t_columns;
+            lColumnGroups apex_data_export.t_column_groups;
+            lCG1 pls_integer;
+            lCGImporteur pls_integer;
+        BEGIN
+        
+        
+            
+            /*    apex_session.create_session (
+                p_app_id   => 118,
+                p_page_id  => 1,
+                p_username => 'EXAMPLE USER' );*/
+        
+            select b_nummer || ' - ' || land into lTitle
+            from t_land
+            where landid = aLandID;
+       
+        
+            l_context := apex_exec.open_query_context(
+                p_location    => apex_exec.c_location_local_db,
+                p_sql_query   => fGenMatrixSQLExcel(aLandID) );
+                
+            lPrintConfig := apex_data_export.get_print_config(
+                p_page_header => lTitle,
+                p_page_header_font_color      => 'Black',
+                p_page_header_font_size       => 14,
+                p_page_header_font_weight     => apex_data_export.c_font_weight_bold               
+            );
+            
+            apex_data_export.add_column_group(
+                p_column_groups => lColumnGroups,
+                p_idx => lCG1,
+                p_name => 'K-VKO' );
+            
+            apex_data_export.add_column(
+                p_columns => lColumns,
+                p_name => 'KONZERN_CLUSTER',
+                p_heading => 'Konzern Cluster',
+                p_is_frozen => true
+            );
+            
+            apex_data_export.add_column(
+                p_columns => lColumns,
+                p_name => 'KVKO_LISTE',
+                p_heading => 'Name',
+                p_column_group_idx => lCG1
+            );
+            
+            apex_data_export.add_column(
+                p_columns => lColumns,
+                p_name => 'KVKO_MAILS',
+                p_heading => 'E-Mail-Adressen',
+                p_column_group_idx => lCG1
+            );   
+            
+            for i in (
+                select lpad(row_number() over (order by i.bezeichnung),2,'0') as idx, irl.importeurid, i.bezeichnung, i.verantwortung_importeur
+                from t_importeur_ref_land irl
+                join t_importeur i on (irl.importeurid = i.importeurid) where landid = aLandId and i.is_deleted = 0 order by i.bezeichnung
+            ) loop
+            
+                apex_data_export.add_column_group(
+                    p_column_groups => lColumnGroups,
+                    p_idx => lCGImporteur,
+                    p_name => i.bezeichnung || chr(10) || case i.verantwortung_importeur when 10 then 'Lead-Importeur' when 20 then 'Support-Importeur' end
+                );
+                apex_data_export.add_column(
+                    p_columns => lColumns,
+                    p_name => 'RVKO_' || i.idx || '_LISTE',
+                    p_heading => 'R-VKO',
+                    p_column_group_idx => lCGImporteur
+                );
+                apex_data_export.add_column(
+                    p_columns => lColumns,
+                    p_name => 'RVKO_' || i.idx || '_MAILS',
+                    p_heading => 'E-Mail-Adressen',
+                    p_column_group_idx => lCGImporteur
+                );                
+
+            end loop;   
+            
+        
+            l_export := apex_data_export.export (
+                                p_context   => l_context,
+                                p_print_config => lPrintConfig,
+                                p_columns => lColumns,
+                                p_column_groups => lColumnGroups,
+                                p_format    => apex_data_export.c_format_xlsx );
+        
+            apex_exec.close( l_context );
+            
+            return l_export.content_blob;
+        
+            
+        
+        EXCEPTION
+            when others THEN
+                apex_exec.close( l_context );
+                raise;
+        
+    end fGenMatrixExport;  
+    
+    
+    function fGetImporteurMetaData(aLandID in number) return clob is
+        lDaten clob;
+    begin
+    
+    
+        with cte1 as (
+            select irl.landid, i.importeurid, i.bezeichnung, case i.verantwortung_importeur when 10 then 'Lead-Importeur' when 20 then 'Support-Importeur' end as typ
+            from t_importeur_ref_land irl
+            join t_importeur i on (irl.importeurid = i.importeurid)
+            where landid = aLandID and i.is_deleted = 0 order by i.bezeichnung
+        )
+        select json_arrayagg(json_object(importeurid, bezeichnung, typ) order by bezeichnung returning clob) into lDaten
+        from cte1;
+        
+        return lDaten;
+    
+    
+    
+    end fGetImporteurMetaData;
+
+    PROCEDURE HTPPRN(PCLOB IN OUT NOCOPY CLOB) 
+    IS
+        V_TEMP VARCHAR2(32767);
+        V_CLOB CLOB := PCLOB;
+        V_AMOUNT NUMBER := 32000;
+        V_OFFSET NUMBER := 1;
+        V_LENGTH NUMBER := DBMS_LOB.GETLENGTH(PCLOB);
+        V_RESULT CLOB;
+    BEGIN
+     
+        WHILE V_LENGTH >= V_OFFSET LOOP
+            V_TEMP:= DBMS_LOB.SUBSTR(V_CLOB, V_AMOUNT, V_OFFSET);
+            HTP.PRN(V_TEMP);
+            V_OFFSET := V_OFFSET + LENGTH(V_TEMP);
+        END LOOP;
+         
+    END;
+
+      function fGenMatrixSQLExcel(aLandID in number) return varchar2 as
+          lSQL varchar2(32000);
+      begin          
+      
+          lSQL := q'[
+            with cte_kvko as (
+                select brkc.benutzerid, brkc.konzern_clusterid, b.nachname, b.vorname, b.abteilung, b.email, b.vorname || ' ' || b.nachname || ' (' || b.abteilung || ')' as name
+                from t_benutzer_ref_rolle brr
+                join t_benutzer_ref_konzern_cluster brkc on (brr.benutzerid = brkc.benutzerid)
+                join t_benutzer b on (brkc.benutzerid = b.benutzerid)
+                where brr.rolleid = 1060 -- K-VKO
+            ), cte_rvko as (
+                select ap.importeurid, ap.nachname, ap.vorname, ap.email_adresse as email, aprkc.konzern_clusterid, irl.landid, ap.vorname || ' ' || ap.nachname as name
+                from t_ansprechpartner ap
+                join t_ansprechpartner_ref_konzern_cluster aprkc on (ap.ansprechpartnerid = aprkc.ansprechpartnerid)
+                join t_importeur i on (ap.importeurid = i.importeurid)
+                join t_importeur_ref_land irl on (i.importeurid = irl.importeurid)
+                where ap.r_vko = 10 and i.is_deleted = 0 and irl.landid = ]' || aLandId || q'[
+            )
+            select kc.bezeichnung || case when kcrl.konzern_cluster_ref_landid is not null then ' (inaktiv)' end as konzern_cluster,
+                listagg(distinct kvko.name,'<br />') within group (order by kvko.name) as kvko_liste,
+                listagg(distinct kvko.email,'<br />') within group (order by kvko.name) as kvko_mails,]';
+                
+            for i in (select lpad(row_number() over (order by i.bezeichnung),2,'0') as idx, irl.importeurid from t_importeur_ref_land irl join t_importeur i on (irl.importeurid = i.importeurid) where landid = aLandId and i.is_deleted = 0 order by i.bezeichnung) loop
+                lSQL := lSQL || q'[ listagg(distinct rvko_]' || i.idx || q'[.name,chr(10)) within group (order by rvko_]' || i.idx || q'[.name) as rvko_]' || i.idx || q'[_liste,]';              
+                lSQL := lSQL || q'[ listagg(distinct rvko_]' || i.idx || q'[.email,chr(10)) within group (order by rvko_]' || i.idx || q'[.name) as rvko_]' || i.idx || q'[_mails,]';                                 
+            end loop;  
+            lSQL := substr(lSQL,1,length(lSQL)-1);         
+            
+            lSQL := lSQL || q'[    
+            from t_konzern_cluster kc
+            left outer join t_konzern_cluster_ref_land kcrl on (kc.konzern_clusterid = kcrl.konzern_clusterid and kcrl.landid = ]' || aLandId || q'[)
+            left outer join cte_kvko kvko on (kc.konzern_clusterid = kvko.konzern_clusterid)
+            ]';            
+                
+            for i in (select lpad(row_number() over (order by i.bezeichnung),2,'0') as idx, irl.importeurid from t_importeur_ref_land irl join t_importeur i on (irl.importeurid = i.importeurid) where landid = aLandId and i.is_deleted = 0 order by i.bezeichnung) loop
+                lSQL := lSQL || ' left outer join cte_rvko rvko_' || i.idx || ' on (kc.konzern_clusterid = rvko_' || i.idx || '.konzern_clusterid and rvko_' || i.idx || '.importeurid = ' || i.importeurid || ')
+                ';
+            end loop;            
+
+            lSQL := lSQL || q'[
+            group by kc.konzern_clusterid, kc.bezeichnung, kcrl.konzern_cluster_ref_landid
+            order by kc.bezeichnung
+            ]';
+            
+            return lSQL;
+            
+        end fGenMatrixSQLExcel;
+      
+      function fGenMatrixSQLJSON(aLandID in number) return varchar2 as
+          lSQL varchar2(32000);
+      begin          
+      
+          lSQL := q'[
+            with cte_kvko as (
+                select brkc.benutzerid, brkc.konzern_clusterid, b.nachname, b.vorname, b.abteilung, b.email, b.vorname || ' ' || b.nachname || ' (' || b.abteilung || ')' as name
+                from t_benutzer_ref_rolle brr
+                join t_benutzer_ref_konzern_cluster brkc on (brr.benutzerid = brkc.benutzerid)
+                join t_benutzer b on (brkc.benutzerid = b.benutzerid)
+                where brr.rolleid = 1060 -- K-VKO
+            ), cte_rvko as (
+                select ap.importeurid, ap.nachname, ap.vorname, ap.email_adresse as email, aprkc.konzern_clusterid, irl.landid, ap.vorname || ' ' || ap.nachname as name
+                from t_ansprechpartner ap
+                join t_ansprechpartner_ref_konzern_cluster aprkc on (ap.ansprechpartnerid = aprkc.ansprechpartnerid)
+                join t_importeur i on (ap.importeurid = i.importeurid)
+                join t_importeur_ref_land irl on (i.importeurid = irl.importeurid)
+                where ap.r_vko = 10 and i.is_deleted = 0 and irl.landid = ]' || aLandId || q'[
+            ), ctex as (
+                select kc.bezeichnung || case when kcrl.konzern_cluster_ref_landid is not null then ' (inaktiv)' end as konzern_cluster,
+                    listagg(distinct kvko.name,chr(10)) within group (order by kvko.name) as kvko_liste,
+                    listagg(distinct kvko.email,chr(10)) within group (order by kvko.name) as kvko_mails,]';
+                    
+                for i in (select lpad(row_number() over (order by i.bezeichnung),2,'0') as idx, irl.importeurid from t_importeur_ref_land irl join t_importeur i on (irl.importeurid = i.importeurid) where landid = aLandId and i.is_deleted = 0 order by i.bezeichnung) loop
+                    lSQL := lSQL || q'[ listagg(distinct rvko_]' || i.idx || q'[.name,chr(10)) within group (order by rvko_]' || i.idx || q'[.name) as rvko_]' || i.idx || q'[_liste,]';              
+                    lSQL := lSQL || q'[ listagg(distinct rvko_]' || i.idx || q'[.email,chr(10)) within group (order by rvko_]' || i.idx || q'[.name) as rvko_]' || i.idx || q'[_mails,]';                                 
+                end loop;  
+                lSQL := substr(lSQL,1,length(lSQL)-1);         
+                
+                lSQL := lSQL || q'[    
+                from t_konzern_cluster kc
+                left outer join t_konzern_cluster_ref_land kcrl on (kc.konzern_clusterid = kcrl.konzern_clusterid and kcrl.landid = ]' || aLandId || q'[)
+                left outer join cte_kvko kvko on (kc.konzern_clusterid = kvko.konzern_clusterid)
+                ]';            
+                    
+                for i in (select lpad(row_number() over (order by i.bezeichnung),2,'0') as idx, irl.importeurid from t_importeur_ref_land irl join t_importeur i on (irl.importeurid = i.importeurid) where landid = aLandId and i.is_deleted = 0 order by i.bezeichnung) loop
+                    lSQL := lSQL || ' left outer join cte_rvko rvko_' || i.idx || ' on (kc.konzern_clusterid = rvko_' || i.idx || '.konzern_clusterid and rvko_' || i.idx || '.importeurid = ' || i.importeurid || ')
+                    ';
+                end loop;            
+    
+                lSQL := lSQL || q'[
+                group by kc.konzern_clusterid, kc.bezeichnung, kcrl.konzern_cluster_ref_landid
+                order by kc.bezeichnung
+            )
+            select json_arrayagg(json_object(*) returning clob) as json_doc
+            from ctex
+            ]';
+            
+            return lSQL;
+            
+        end fGenMatrixSQLJSON;      
+
+
+      function fGenMatrixSQL(aLandId in number) return varchar2 AS
+          lSQL varchar2(32000);
+      BEGIN
+          
+          lSQL := q'[
+            with cte_kvko as (
+                select brkc.benutzerid, brkc.konzern_clusterid, b.nachname, b.vorname, b.abteilung, b.email, b.vorname || ' ' || b.nachname || ' (' || b.abteilung || ') <a href="mailto:' || b.email || '"><span class="fa fa-envelope-o"></span></a>' as name
+                from t_benutzer_ref_rolle brr
+                join t_benutzer_ref_konzern_cluster brkc on (brr.benutzerid = brkc.benutzerid)
+                join t_benutzer b on (brkc.benutzerid = b.benutzerid)
+                where brr.rolleid = 1060 -- K-VKO
+            ), cte_rvko as (
+                select ap.importeurid, ap.nachname, ap.vorname, ap.email_adresse as email, aprkc.konzern_clusterid, irl.landid, ap.vorname || ' ' || ap.nachname || ' <a href="mailto:' || ap.email_adresse || '"><span class="fa fa-envelope-o"></span></a>' as name
+                from t_ansprechpartner ap
+                join t_ansprechpartner_ref_konzern_cluster aprkc on (ap.ansprechpartnerid = aprkc.ansprechpartnerid)
+                join t_importeur i on (ap.importeurid = i.importeurid)
+                join t_importeur_ref_land irl on (i.importeurid = irl.importeurid)
+                where ap.r_vko = 10 and i.is_deleted = 0 and irl.landid = ]' || aLandId || q'[
+            )
+            select case when kcrl.konzern_cluster_ref_landid is not null then '<i>' end || kc.bezeichnung || case when kcrl.konzern_cluster_ref_landid is not null then ' <b>(inaktiv)</b></i>' end as konzern_cluster,
+                listagg(distinct kvko.name,'<br />') within group (order by kvko.name) as kvko_liste,]';
+                
+
+            for i in (select lpad(row_number() over (order by i.bezeichnung),2,'0') as idx, irl.importeurid from t_importeur_ref_land irl join t_importeur i on (irl.importeurid = i.importeurid) where landid = aLandId and i.is_deleted = 0 order by i.bezeichnung) loop
+                lSQL := lSQL || q'[ listagg(distinct rvko_]' || i.idx || q'[.name,'<br />') within group (order by rvko_]' || i.idx || q'[.name) as rvko_]' || i.idx || q'[_liste,]';                
+            
+            end loop; 
+            
+            lSQL := substr(lSQL,1,length(lSQL)-1);
+
+                
+                
+            lSQL := lSQL || q'[    
+            from t_konzern_cluster kc
+            left outer join t_konzern_cluster_ref_land kcrl on (kc.konzern_clusterid = kcrl.konzern_clusterid and kcrl.landid = ]' || aLandId || q'[)
+            left outer join cte_kvko kvko on (kc.konzern_clusterid = kvko.konzern_clusterid)
+            ]';
+            
+            for i in (select lpad(row_number() over (order by i.bezeichnung),2,'0') as idx, irl.importeurid from t_importeur_ref_land irl join t_importeur i on (irl.importeurid = i.importeurid) where landid = aLandId and i.is_deleted = 0 order by i.bezeichnung) loop
+                lSQL := lSQL || ' left outer join cte_rvko rvko_' || i.idx || ' on (kc.konzern_clusterid = rvko_' || i.idx || '.konzern_clusterid and rvko_' || i.idx || '.importeurid = ' || i.importeurid || ')
+                ';
+            end loop;
+            
+            lSQL := lSQL || q'[
+            group by kc.konzern_clusterid, kc.bezeichnung, kcrl.konzern_cluster_ref_landid
+            order by kc.bezeichnung
+            ]';
+            
+            return lSQL;
+          
+          
+          
+          
+          
+      END fGenMatrixSQL;
+
+END PCK_RI_IMPORTEUR;
+```
+
+
+
+## PCK RI JIRA
+
+### SPECIFICATION
+
+```sql
+create or replace PACKAGE PCK_RI_JIRA AS 
+ 
+ /**
+      Rudimentaere Abfrage direkt am Zugriffspunkt
+
+      @param p_request_data varchar2 Abfrageparameter z.B. search?jql=issueType%20=%20task
+      @return Antwort des Jira Servers
+    */
+  function fJiraRead(p_request_data varchar2 default 'NO REQUEST') return BLOB;
+  
+  
+    function fJiraPost(p_request_data varchar2 default 'NO REQUEST') return varchar2;  
+
+  /**
+      Abfrage via JQL-Query
+
+      @param p_jql varchar2 JQL-Query zb. 'issueType = task'
+      @return 
+    */
+  function fJiraJqlRequest(p_jql varchar2) return BLOB;
+
+  /**
+      Abfrage eines Vorgangs
+
+      @param p_issue_key varchar2 Key des Vorgangs zb. 'JIRA-4733'
+      @return 
+    */
+  function fJiraIssueRequest(p_issue_key varchar2) return BLOB;
+  
+    /* Prüft, ob die Verbindung funktioniert oder nicht (Tests ausstehend) */
+    function fJiraConnectionTest return number;  
+    
+  /* erstellt Ticket in Jira 
+  * params:
+   projektiD - für Technische Vorschriften (TVRB)  = '21724'
+   pMfvType  -        83 - informat;   11- interpretat
+   pVorschriftennr - nummer des Vorschr
+   pThemaMfv   -      Thema des Tickets
+   plstLaender  -    Liste von jira land code   '39775:39794'
+   plstAKreiseID   -    Liste von Ak Kurz   '1022:1003'
+   pDescription  - optionale beschreibung des Tickets
+   pMfvIds    -   zugewiesene MFVs
+   pKeywords      -    Liste von stichworter   'HEV:BEV'
+  
+  */
+  FUNCTION fErstelleJiraTicket (  projektiD Varchar2,   pMfvType Varchar2 
+        , pVorschriftennr Varchar2, pThemaMfv Varchar2  
+        , plstLaender Varchar2 default ''
+        , plstAKreiseID Varchar2 default ''
+        , pDescription Varchar2 default ''
+        , pMfvIds Varchar2 default ''
+        , pKeywords Varchar2 default ''
+  ) return varchar2;
+  
+END PCK_RI_JIRA;
+```
+
+
+### BODY
+
+
+```sql
+
+create or replace PACKAGE BODY PCK_RI_JIRA AS
+ g_jira_endpoint CONSTANT VARCHAR2(45 CHAR) := 'https://aen-jira-pre.in.audi.vwg:944/aenjira';
+  --g_jira_rest_api CONSTANT VARCHAR2(65 CHAR) := g_jira_endpoint || '/rest/api/latest/'; -- oder '/rest/api/2/'
+  g_jira_rest_api CONSTANT VARCHAR2(65 CHAR) := g_jira_endpoint || '/rest/api/2/'; -- oder '/rest/api/2/'  
+  g_jira_search_request CONSTANT VARCHAR2(70 CHAR) := 'search?maxResults=50&jql='; -- Parameter ist 'jql' 
+  g_jira_issue_request CONSTANT VARCHAR2(70 CHAR) := 'issue/'; -- gefolgt von ISSUEKEY-n + Parametern
+
+  g_jira_username CONSTANT VARCHAR2(10 CHAR) := 'FDF2OON';
+  g_jira_password CONSTANT VARCHAR2(35 CHAR) := 'iAm&5678ut7_ETB72_APEX_Regindex1';
+  
+  -- Jira fields ****************************
+  g_Vorschriftennr CONSTANT VARCHAR2(24 CHAR) := 'customfield_19970';
+  g_MfvType  CONSTANT VARCHAR2(24 CHAR) := 'issuetype';   --'83'- inform., '11'-interpret
+  g_themaMfv  CONSTANT VARCHAR2(24 CHAR) := 'summary';
+  g_description  CONSTANT VARCHAR2(24 CHAR) := 'description';
+
+  g_MfV_ids  CONSTANT VARCHAR2(24 CHAR) := 'customfield_11670';
+  g_addition_info  CONSTANT VARCHAR2(24 CHAR) := 'customfield_10698';
+  g_jira_land_ids  CONSTANT VARCHAR2(24 CHAR) := 'customfield_19985'; -- 'customfield_19885'; 16470
+  g_beteiligte_OEs CONSTANT VARCHAR2(24 CHAR) := 'customfield_13070';
+  
+  
+    function fJiraConnectionTest return number as
+        lResult number;
+    begin
+    
+        with cte1 as (
+            select pck_ri_jira.fJiraJqlRequest('issuetype = task') as daten
+            from dual
+        )
+        select count(*) into lResult
+        from cte1
+        outer apply (json_table(cte1.daten , 
+                       '$.issues[*]' error on error
+                       columns
+                       (
+                           id varchar2(18 char) path '$.fields.customfield_11670'
+                       )
+                   )); 
+        return 1;
+        
+    exception
+        when others then
+            return 0;        
+    
+    end fJiraConnectionTest;
+
+    function fJiraRead(p_request_data varchar2 default 'NO REQUEST') return BLOB AS
+        cWalletPath constant varchar2(250) := '/u00/app/oracle/admin/T181/wallet/VORSCHRIFTEN';
+        cWalletPwd constant varchar2(250) := 'pw4+wallet+VORS+T';
+
+        lHttpRequest         utl_http.req;
+        lHttpResponse        utl_http.resp;
+
+        xBlob blob;
+        lBuffer raw(32767);     
+
+    begin
+
+        UTL_HTTP.set_wallet('file:' || cWalletPath, cWalletPwd);
+
+        lHttpRequest := utl_http.begin_request (
+            url          => g_jira_rest_api || p_request_data, --g_jira_endpoint, 
+            method       => 'GET', 
+            http_version => 'HTTP/1.1'
+        );      
+
+        -- http basic auth
+        UTL_HTTP.set_authentication(lHttpRequest, g_jira_username,  g_jira_password); 
+
+        -- response holen
+        lHttpResponse := utl_http.get_response(lHttpRequest); 
+
+        dbms_lob.createtemporary(xBlob, false);
+        dbms_lob.open(xBlob, dbms_lob.lob_readwrite);
+
+        begin
+            loop
+
+                UTL_HTTP.read_raw(lHttpResponse, lBuffer);
+                dbms_lob.writeappend(xBlob, dbms_lob.getLength(lBuffer), lBuffer); --utl_raw.cast_to_raw(lBuffer));
+--                dbms_output.put_line(substr(lBuffer, 1, 1000));
+
+            end loop;
+
+            exception
+                WHEN UTL_HTTP.END_OF_BODY THEN
+                    UTL_HTTP.END_RESPONSE(lHttpResponse); 
+
+        end;  
+
+        return xBlob;
+        --return to_clob(p_request_data);
+    end fJiraRead ;
+    
+    
+    function fJiraPost(p_request_data varchar2 default 'NO REQUEST') return varchar2 AS
+        cWalletPath constant varchar2(250) := '/u00/app/oracle/admin/T181/wallet/VORSCHRIFTEN';
+        cWalletPwd constant varchar2(250) := 'pw4+wallet+VORS+T';
+
+        lHttpRequest         utl_http.req;
+        lHttpResponse        utl_http.resp;
+
+        xClob clob;
+        lOffset number := 1;        
+        lAmount    number(15) := 32767; 
+        lBufferRaw raw(32767); 
+        lResponseText        varchar2(32000);    
+        
+        lRequestData blob;
+
+    begin
+
+        UTL_HTTP.set_wallet('file:' || cWalletPath, cWalletPwd);
+
+        lHttpRequest := utl_http.begin_request (
+            url          => g_jira_rest_api || 'issue/', --g_jira_endpoint, 
+            method       => 'POST', 
+            http_version => 'HTTP/1.1'
+        );      
+        
+        --lRequestData := utl_raw.cast_to_raw(p_request_data);
+
+ 
+ 
+        -- http basic auth
+        UTL_HTTP.set_authentication(lHttpRequest, g_jira_username,  g_jira_password);
+        --utl_http.set_header(lHttpRequest, 'Content-Type', 'application/json;charset=UTF-8');         
+        utl_http.set_header(lHttpRequest, 'Content-Type', 'application/json');
+        utl_http.set_header(lHttpRequest, 'Content-Length', length(p_request_data));        
+        
+        -- Daten versenden
+        
+        utl_http.write_text(lHttpRequest,p_request_data);
+        
+        /*
+        begin
+            while lOffset < lengthb(lRequestData) loop
+                dbms_lob.read(lRequestData, lAmount, lOffset, lBufferRaw);
+                utl_http.write_raw(lHttpRequest, lBufferRaw);
+                lOffset := lOffset + lAmount;
+            end loop;
+        end;   
+        */
+
+        -- response holen
+        /*lHttpResponse := utl_http.get_response(lHttpRequest); 
+
+        dbms_lob.createtemporary(xClob, false);
+        dbms_lob.open(xClob, dbms_lob.lob_readwrite);*/
+
+        lHttpResponse := utl_http.get_response(lHttpRequest); 
+        
+        UTL_HTTP.READ_TEXT(lHttpResponse, lResponseText);
+        utl_http.end_response(lHttpResponse);         
+
+        return lResponseText;
+
+    end fJiraPost ;    
+
+  function fJiraJqlRequest(p_jql varchar2) return BLOB AS
+  BEGIN
+    return fJiraRead(p_request_data => g_jira_search_request || UTL_URL.ESCAPE (p_jql));
+  END fJiraJqlRequest;
+
+  function fJiraIssueRequest(p_issue_key varchar2) return BLOB AS
+  BEGIN
+    RETURN fJiraRead(p_request_data => g_jira_issue_request || p_issue_key);
+  END fJiraIssueRequest;
+  
+  FUNCTION  fErstelleJiraTicket (  projektiD Varchar2,   pMfvType Varchar2 
+        , pVorschriftennr Varchar2, pThemaMfv Varchar2
+        ,  plstLaender Varchar2 default ''
+        , plstAKreiseID Varchar2 default ''
+        , pDescription Varchar2 default ''
+        , pMfvIds Varchar2 default ''
+        , pKeywords Varchar2 default ''
+)
+ RETURN VARCHAR2  AS
+    lDaten varchar2(32000) ; 
+   lResponse varchar2(32000);
+   lKey varchar2(12);
+   lJiraid varchar2(16);
+   
+   lLaender_Field varchar2(250);
+   lAKreise_Field varchar2(250);
+   lstKeywords_Field varchar2(250);
+   nco_land number :=0;
+   nco_ak number :=0;
+   nco_keyw number :=0;
+
+   lstAKreiseKurz varchar2 (500);
+  BEGIN
+  
+     select count(*) into nco_keyw from table (apex_string.split( pKeywords ,':'));
+     if ( nco_keyw >0) then
+      with cte_kw as ( 
+         select column_value as cv from table (apex_string.split( pKeywords ,':')) where column_value is not null
+       )
+      select '["'|| listagg(cte_kw.cv, '","') || '"]' as res into lstKeywords_Field
+      from dual, cte_kw;
+     end if;
+     debug('lstKeywords_Field ', lstKeywords_Field);
+    -- lands 
+    select count(*) into nco_land from table (apex_string.split( plstLaender ,':'));
+    if ( nco_land >0) then
+      with cte as ( 
+         select column_value as cv from table (apex_string.split( plstLaender ,':')) where column_value is not null
+       )
+     select '[{"id":"'|| listagg(cte.cv, '"},{"id":"') || '"}]' as res into lLaender_Field
+     from dual, cte;
+    end if;
+     --dbms_output.put_line(lLaender_Field);
+      
+     -- AKs
+     select count(*) into nco_ak from table (apex_string.split( plstAKreiseID ,':'));
+     if ( nco_ak >0) then
+        with cte_ak as ( 
+           select column_value as akid from table (apex_string.split( plstAKreiseID ,':')) where column_value is not null  
+         )
+        select listagg(bak.kurz,':') within group (order by bak.kurz) into lstAKreiseKurz
+        from T_ET_B_AK bak, cte_ak ctak where ctak.akid = bak.et_b_akid;
+        
+         with cte_akk as ( 
+           select column_value as ak from table (apex_string.split( lstAKreiseKurz ,':')) where column_value is not null
+         )
+         select '[{"name":"'|| listagg(cte_akk.ak, '"},{"name":"') || '"}]' into lAKreise_Field
+         from dual, cte_akk;
+     end if;
+     --dbms_output.put_line(lAKreise_Field);
+     --debug('lAKreise_Field ', lAKreise_Field);
+     lDaten := '{   "fields": {
+       "project": { "id": "'|| projektiD || '" },
+       "summary": "'|| pThemaMfv|| '",
+       "issuetype": {  "id": "'|| pMfvType || '"  },
+       "'|| g_Vorschriftennr||'": "' || pVorschriftennr|| '" ';
+       
+       if ( pMfvIds is not null) then
+         lDaten := lDaten ||', "' ||g_MfV_ids || '":"' || pMfvIds || '"';
+       end if;
+       --"customfield_13070": "T EMANO 11-16",
+       if ( pDescription is not null) then
+         lDaten := lDaten ||', "description":"' || pDescription || '"';
+       end if;
+       
+      -- debug('lDaten ', lDaten);
+       -- listen --
+       
+       if ( nco_keyw >0) then
+         lDaten := lDaten ||', "labels":' || lstKeywords_Field ;
+       end if;
+       debug('lDaten ', lDaten);
+       if ( nco_land >0) then
+          lDaten := lDaten ||', "' ||g_jira_land_ids || '":' || lLaender_Field ;
+          --debug('lDaten ', lDaten);
+          --debug('lLaender_Field ', lLaender_Field);
+         --lDaten := lDaten || lLaender_Field ;
+       end if;
+       debug('lDaten ', substr(lDaten,100,240));
+       if ( nco_ak >0) then
+          lDaten := lDaten ||', "components":' || lAKreise_Field ;
+       end if;
+       
+    lDaten := lDaten ||'} }';
+    --debug('lDaten ', substr(lDaten,100,240));
+    lResponse := pck_ri_jira.fJiraPost(lDaten);
+    debug('lResponse ', substr(lResponse,18,70));
+    --dbms_output.put_line(lResponse);
+    RETURN lResponse;
+  END;
+                                               
+ 
+END PCK_RI_JIRA;
+
+```
+
+
+
+
+## PCK RI JIRA IMPORT
+
+### SPECIFICATION
+
+
+```sql
+
+create or replace PACKAGE PCK_RI_JIRA_IMPORT AS 
+ 
+  /**
+      Abfrage von oe_leiter daten für alle Jira tickets aus der Tabelle
+      T_JIRA_MFV und befüllung der tabelle T_JIRA_MFV_OE_LEITER
+    */
+  PROCEDURE pReadJiraTasks_oe_leiter;
+
+  /**
+   befüllt T_MFV  mit daten aus t_jira_MFV, T_Jira_MFV_schlagwort
+   */
+   PROCEDURE pactualizeMFV;
+
+END PCK_RI_JIRA_IMPORT;
+```
+
+
+### BODY
+
+```sql
+create or replace PACKAGE BODY PCK_RI_JIRA_IMPORT AS
+                                                
+--
+PROCEDURE pReadJiraTasks_oe_leiter is
+
+  nmfv_id number :=0;
+  cjira_key varchar2(32);
+  --for test
+  co  number :=0;
+  err_code varchar2(32);
+  err_msg varchar2(210);
+
+BEGIN
+   delete from T_JIRA_MFV_OE_LEITER;
+   delete from  T_JIRA_MFV_SCHLAGWORT;
+   delete from T_JIRA_MFV;
+   commit;
+   -- get all task tickets
+   INSERT INTO T_JIRA_MFV (JIRA_MFVID, Mfv_name, MFV_teil, MFV_Thema, Beteiligte_OES, Status_Umgebung, LinkSammelOrdner, AK_kurz, jira_key )
+        SELECT TO_NUMBER(jiraid), Mfv_name,   MFV_teil,     Thema, Beteiligte_OES, Status_Umgebung, LinkSammelOrdner, AK_kurz, jirakey
+          FROM json_table(
+              pck_ri_jira.fJiraJqlRequest('issuetype = task AND status = closed'),  
+              '$.issues[*]'
+              columns (
+                   jiraid varchar2(250) path '$.id',
+                   Mfv_name varchar2(250) path '$.fields.customfield_11670',
+                   --cf19470 varchar2(250) path '$.fields.customfield_19470',
+                   --cf10288 varchar2(250) path '$.fields.customfield_10288',
+                   MFV_teil varchar2(250) path '$.fields.customfield_11406.value'      --  Teil
+                   , Thema varchar2(250) path '$.fields.summary'            -- Thema der MfV
+                   , Beteiligte_OES  varchar2(250) path '$.fields.customfield_13070'   -- abteilung OE
+                   , Status_Umgebung    varchar2(250)  path '$.fields.environment'        -- Umgebung-status
+                   , LinkSammelOrdner  varchar2(250) path '$.fields.customfield_11814'
+                   , AK_kurz   varchar2(250) path '$.fields.components.name'
+                   , jirakey varchar2(32) path '$.key'
+            )
+       ) x;
+   commit;
+
+   FOR cu  in (select JIRA_MFVID, jira_key  from T_JIRA_MFV)
+   LOOP
+      cjira_key := cu.jira_key;
+      nmfv_id := cu.JIRA_MFVID;
+      -- schlagwoerter
+      INSERT INTO T_JIRA_MFV_SCHLAGWORT (JIRA_MFVID, SCHLAGWORT)
+       select jiraid, x.labels
+         from json_table(
+            pck_ri_jira.fJiraJqlRequest('issuetype = task AND key = "' || cjira_key || '"'), --(cf[19470] ~ "\"FMVSS 124\"" or cf[10288] ~ 19101)'),
+            '$.issues[*]'
+            columns (
+                   jiraid varchar2(250) path '$.id',
+                   nested path '$.fields.labels[*]'                   -- Stichwörter
+                       columns (
+                           labels varchar2(250) path '$'
+                       )
+            )
+        ) x;
+
+     -- leiter
+     INSERT into T_JIRA_MFV_OE_LEITER (JIRA_MFVID, Mfv_name, jirakey, assignee, assignee_email,  jiraId_aus_mfv)
+                    SELECT  to_number(jiraid), Mfv_name, jirakey, assignee, assignee_email, to_number(nmfv_id) 
+            FROM json_table(
+          pck_ri_jira.fJiraJqlRequest(
+          'issuetype = Freigabe AND issueFunction in linkedIssuesOf("project = TVRB AND type = Task AND status = closed AND key = '|| cjira_key ||'")'),
+          '$.issues[*]' columns (
+                       jiraid varchar2(250) path '$.id',
+                       Mfv_name varchar2(250) path '$.fields.customfield_11670',
+                       jirakey varchar2(128) path '$.key',
+                       assignee varchar2(128) path '$.fields.assignee.displayName',
+                       assignee_email varchar2(128) path '$.fields.assignee.emailAddress'
+                      )
+           ) x;  
+      co := co+1;
+
+      if (co >= 50) then
+         exit;
+      end if;
+   END LOOP;
+    exception
+      WHEN NO_DATA_FOUND THEN
+        debug('except pImportJiraTasks: no dada available for this record');
+        --DBMS_OUTPUT.PUT_LINE('except pReadJiraTasks_oe_leiter: no dada available for this record');
+      WHEN OTHERS THEN
+      err_code := SQLCODE;
+      err_msg := SUBSTR(SQLERRM, 1, 200);
+        debug('except pImportJiraTasks: co=' || to_char(err_code) , 'cu.JIRA_MFVID=' || to_char(nmfv_id) ||'; err_msg: '|| err_msg); 
+
+   commit;
+END;
+
+PROCEDURE pactualizeMFV is
+
+  err_code varchar2(32);
+  err_msg varchar2(210);
+BEGIN
+
+    --select * from T_Jira_MFV where mfv_name not in (select mfv_name from T_MFV)
+   -- ERSTELLUNG_DATUM,GUELTIGKEITSDATUM, LETZTE_AENDERUNG_DATUM,LETZTE_AENDERUNG_BENUTZERID,
+    savepoint start_pr;
+     insert into T_MFV (BETEILIGTE_OES, MFV_NAME, MFV_THEMA, JIRA_TICKET, --MFVID,  
+        MFV_TEILID --, SCHLAGWORTE --, VORSCHRIFTENVERANTWORTLICHER,LINK_MFV_DMS, KSUID, DMS_DOKUMENTENSTATUS, 
+        )
+      --VALUES ( )
+      select  m.BETEILIGTE_OES, m.MFV_NAME, m.MFV_THEMA, m.JIRA_KEY, --JIRA_MFVID, 
+           case when instr(MFV_TEIL, 'Teil 1') >1 then 1000
+               when instr(MFV_TEIL, 'Teil 2') >1 then 1001
+            else 1002  end  mfv_teil--, -- LINKSAMMELORDNER,    --STATUS_UMGEBUNG
+           --listagg(s.schlagwort, ', ') within group (order by s.schlagwort)  schlagw  
+       from T_Jira_MFV m
+       where m.JIRA_KEY not in (select JIRA_ticket from T_MFV where JIRA_ticket is not null);
+   --commit;   
+     for cu in ( select m.jira_key jkey, m.mfv_name mfv_name, 
+                 listagg(s.schlagwort, ', ') within group (order by s.schlagwort) schlagw
+                  from T_JIRA_MFV m
+                 join  T_JIRA_MFV_SCHLAGWORT s on (s.jira_mfvid = m.JIRA_MFVID)
+                 group by  m.mfv_name, m.jira_key )
+     loop
+      update T_MFV  set schlagworte = cu.schlagw where jira_ticket= cu.jkey;
+     end loop;
+     EXCEPTION 
+     when others then
+     err_code := SQLCODE;
+      err_msg := SUBSTR(SQLERRM, 1, 180);
+       rollback to start_pr;
+        debug ('exception in pactualizeMFV','sqlcode:'|| err_code ||'; err_msg:'|| err_msg);
+END;
+
+END PCK_RI_JIRA_IMPORT;
+```
+
+
+## PCK_RI_MAINTENANCE
+
+### SPECIFICATION
+
+```sql 
+create or replace PACKAGE PCK_RI_MAINTENANCE AS 
+ 
+ /*
+ * adds  filds MEILENSTEIN to each MS of suche with sucheid = asuchid
+ */
+  procedure paddMeilensteintoDaten(asuchid number );
+
+END PCK_RI_MAINTENANCE;
+
+```
+
+### BODY
+
+```sql
+
+create or replace PACKAGE BODY  "PCK_RI_MAINTENANCE" AS
+--****************************************************
+   -- *
+   -- ********************************************
+
+ procedure paddMeilensteintoDaten(asuchid number )
+as
+    jobj_1 clob :=null;
+    jobj_2 clob:=null;
+    jobj_3 clob:=null;
+    cur_suchid number :=0;
+    s_id number :=0;
+    co number :=0;
+    arr_dat clob :='[';
+begin
+for cur in (
+            select * from (
+                select sucheid, row_number() over( order by rownum) rn,  
+                --to_date(t.ms,'dd.mm.yyyy') ms_d,  to_date(t.sop, 'dd.mm.yyyy') sop, to_date(t.eop, 'dd.mm.yyyy') eop, 
+                t.laender laen , t.themen them,   t.smode smod, t.ckd_fbu_mode fbu_m,   t.l_risk l_r, t.h_risk h_r ,
+                t.ms ms_d, t.sop sop, t.eop eop
+                from t_suche_json t, json_table (t.suchdaten, '$[*]'  columns  (
+                nested path '$[*]' COLUMNS(
+                   laender varchar2(500) PATH '$.LAENDER',
+                    themen varchar2(2000) path '$.THEMEN',
+                    l_risk number path '$.LOW_RISK',
+                    h_risk number path '$.HIGH_RISK',
+                    ms varchar2(20) path '$.DATUM_MEILENSTEIN',
+                    sop varchar2 path '$.DATUM_SOP',
+                    eop varchar2(20) path '$.DATUM_EOP',
+                    smode varchar2(20) path '$.SUCHTYP',
+                    ckd_fbu_mode number path'$.CKD_FBU_MODE'
+                ) ) ) t   where sucheid = asuchid  
+            )
+    )
+
+  loop
+    co:= co+1;
+
+    if (co=1) then
+        with cte as ( SELECT cur.sucheid suchid, json_object('MEILENSTEIN'  VALUE co,
+         'DATUM_MEILENSTEIN' VALUE cur.ms_d,
+         'DATUM_SOP' VALUE cur.sop,
+         'DATUM_EOP' VALUE cur.eop,
+         'LAENDER' VALUE cur.laen,
+         'THEMEN' VALUE cur.them,
+         'SUCHTYP' VALUE cur.smod,
+         'CKD_FBU_MODE' VALUE cur.fbu_m ,
+         'HIGH_RISK' VALUE cur.h_r,
+         'LOW_RISK' VALUE cur.l_r ) jobject  from dual
+        )
+         select jobject, suchid into jobj_1, cur_suchid from cte;
+        -- dbms_output.put_line('s_id:'||cur_suchid ||', suche:'|| TO_CHAR(SUBSTR (jobj_1,0,3999)));
+    elsif (co=2) then
+        with cte as (  SELECT cur.sucheid suchid, json_object('MEILENSTEIN'  VALUE co,
+         'DATUM_MEILENSTEIN' VALUE cur.ms_d,
+         'DATUM_SOP' VALUE cur.sop,
+         'DATUM_EOP' VALUE cur.eop,
+         'LAENDER' VALUE cur.laen,
+         'THEMEN' VALUE cur.them,
+         'SUCHTYP' VALUE cur.smod,
+         'CKD_FBU_MODE' VALUE cur.fbu_m ,
+         'HIGH_RISK' VALUE cur.h_r,
+         'LOW_RISK' VALUE cur.l_r ) jobject  from dual
+        )
+        select jobject, suchid into jobj_2, cur_suchid from cte;
+      --  dbms_output.put_line('s_id:'||cur_suchid ||', suchid:'|| TO_CHAR(SUBSTR (jobj_2,0,3999)));
+    else
+        with cte as ( SELECT cur.sucheid suchid, json_object('MEILENSTEIN'  VALUE co,
+         'DATUM_MEILENSTEIN' VALUE cur.ms_d,
+         'DATUM_SOP' VALUE cur.sop,
+         'DATUM_EOP' VALUE cur.eop,
+         'LAENDER' VALUE cur.laen,
+         'THEMEN' VALUE cur.them,
+         'SUCHTYP' VALUE cur.smod,
+         'CKD_FBU_MODE' VALUE cur.fbu_m ,
+         'HIGH_RISK' VALUE cur.h_r,
+         'LOW_RISK' VALUE cur.l_r ) jobject  from dual
+        )
+        select jobject, suchid into jobj_3, cur_suchid from cte;
+       -- dbms_output.put_line('s_id:'||cur_suchid ||', suchid:'|| TO_CHAR(SUBSTR (jobj_3,0,3999)));
+    end if;
+
+  end loop;
+  if(0 < co) then
+      dbms_lob.append(arr_dat, jobj_1);
+      if(jobj_2 is not null) then
+         dbms_lob.append(arr_dat,',');
+         dbms_lob.append(arr_dat, jobj_2);
+       end if;
+       if(jobj_3 is not null) then
+         dbms_lob.append(arr_dat,',');
+         dbms_lob.append(arr_dat, jobj_3);
+       end if;
+      dbms_lob.append(arr_dat,']');
+
+      update t_suche_json set suchdaten = arr_dat where sucheid = asuchid;
+  end if;
+
+end paddMeilensteintoDaten; -- proced
+
+/*
+*
+*/
+END PCK_RI_MAINTENANCE;
+
+```
+
+
+
+## PCK RI SUCHE
+
+### SPECIFICATION
+
+
+```sql
+
+
+create or replace PACKAGE PCK_RI_SUCHE AS 
+
+    /* 
+        Erstellt einen einen Eintrag in T_SUCHE_TEMP 
+     */
+    function fGetNewTempSuche (aMeilensteinNr number, aBenutzerID in number default pck_ri.fGetUserId) return number;
+    function fGetNewTempJSONSuche (aMeilensteinNr number, aBenutzerID in number default pck_ri.fGetUserId) return number;
+    /* 
+        Speichert eine Suche mit einem Suchparameter-Triplet für den angegebenen Benutzer 
+     */
+    function fSaveSuche (aBezeichnung in varchar2, aBeschreibung in varchar2, 
+            aSucheTempIDs in varchar2, aBenutzerId in number default pck_ri.fGetUserId, amanuel in number default 10) return number;
+    
+    /* 
+      *  Speichert eine Suche mit einem Suchparameter-Triplet für den angegebenen Benutzer 
+      *  speicherung  explizit 0 und autmatisch 10  (auch in T_MS_suchergebniss)
+     */
+    function fSaveSuche2 (abezeichnung in varchar2, abeschreibung in varchar2, asucheid IN NUMBER,
+             abenutzerId in number default pck_ri.fGetUserId, amanuell in number default 10) return number;
+    /* 
+      *  Sucht ergebnisse für Suchparameter und meilenstein
+      *  returns  list 
+     */
+    function fSearchResults(asucheid number , ameilenstein number) RETURN T_SUCHE_ERGEBNIS_LISTE;
+            /*
+            * Speichert eine Suche in T_MS_suchergebniss
+            */
+    procedure psaveMSSuchergebnis ( asucheid IN NUMBER , avorschriftid IN NUMBER,athemaid IN NUMBER , aregelnummer IN NUMBER ,
+                                 ams_parameterid IN NUMBER , azeitpunkt date, arisiko number,
+                                  alandid IN NUMBER , ameilenstein IN NUMBER ,aequvalentid in number);
+     
+    procedure psearchandsaveresults(asucheid number   );
+    
+    PROCEDURE pupdatesucheBezeichnung ( abezeichnung IN VARCHAR2,
+                                    abeschreibung   IN   VARCHAR2,
+                                    asucheid        IN NUMBER,
+                                    abenutzerid     IN   NUMBER, 
+                                    amanuell        IN  NUMBER DEFAULT 10    -- manuell
+    ) ;
+    
+    /*
+    * speichert bestehende suche unter neuem suchId  (z. B. für anderen benutzer)
+    */ 
+    procedure psaveSucheAlternative(asucheid IN number, abezeichnung IN VARCHAR2 default null, abeschreibung IN VARCHAR2 default null, 
+                                 abenutzerid IN number default null, amanuel_saving IN number default null );
+    /**
+    *  loescht json Suchen und suchergebnisse, die aelter sind als aolder_as_days Tage
+    */
+    procedure ploescheAlteSuchen ( aolder_as_days number);
+      
+    /* 
+        Lädt eine Suche per ID und speichert die Suchparameter in T_SUCHE_TEMP 
+     */
+    function fLoadSuche (aSucheID in number) return varchar2;    
+    
+    /* 
+        Lädt eine Suche per ID 
+    */
+  --  function fLoadMSSuche (aSucheID in number) return varchar2; 
+    /* 
+        Kopiert die Suchparameter in T_SUCHE_TEMP von Quell-ID zu Ziel-ID 
+     */
+    procedure pCopySuchparameter(aSourceSucheTempId in number, aTargetSucheTempId in number);
+    /**
+    *  Liest daten eines Meilensteins aus 
+    * ersetzt Meilenstein Nr und MS-datum ;   return  neue daten
+    */
+    function fgetMeilensteinDaten( aSucheid in number, aMeilenstein in number, aNewMeilenstein in number, aNewMS_Datum in date) return clob;
+    /* 
+        Kopiert die Suchparameter inerhalb von aSucheId in T_SUCHE_json von ameilenstein to ameilenstein+1
+         als meileinstein_datum - sysdate 
+    */
+    procedure pCopyMSSuchparameter(aSucheId in number, ameilenstein in number);
+  
+    /*
+    */
+    function ftoDate(apar varchar2) return date;
+    /* gibt die Suchergebnisse als verkette Liste an Vorschriftenids zurück */
+    function fSearchResultsBase(aThemenids in varchar2, aLandids in varchar2, aSopDate date, aSearchdate date default sysdate, aSearchMode number default 0,aEOPdate date default null,  alckd_fbu_mode number default 0 , aRiskLow number default 4, aRiskHigh number default 2) return  T_SUCHE_ERGEBNIS_MASKE_LISTE;
+    /* gibt eineTabelle mit den ergebnissen der Suche zurück*/
+     function fSearchResultsFull(aThemenids in varchar2, aLandids in varchar2, aSopDate date, aSearchdate date default sysdate, aSearchMode number default 0,aEOPdate date default null,  alckd_fbu_mode number default 0, aRiskLow number default 4, aRiskHigh number default 2, amodelljahranfang number default 0, amodelljahrende number default 0) return T_SUCHE_ERGEBNIS_LISTE;
+    /* gibt den n-Ten Teil aus einem Doppelpunkt-Array zurück */
+    function fSplitIndex(aInput in varchar2, aIndex in number) return number;
+    
+    /* Gibt das vollständige SQL für einen CSV-Export aus */
+  function fGetCSVSQL(aTempSucheIDs in varchar2, aIndex in number, aCSVFormat in number, aDeltaMode in number) return clob;
+    function fGetCSVSQL2(aSucheID in number, aIndex in number, aCSVFormat in number, aDeltaMode in number,aTempSucheIDs in varchar2) return clob;
+     function fGetCSVSQLFull(aTempSucheIDs in varchar2, aIndex in number, aCSVFormat in number, aDeltaMode in number) return clob;     
+    /* 
+      Rückgabe der Bezeichnung für das Startdatum (Datum SOP/ME) für das
+      erste Land der übergebenen Länderliste
+  
+      aListLand: durch ':' getrennte Liste von Laendern
+    */
+    function fGetBezeichnungStartdatumTyp(aListLand in varchar2) return varchar2;
+
+    /*
+    Loescht die uebergebene Suche mit ihren Suchparametern
+    
+    aSucheID: Primärschlüssel der Suche
+    */
+  function fDeleteSuche (aSucheId in number) return number;
+  
+  function fmergeSuche (aSuchid1 number, apos1 number, asuchid2 number, apos2 number,aBezeichnung in varchar2, aBeschreibung in varchar2,aBenutzerId in number default pck_ri.fGetUserId) return number;
+ /* new merge
+ */
+  function fmergeMSSuche (aSuchid1 in number, aMeilen1 in number, aSuchid2 in number, aMeilen2 in number,
+                       aBezeichnung in varchar2, aBeschreibung in varchar2, aBenutzerId in number default pck_ri.fGetUserId) return number;
+
+  procedure pSucheAusfuehren(aSucheid in number);
+  procedure pSucheJobRunner;
+  procedure pDeleteOldSearchesJobRunner;
+
+END PCK_RI_SUCHE;
+```
+
+### BODY
+
+```sql
+
+create or replace PACKAGE BODY                      "PCK_RI_SUCHE" AS
+    gproduktivdate DATE := TO_DATE('01.01.2022', 'DD.MM.YYYY');
+
+    FUNCTION fgetnewtempsuche (
+        ameilensteinnr   NUMBER,
+        abenutzerid      IN NUMBER DEFAULT pck_ri.fgetuserid
+    ) RETURN NUMBER AS
+        linsertid NUMBER;
+    BEGIN
+       /* insert into t_suche_temp (benutzerid, suchdaten) values (aBenutzerID,
+            t_type_suche(
+                datum_meilenstein => null,
+                datum_sop => null,
+                datum_eop => null,
+                liste_laender => null, --(select listagg(l.landid, ':') from t_land l where l.startdatum_typ = 10), --10: SOP
+                liste_themen => null, --(select listagg(t.themaid, ':') from t_thema t),
+                suchtyp => null,
+                meilenstein => aMeilensteinNr,
+                CKD_FBU_MODE => null
+            ) 
+        ) returning suche_tempid into lInsertID;*/
+        RETURN linsertid;
+    END fgetnewtempsuche;
+
+    FUNCTION fgetnewtempjsonsuche (
+        ameilensteinnr   NUMBER,
+        abenutzerid      IN NUMBER DEFAULT pck_ri.fgetuserid
+    ) RETURN NUMBER AS
+        linsertid NUMBER;
+    BEGIN
+        INSERT INTO t_suche_json_temp ( benutzerid ) VALUES ( abenutzerid ) RETURNING suche_tempid INTO linsertid;
+
+        RETURN linsertid;
+    END fgetnewtempjsonsuche;
+
+/**
+*  fsavesuche  - in T_suche_JSON
+*/
+    FUNCTION fsavesuche (
+        abezeichnung    IN   VARCHAR2,
+        abeschreibung   IN   VARCHAR2,
+        asuchetempids   IN   VARCHAR2,
+        abenutzerid     IN   NUMBER DEFAULT pck_ri.fgetuserid,
+        amanuel         IN  NUMBER DEFAULT 10
+    ) RETURN NUMBER AS
+        lsuchliste    CLOB;
+        linsertid     NUMBER;
+        lbenutzerid   NUMBER;
+    BEGIN
+        IF ( abenutzerid IS NULL ) THEN          -- Benutzer ist noch nicht angelegt
+            lbenutzerid := pck_ri.fcreateplaceholderuser();
+        ELSE
+            lbenutzerid := abenutzerid;
+        END IF;
+
+        debug('SaveSuche', asuchetempids);
+        WITH cte1 AS (
+            SELECT
+                ROW_NUMBER() OVER(
+                    ORDER BY
+                        suche_tempid
+                ) AS meilenstein,
+                suchdaten
+            FROM
+                t_suche_json_temp
+            WHERE
+                suche_tempid IN (
+                    SELECT
+                        column_value
+                    FROM
+                        TABLE ( apex_string.split_numbers(asuchetempids, ':') )
+                )
+        )
+        SELECT
+            JSON_ARRAYAGG(suchdaten
+            ORDER BY
+                meilenstein
+            RETURNING CLOB)
+        INTO lsuchliste
+        FROM
+            cte1;
+       /* select suchdaten
+        from t_suche_JSON_temp
+        where suche_tempid in (
+            select column_value from table(apex_string.split_numbers(aSucheTempIDs,':'))
+        )
+        order by suche_tempid;*/
+
+        INSERT INTO t_suche_json (
+            bezeichnung,
+            beschreibung,
+            benutzerid,
+            zeitpunkt,
+            suchdaten,
+            manuelle_speicherung
+        ) VALUES (
+            abezeichnung,
+            abeschreibung,
+            lbenutzerid,
+            sysdate,
+            lsuchliste,
+            amanuel
+        ) RETURNING sucheid INTO linsertid;
+
+        RETURN linsertid;
+    END fsavesuche;
+
+/**
+* fsavesuche2 uses fsavesuche
+*/
+FUNCTION fsavesuche2 (
+        abezeichnung    IN   VARCHAR2,
+        abeschreibung   IN   VARCHAR2,
+        asucheid        IN NUMBER,
+        abenutzerid     IN   NUMBER DEFAULT pck_ri.fgetuserid,
+        amanuell         IN  NUMBER DEFAULT 10    -- manuell
+    ) RETURN NUMBER AS
+        lsuchliste    CLOB;
+        lbenutzerid   NUMBER;
+        new_suchid  NUMBER :=0;
+
+  BEGIN
+       IF ( abenutzerid IS NULL ) THEN          -- Benutzer ist noch nicht angelegt
+            lbenutzerid := pck_ri.fcreateplaceholderuser();
+        ELSE
+            lbenutzerid := abenutzerid;
+        END IF;
+
+      SELECT suchdaten
+           INTO lsuchliste
+           FROM t_suche_json where sucheid = asucheid;
+
+           --insert mit new suche
+         insert into t_suche_json(
+            bezeichnung,
+            beschreibung,
+            benutzerid,
+            zeitpunkt,
+            suchdaten, 
+            manuelle_speicherung,
+            ERGEBNIS_STATUS
+         )
+         values( abezeichnung,
+            abeschreibung,
+            lbenutzerid,
+            sysdate,
+            lsuchliste,
+            amanuell,
+            0
+        ) RETURNING sucheid INTO new_suchid;
+
+        RETURN new_suchid;
+
+     --suchid :=fsavesuche ( abezeichnung, abeschreibung ,asuchetempids  ,abenutzerid ,amanuel);  
+     return new_suchid;
+  END fsavesuche2;
+
+ /**
+ * Aktualisiert  Bezeichnung, Beschreibung , Zeitpunkt, amanuell von  der Suche 
+ */
+ PROCEDURE pupdatesucheBezeichnung (
+        abezeichnung    IN   VARCHAR2,
+        abeschreibung   IN   VARCHAR2,
+        asucheid        IN NUMBER,
+        abenutzerid     IN   NUMBER,     --DEFAULT pck_ri.fgetuserid,
+        amanuell         IN  NUMBER DEFAULT 10    -- manuell
+    )  IS
+      --  lsuchliste    CLOB;
+        lbenutzerid   NUMBER;
+
+  BEGIN
+       IF ( abenutzerid IS NULL ) THEN          -- Benutzer ist noch nicht angelegt
+            lbenutzerid := pck_ri.fcreateplaceholderuser();
+        ELSE
+            lbenutzerid := abenutzerid;
+        END IF;
+
+         UPDATE  t_suche_json SET bezeichnung = abezeichnung,
+            beschreibung = abeschreibung,
+            benutzerid = lbenutzerid,
+            zeitpunkt = sysdate,
+            manuelle_speicherung = amanuell
+         WHERE sucheid = asucheid;
+
+  END pupdatesucheBezeichnung;
+
+
+  /**
+  *
+  */
+  function fSearchResults(asucheid number , ameilenstein number
+  ) RETURN T_SUCHE_ERGEBNIS_LISTE
+  AS
+      erg_list T_SUCHE_ERGEBNIS_LISTE; 
+      l_zeitpunkt varchar2(300);
+      l_bezeichnung varchar2(300);
+      l_benutzerid number;
+      lThemenids varchar2(4000); 
+      lLandids varchar2(4000);
+      lSOPdate date; 
+        lSearchdate date; 
+      lSearchMode number; 
+      lEOPdate date; 
+      lckd_fbu_mode number;
+     lRiskLow number;
+     lRiskHigh number;
+     lModelende number;
+     lModelanfang number;
+     ms_cou  number :=0;
+    -- l_Landid number :=0;
+    l_regelnummer number :=0;
+    l_ms_parameterid number :=0;
+    l_risiko number :=0;
+    l_co_regNo number :=0;
+    --l_meilenstein number :=0;
+  BEGIN
+      -- get  suchparams
+    FOR  cur IN ( select bezeichnung, zeitpunkt, benutzerid,  t.lae_ids lae_ids, t.themen_ids themen_ids, 
+           t.l_risk l_risk, t.h_risk h_risk, t.ms ms, t.sop sop, t.eop eop, 
+           t.smode smode, t.ckd_fbu_mode ckd_fbu_mode, t.meilenstein meilenstein, t.modelanfang modelanfang ,
+            t.modelende modelende
+       --INTO l_bezeichnung, l_zeitpunkt, l_benutzerid, lLandids , lThemenids,
+       --   lRiskLow, lRiskHigh,      lSearchdate,         lSOPdate,                        lEOPdate,             lSearchMode, lckd_fbu_mode
+       from t_suche_json t, json_table (t.suchdaten, '$[*]' columns (
+        nested path '$[*]' COLUMNS( meilenstein number path '$.MEILENSTEIN',
+            lae_ids varchar2(4000) PATH '$.LAENDER',
+            themen_ids varchar2(4000) path '$.THEMEN',
+            l_risk number path '$.LOW_RISK',
+            h_risk number path '$.HIGH_RISK',
+            ms varchar2(20) path '$.DATUM_MEILENSTEIN',
+            sop varchar2 path '$.DATUM_SOP',
+            eop varchar2(20) path '$.DATUM_EOP',
+            smode number path '$.SUCHTYP',
+            ckd_fbu_mode number path '$.CKD_FBU_MODE',
+            modelanfang number path '$.MJ_ANFANG',
+            modelende number path '$.MJ_ENDE'
+            ))) t where sucheid = asucheid and meilenstein= ameilenstein
+            )
+     LOOP 
+     l_zeitpunkt := cur.zeitpunkt; 
+     l_benutzerid := cur.benutzerid; 
+     lLandids  := cur.lae_ids;
+     lThemenids := cur.themen_ids;
+          lRiskLow:= cur.l_risk; 
+          lRiskHigh := cur.l_risk;
+          lSearchdate:= ftoDate(cur.ms);
+          lSOPdate := ftoDate(cur.sop);
+              lEOPdate := ftoDate(cur.eop);
+            lSearchMode := cur.smode;
+         lckd_fbu_mode := cur.ckd_fbu_mode;
+         lModelende :=  cur.modelende;
+         lModelanfang := cur.modelanfang;
+         --l_meilenstein := cur.meilenstein;
+
+      ms_cou:=ms_cou+1;
+    --  debug ('start sucheid=' ||asucheid||', MS='||ameilenstein || ', ms_date='||lSearchdate, 'lLandids='|| lLandids);
+      erg_list := fSearchResultsFull(lThemenids , lLandids , lSOPdate , 
+                                   lSearchdate , lSearchMode , lEOPdate ,  
+                                  lckd_fbu_mode , lRiskLow , lRiskHigh,lModelanfang,lModelende );
+
+     END LOOP; 
+     return erg_list;
+  END fSearchResults;
+
+  /*
+  */
+  function ftoDate(apar varchar2) return date as
+     lSearchdate date;
+     lpos number :=0;
+   begin
+    lpos :=instr(substr(apar, 1,10), '-');
+    --dbms_output.put_line(lpos);
+    if (lpos >0) then
+      select to_date(substr(apar, 1,10), 'yyyy-mm-dd') into lSearchdate from dual;
+    else
+      select to_date(substr(apar, 1,10), 'dd.mm.yyyy') into lSearchdate from dual;
+    end if;
+      --dbms_output.put_line(lSearchdate);
+      return lSearchdate;
+   exception when others then
+      debug('search date:'||lSearchdate);
+   end;
+
+  /*
+  *
+  */
+  procedure psearchandsaveresults(asucheid number 
+  )
+  is
+  erg_list T_SUCHE_ERGEBNIS_LISTE; 
+  l_zeitpunkt varchar2(300);
+  l_bezeichnung varchar2(300);
+  l_benutzerid number;
+  lThemenids varchar2(2000); 
+  lLandids varchar2(2000);
+  lSOPdate date; 
+    lSearchdate date; 
+  lSearchMode number; 
+  lEOPdate date; 
+      lckd_fbu_mode number;
+     lRiskLow number;
+     lRiskHigh number;
+     cou  number :=0;
+     ms_cou  number :=0;
+     cou_saved number :=0;
+    -- l_Landid number :=0;
+    l_regelnummer number :=0;
+    l_ms_parameterid number :=0;
+    l_risiko number :=0;
+    l_co_regNo number :=0;
+    l_meilenstein number :=0;
+    l_geladen number :=0;
+
+     lModelende number;
+     lModelanfang number;
+  BEGIN
+    select ERGEBNIS_STATUS into l_geladen from t_suche_json where sucheid = asucheid;
+    --debug('erg_geladen= '|| l_geladen);
+    if(l_geladen =-1) then  -----is null or l_geladen =0) then
+        return;
+    end if;
+    --elsif ( l_geladen = -1) then
+       update t_suche_json set ERGEBNIS_STATUS =-1 where sucheid= asucheid;
+       commit;
+debug('Suche:','Tabelle geupdatet');
+    -- get  suchparams
+    FOR  cur IN ( select bezeichnung, zeitpunkt, benutzerid,  t.lae_ids lae_ids, t.themen_ids themen_ids, 
+           t.l_risk l_risk, t.h_risk h_risk, t.ms ms, t.sop sop, t.eop eop, 
+           t.smode smode, t.ckd_fbu_mode ckd_fbu_mode, t.meilenstein meilenstein,t.modelanfang modelanfang ,
+            t.modelende modelende
+       --INTO l_bezeichnung, l_zeitpunkt, l_benutzerid, lLandids , lThemenids,
+       --   lRiskLow, lRiskHigh,      lSearchdate,         lSOPdate,                        lEOPdate,             lSearchMode, lckd_fbu_mode
+       from t_suche_json t, json_table (t.suchdaten, '$[*]' columns (
+        nested path '$[*]' COLUMNS( meilenstein number path '$.MEILENSTEIN',
+            lae_ids varchar2(4000) PATH '$.LAENDER',
+            themen_ids varchar2(4000) path '$.THEMEN',
+            l_risk number path '$.LOW_RISK',
+            h_risk number path '$.HIGH_RISK',
+            ms varchar2(20) path '$.DATUM_MEILENSTEIN',
+            sop varchar2(20) path '$.DATUM_SOP',
+            eop varchar2(20) path '$.DATUM_EOP',
+            smode number path '$.SUCHTYP',
+            ckd_fbu_mode number path '$.CKD_FBU_MODE',
+             modelanfang number path '$.MJ_ANFANG',
+            modelende number path '$.MJ_ENDE'
+            ))) t where sucheid = asucheid
+            )
+     LOOP 
+     l_zeitpunkt := cur.zeitpunkt; 
+     l_benutzerid := cur.benutzerid; 
+     lLandids  := cur.lae_ids;
+     lThemenids := cur.themen_ids;
+          lRiskLow:= cur.l_risk; 
+          lRiskHigh := cur.l_risk;
+
+            lSearchdate:= ftoDate(cur.ms);
+            lSOPdate:= ftoDate(cur.sop);
+            lEOPdate:= ftoDate(cur.eop) ;
+
+            lSearchMode := cur.smode;
+         lckd_fbu_mode := cur.ckd_fbu_mode;
+         l_meilenstein := cur.meilenstein;
+          lModelende :=  cur.modelende;
+         lModelanfang := cur.modelanfang;
+
+
+      ms_cou:=ms_cou+1;
+      debug ('start sucheid=' ||asucheid||', MS='||l_meilenstein );
+
+      erg_list := fSearchResultsFull(lThemenids , lLandids , lSOPdate , 
+                                   lSearchdate , lSearchMode , lEOPdate ,  
+                                  lckd_fbu_mode , lRiskLow , lRiskHigh ,lModelanfang,lModelende );
+        /* Vorschriftid number,        in_kraft date,        neue_Typen date,
+        alle_Fahrzeuge date,
+        landid number,        themaid number,        regelnummer number,
+        risiko number   */
+        if(erg_list is not null and erg_list.count >0) then
+          delete from t_MS_SUCHERGEBNISS WHERE  sucheid = asucheid and meilenstein= l_meilenstein;
+        end if;
+       for i in erg_list.FIRST .. erg_list.LAST
+        loop
+         -- debug ('v_id='||erg_list(i).vorschriftid|| ', in_kraft='||erg_list(i).in_kraft 
+         -- || ', landid='||erg_list(i).landid || ', themaid='||erg_list(i).themaid || ', regelnr='||erg_list(i).regelnummer, 
+        --  'ms='|| ms_cou || ', erg_co='||cou || ', risiko='||erg_list(i).risiko );
+
+          cou :=cou+1;
+          l_risiko := erg_list(i).risiko;
+          l_regelnummer := erg_list(i).regelnummer;
+          if(l_regelnummer is  null or l_regelnummer =0) then
+              continue;
+          end if;
+
+          select count(*) into l_co_regNo from  T_MS_PARAMETER WHERE  nummer = l_regelnummer ;
+          if(l_co_regNo =0) then
+              continue;
+          end if;
+
+          select ms_parameterid into l_ms_parameterid 
+            from  T_MS_PARAMETER WHERE  nummer = l_regelnummer ;
+          -- save
+
+          psaveMSSuchergebnis ( asucheid,  erg_list(i).vorschriftid ,
+                erg_list(i).themaid , l_regelnummer , l_ms_parameterid ,
+                l_zeitpunkt, l_risiko,
+                erg_list(i).landid , l_meilenstein ,erg_list(i).equivalentid  );
+          cou_saved := cou_saved+1;
+       end loop;
+         debug('Save Suche');
+   END LOOP; 
+   --if(cou_saved>0)   then
+      update t_suche_json set ERGEBNIS_STATUS =10 where sucheid= asucheid;
+      commit;
+  -- end if;
+   exception 
+     when others then
+     debug('Suche abgebrochen',SQLERRM);
+     update t_suche_json set ERGEBNIS_STATUS =0 where sucheid= asucheid;
+   commit;
+END psearchandsaveresults;
+
+
+
+  /**
+* psaveMSSuchergebnis
+*/
+procedure psaveMSSuchergebnis ( asucheid IN NUMBER ,  avorschriftid  IN NUMBER ,
+         athemaid IN  NUMBER, aregelnummer IN NUMBER,    ams_parameterid IN NUMBER ,
+         azeitpunkt date, arisiko number,
+          alandid IN NUMBER ,
+          ameilenstein IN NUMBER ,aequvalentid in number
+    ) AS
+     l_themanummer VARCHAR2(4000);     --
+    l_themabezeichnung  VARCHAR2(4000); --
+    l_landbezeichnung VARCHAR2(4000);   --
+    l_landnummer VARCHAR2(4000);        --
+      l_vorschriftnummer VARCHAR2(4000); --
+    l_vorschrifttitel VARCHAR2(4000);    --
+    l_status_vorschrift VARCHAR2(4000);  --
+    l_prognose_qualitaet NUMBER :=0;    --
+    l_sw_relevant VARCHAR2(4000); --
+    l_ANSPRECHPARTNERID number;
+    --l_risiko VARCHAR2(500);
+
+  BEGIN
+
+    select v.vorschrift_nummer, v.vorschrift_bezeichnung, v.prognose_qualitaet, v.rxswin, s.status 
+      into l_vorschriftnummer, l_vorschrifttitel, l_prognose_qualitaet, l_sw_relevant, l_status_vorschrift
+      from T_Vorschrift v 
+      join T_vorschrift_status s on (v.vorschrift_statusid = s.vorschrift_statusid)
+     where vorschriftid = avorschriftid;
+
+    select nummer, bezeichnung /*,lead_syva, konzern_cluster*/  into l_themanummer, l_themabezeichnung 
+      from T_THEMA WHERE themaid = athemaid;
+
+    select B_nummer, land into l_landnummer, l_landbezeichnung 
+      from T_LAND WHERE landid = alandid;
+
+    INSERT INTO T_MS_Suchergebniss (  SUCHEID,  VORSCHRIFTID,
+               VORSCHRIFTNUMMER,     VORSCHRIFTTITEL,
+                THEMAID, THEMANUMMER, THEMABEZEICHNUNG,
+                  LANDID, LANDNUMMER, LANDBEZEICHNUNG,  
+                REGELNUMMER,
+                STATUS_VORSCHRIFT, PROGNOSE_QUALITAET,
+                SW_RELEVANT,    RISIKO,
+                MS_PARAMETERID, ZEITPUNKT,       MEILENSTEIN,ALTERNATIVE_VORSCHRIFTID,
+ANSPRECHPARTNERID
+                )
+            VALUES( asucheid, avorschriftid,   l_vorschriftnummer, l_vorschrifttitel,
+                  athemaid,  l_themanummer ,l_themabezeichnung ,
+                  alandid , l_landnummer ,l_landbezeichnung,
+                 aregelnummer,
+               l_status_vorschrift, l_prognose_qualitaet,
+               l_sw_relevant, arisiko,
+                ams_parameterid,  azeitpunkt , ameilenstein, aequvalentid,
+                l_ANSPRECHPARTNERID 
+            );
+  END psaveMSSuchergebnis;
+
+
+ /*
+  * speichert bestehende suche unter neuem suchId  (z. B. für anderen benutzer)
+  */
+  procedure psaveSucheAlternative(asucheid IN number, abezeichnung IN VARCHAR2 default null, abeschreibung IN VARCHAR2 default null, 
+                                 abenutzerid IN number default null, amanuel_saving IN number default null ) 
+
+  is
+    l_suchdat clob;
+    l_newsuchid number:=0;
+    l_co number :=0;
+    l_co_erg number :=0;
+  BEGIN 
+    --debug ( 'sucheid='||asucheid||', benutzid:'|| abenutzerid,'' );
+      select suchdaten into l_suchdat  from T_SUCHE_JSON where sucheid = asucheid;
+
+      INSERT INTO T_SUCHE_JSON ( benutzerid, bezeichnung, beschreibung, zeitpunkt, suchdaten, manuelle_speicherung, ergebnis_status
+       )
+       VALUES (  abenutzerid, abezeichnung, abeschreibung, sysdate, l_suchdat, amanuel_saving, 0
+       )
+       RETURNING sucheid into l_newsuchid;
+
+     --history nur wenn vorhanden
+      select count(*) into l_co_erg from T_MS_SUCHERGEBNISS where sucheid = asucheid;
+       if(l_co_erg >0) then
+         insert into T_MS_SUCHERGEBNISS(
+            SUCHEID,  VORSCHRIFTID,
+               VORSCHRIFTNUMMER,     VORSCHRIFTTITEL,
+                THEMAID, THEMANUMMER, THEMABEZEICHNUNG,
+                  LANDID, LANDNUMMER, LANDBEZEICHNUNG,  
+                REGELNUMMER,
+                STATUS_VORSCHRIFT, PROGNOSE_QUALITAET,
+                SW_RELEVANT,    RISIKO,
+                MS_PARAMETERID, ZEITPUNKT,       MEILENSTEIN
+                )
+          SELECT l_newsuchid, VORSCHRIFTID,
+               VORSCHRIFTNUMMER,     VORSCHRIFTTITEL,
+                THEMAID, THEMANUMMER, THEMABEZEICHNUNG,
+                  LANDID, LANDNUMMER, LANDBEZEICHNUNG,  
+                REGELNUMMER,
+                STATUS_VORSCHRIFT, PROGNOSE_QUALITAET,
+                SW_RELEVANT,    RISIKO,
+                MS_PARAMETERID, ZEITPUNKT,       MEILENSTEIN
+                FROM T_MS_SUCHERGEBNISS where SUCHEID = asucheid;
+        end if;
+     --end if;
+     EXCEPTION WHEN too_many_rows then
+           debug('EXCEPT in psaveSucheAlternative: too_many_rows');
+        WHEN no_data_found THEN
+          debug('EXCEPT in psaveSucheAlternative: no_rows_found');
+
+  END psaveSucheAlternative;
+/**
+  * pdeleteSuchergebnise 
+  *  loescht json Suchen und suchergebnisse, die aelter sind als aolder_as_days Tage
+  */
+  procedure ploescheAlteSuchen ( aolder_as_days number)
+  is
+   l_suchids varchar2(4000) :=''; 
+   lco number :=0;
+  BEGIN
+    select count(*) into lco from T_SUCHE_JSON where manuelle_speicherung !=10 and zeitpunkt < sysdate - aolder_as_days;
+    if(lco>0 ) then
+      /*  select listagg(sucheid, ':') within group (order by sucheid) sidlist 
+         into l_suchids from T_SUCHE_JSON 
+         where zeitpunkt < sysdate -aolder_as_days;*/
+    -- delete 
+       -- debug('suchids to delete='||l_suchids);
+        delete  from T_MS_SUCHERGEBNISS where sucheid in (select sucheid from T_SUCHE_JSON where manuelle_speicherung !=10 and zeitpunkt < sysdate - aolder_as_days);
+       delete from  T_SUCHE_JSON where sucheid in (select sucheid from T_SUCHE_JSON where manuelle_speicherung !=10 and zeitpunkt < sysdate - aolder_as_days );
+    end if;
+    EXCEPTION 
+       when others then
+          debug('exception ploescheAlteSuchen','others');
+          raise;
+  END;  
+
+  /**
+  *  Liest daten eines Meilensteins aus 
+  * ersetzt Meilenstein Nr und MS-datum ;   return  neue daten
+  */
+  function fgetMeilensteinDaten( aSucheid number, aMeilenstein number, aNewMeilenstein number, aNewMS_Datum date) return clob
+  as
+     l_daten clob;
+     --l_user varchar2(200);
+      l_rown number :=0;
+      --
+      d_ms varchar2(25) ;
+      d_sop varchar2(25) ;
+      d_eop varchar2(25) ;
+     -- c_d_ms varchar2(25) ;
+      --c_d_sop varchar2(25) ;
+     -- c_d_eop varchar2(25) ;
+      v_themen varchar2(4000) ;
+      v_laender varchar2(2000) ;
+      s_modus number;
+      l_ckd_fbu number;
+      l_risk number;
+      h_risk number;
+      l_meilenstein number;
+      l_mja number;
+      l_mjae number;
+      --l_cou number :=0;
+
+  BEGIN
+
+      select *  into l_rown, d_ms, d_sop, d_eop,
+                v_laender, v_themen, s_modus, l_ckd_fbu,
+                l_risk, h_risk, l_meilenstein,l_mja,l_mjae
+        from (
+            select  row_number() over(order by t.meilenstein) rn, 
+             t.ms, t.sop, t.eop,
+                     t.laender , t.themen,   t.smode, t.ckd_fbu_mode,
+                     t.l_risk, t.h_risk,  t.meilenstein meilenstein,
+                     t.mja, t.mje
+              from t_suche_json t, json_table (t.suchdaten, '$[*]' columns (
+                nested path '$[*]' COLUMNS(
+                    laender varchar2(4000) PATH '$.LAENDER',
+                    themen varchar2(4000) path '$.THEMEN',
+                    l_risk number path '$.LOW_RISK',
+                    h_risk number path '$.HIGH_RISK',
+                    ms varchar2(25) path '$.DATUM_MEILENSTEIN',
+                    sop varchar2(25) path '$.DATUM_SOP',
+                    eop varchar2(25) path '$.DATUM_EOP',
+                    smode varchar2(20) path '$.SUCHTYP',
+                    ckd_fbu_mode number path'$.CKD_FBU_MODE',
+                    meilenstein number path'$.MEILENSTEIN',
+                     mja number path'$.MJ_ANFANG',
+                      mje number path'$.MJ_ENDE'
+                    ))) t where sucheid = aSucheId
+          )  where meilenstein = aMeilenstein;
+      -- ensure the right date format
+        -- c_d_ms := to_char(ftoDate(d_ms), 'dd.mm.yyyy');
+        -- c_d_sop := to_char(ftoDate(d_sop), 'dd.mm.yyyy');
+        -- c_d_eop := to_char(ftoDate(d_eop), 'dd.mm.yyyy');
+
+        if(aNewMS_Datum is null) then  -- behalte MS_datum
+           l_daten := '{"DATUM_MEILENSTEIN":"' || to_char(ftoDate(d_ms), 'dd.mm.yyyy')|| '", "DATUM_SOP":"'|| to_char(ftoDate(d_sop), 'dd.mm.yyyy')
+           || '", "DATUM_EOP":"'|| to_char(ftoDate(d_eop), 'dd.mm.yyyy') || '", ';
+         else
+             l_daten := '{"DATUM_MEILENSTEIN":"' || to_char(aNewMS_Datum,'DD.MM.YYYY') || '", "DATUM_SOP":"'|| to_char(ftoDate(d_sop), 'dd.mm.yyyy') 
+             || '", "DATUM_EOP":"'|| to_char(ftoDate(d_eop), 'dd.mm.yyyy') || '", ';
+         end if;
+        dbms_lob.append(l_daten,'"LAENDER":"' ||v_laender||'",');
+        dbms_lob.append(l_daten,'"THEMEN":"' ||v_themen||'",' );
+        dbms_lob.append(l_daten,'"LOW_RISK":"' ||l_risk||'", "HIGH_RISK":"'||h_risk||'", "SUCHTYP":"'|| s_modus||'", "CKD_FBU_MODE":"'|| l_ckd_fbu||'",'||'"MJ_ANFANG":"'||l_mja||'","MJ_ENDE":"'||l_mjae||'",');
+        dbms_lob.append(l_daten,'"MEILENSTEIN":"'||aNewMeilenstein || '"}' );
+        return l_daten;
+  END;
+
+  /**
+  *
+  */
+  procedure pCopyMSSuchparameter(aSucheId in number, ameilenstein in number)
+  IS
+      l_daten_1 clob; -- source
+      l_daten_2 clob;  -- destination
+      l_daten_3 clob;
+      l_equal number;
+      l_arr clob :='[';
+      --unchanged_meilenst number :=3;
+      l_user varchar2(200);
+      l_rown number :=0;
+      --
+      d_ms varchar2(25) ;
+      d_sop varchar2(25) ;
+      d_eop varchar2(25) ;
+      v_themen varchar2(4000) ;
+      v_laender varchar2(4000) ;
+      s_modus number;
+      l_ckd_fbu number;
+      l_risk number;
+      h_risk number;
+      l_meilenstein number;
+      l_cou number :=0;
+    BEGIN
+
+      select daten into l_daten_1
+        from (
+       select sucheid, row_number() over( order by t.meils) rn, t.daten daten, t.meils meils
+         from t_suche_json t, json_table (t.suchdaten, '$[*]' columns (daten clob format json path '$',
+                    nested path '$[*]' COLUMNS(
+                     meils number path '$.MEILENSTEIN'))
+              ) t where sucheid = aSucheId
+     ) where meils = 1;
+
+    IF (ameilenstein =1) then 
+      -- unchanged_meilenst := 3;
+      select count(*) into l_cou from (
+                     select sucheid, --row_number() over( order by t.meils) rn, 
+                     t.meils meils , t.daten daten 
+                       from t_suche_json t, json_table (t.suchdaten, '$[*]' columns (daten clob format json path '$',
+                            nested path '$[*]' COLUMNS( meils number path '$.MEILENSTEIN')
+                        ) 
+                  ) t where sucheid = aSucheId
+        ) where meils = 3;
+        if(l_cou>0) then
+             select daten into l_daten_3 from (
+                     select sucheid, --row_number() over( order by t.meils) rn, 
+                     t.meils meils , t.daten daten 
+                       from t_suche_json t, json_table (t.suchdaten, '$[*]' columns (daten clob format json path '$',
+                            nested path '$[*]' COLUMNS( meils number path '$.MEILENSTEIN')
+                        ) 
+                  ) t where sucheid = aSucheId
+          ) where meils = 3;
+          l_cou:=0;
+        end if;
+
+      --l_daten_2 := l_daten_1; change meilenst und ms_datum
+
+       l_daten_2:= fgetMeilensteinDaten( aSucheId, 1, 2, sysdate );
+    ELSE 
+      -- unchanged_meilenst := 2;
+      select count(*) into l_cou from (
+               select sucheid, --row_number() over( order by t.meils) rn, 
+                  t.meils meils , t.daten daten 
+                from t_suche_json t, json_table (t.suchdaten, '$[*]' columns (daten clob format json path '$',
+                     nested path '$[*]' COLUMNS( meils number path '$.MEILENSTEIN')
+                 ) 
+              ) t where sucheid = aSucheId
+        ) where meils = 2;
+
+      if(l_cou>0) then
+        select daten into l_daten_2 from (
+               select sucheid, --row_number() over( order by t.meils) rn, 
+                  t.meils meils , t.daten daten 
+                from t_suche_json t, json_table (t.suchdaten, '$[*]' columns (daten clob format json path '$',
+                     nested path '$[*]' COLUMNS( meils number path '$.MEILENSTEIN')
+                 ) 
+              ) t where sucheid = aSucheId
+        ) where meils = 2;
+
+      end if; 
+
+     -- l_daten_3 := l_daten_2;
+
+        l_daten_3 := fgetMeilensteinDaten( aSucheId, 2, 3, sysdate );
+    END IF;
+
+    -- build array
+     dbms_lob.append(l_arr, l_daten_1);
+      if(l_daten_2 is not null) then
+         dbms_lob.append(l_arr,',');
+         dbms_lob.append(l_arr, l_daten_2);
+       end if;
+       if(l_daten_3 is not null) then
+         dbms_lob.append(l_arr,',');
+         dbms_lob.append(l_arr, l_daten_3);
+       end if;
+      dbms_lob.append(l_arr,']'); 
+
+      update T_SUCHE_JSON  set suchdaten = l_arr where sucheid = aSucheId;
+      -- todo  update  suchergebnisse
+
+    END pCopyMSSuchparameter;
+
+    /**
+    *
+    */
+    FUNCTION fdeletesuche (
+        asucheid IN NUMBER
+    ) RETURN NUMBER IS
+    BEGIN
+         DELETE FROM t_ms_suchergebniss
+          WHERE
+            sucheid = asucheid;
+
+        DELETE FROM t_suche_json
+         WHERE
+            sucheid = asucheid;
+
+        RETURN SQL%rowcount;
+    END fdeletesuche;
+
+/*
+*
+*/
+   FUNCTION floadsuche (
+        asucheid IN NUMBER
+   ) RETURN VARCHAR2 IS
+    linsertid    NUMBER;
+    lreturnids   VARCHAR2(50) := '';
+    lindex       PLS_INTEGER;
+    lcounter     NUMBER;
+   BEGIN lcounter := 0;
+      FOR x IN ( SELECT   daten
+                 FROM  t_suche_json t,
+                       json_table
+                ( t.suchdaten, '$[*]' COLUMNS (
+                        daten clob format json path '$'
+                      )
+                 )
+                where sucheid = aSucheID 
+            )
+        loop
+
+           lcounter :=lcounter +1;
+            insert into t_suche_json_temp(benutzerid, suchdaten)
+            values (pck_ri.fGetUserid, x.daten)
+            returning suche_tempid into lInsertID;
+
+            lReturnIDs := lReturnIDs || ':' || lInsertID;          
+
+        end loop;
+       if lcounter < 3
+       then 
+
+       while lcounter <3 
+       loop
+        insert into t_suche_JSON_temp (benutzerid) values (pck_ri.fGetUserid
+
+        ) returning suche_tempid into lInsertID;
+        lReturnIDs := lReturnIDs || ':' || lInsertID;
+        lcounter :=lcounter +1;
+       end loop;
+
+
+
+       end if;
+        lReturnIDs := substr(lReturnIDs,2);
+        return lReturnIDs;
+
+   END fLoadSuche;
+
+   /*
+    * loads suche für asucheid aus json Tabelle
+   */
+  /* FUNCTION floadMSsuche (
+        asucheid IN NUMBER
+   ) RETURN VARCHAR2 IS
+        linsertid    NUMBER;
+        lreturnids   VARCHAR2(50) := '';
+        lindex       PLS_INTEGER;
+        lcounter     NUMBER;
+   BEGIN lcounter := 0;
+      FOR x IN ( SELECT   daten
+                 FROM  t_suche_json t,
+                       json_table
+                ( t.suchdaten, '$[*]' COLUMNS (
+                        daten clob format json path '$'
+                      )
+                 )
+                where sucheid = aSucheID 
+            )
+        LOOP
+            lcounter :=lcounter +1;
+            --insert into t_suche_json_temp(benutzerid, suchdaten)
+            --values (pck_ri.fGetUserid, x.daten)
+            --returning suche_tempid into lInsertID;
+
+            --lReturnIDs := lReturnIDs || ':' || lInsertID;          
+        end loop;
+
+        return lReturnIDs;
+   END floadMSsuche;
+*/
+    procedure pCopySuchparameter(aSourceSucheTempId in number, aTargetSucheTempId in number) AS
+    BEGIN
+        update T_SUCHE_json_TEMP tmp_target 
+        SET suchdaten = (
+            select json_mergepatch(tmp_source.suchdaten, '{"DATUM_MEILENSTEIN": "'|| to_char(Sysdate,'DD.MM.YYYY')||'"}') suchdaten
+            from t_suche_json_temp tmp_source 
+            where tmp_source.SUCHE_TEMPID = aSourceSucheTempId)
+        where tmp_target.SUCHE_TEMPID = aTargetSucheTempId;
+    END pCopySuchparameter;
+
+
+    function fSplitIndex(aInput in varchar2, aIndex in number) return number is
+        lReturn number;
+    begin
+
+        with cte1 as (
+            select rownum xrow, column_value
+            from table(apex_string.split_numbers(aInput,':'))
+        )
+        select to_number(column_value) into lReturn
+        from cte1
+        where xrow = aIndex;
+
+        return lReturn;
+
+    end fSplitIndex;
+
+/*
+ -- old -- function fSearchResultsBase(aThemenids in varchar2, aLandids in varchar2, aSopDate date, aSearchdate date default sysdate, aSearchMode number default 0,aEOPdate date default null,  alckd_fbu_mode number default 0 , aRiskLow number default 4, aRiskHigh number default 2) return  t_suche_ergebnis_maske_liste
+
+    is
+    lresult t_suche_ergebnis_maske_liste;
+    aForecast  number := 0;
+    lsearchdate date;
+    begin
+    -- Risiko: 0/null kein Risiko
+    --           1 =niedriges Risiko
+    --        2 = hohes Risiko
+
+    -- Regeln: 1 optional
+    --        2 neue Fahrzeuge 
+    --        3 alle Fahrzeuge
+
+if aSearchdate < gProduktivdate then 
+lsearchdate := gProduktivdate;
+else 
+lsearchdate := asearchdate;
+end if;
+
+-- Unterscheidung Historische Daten (Searchdate < heute) oder aktuelle Searchdate größer heute             
+WITH vorschrift_history AS (
+    SELECT
+        vorschriftid,
+        vorschrift_nummer,
+        vorschrift_bezeichnung,
+        prognose_qualitaet,
+        jira_ticket,
+        vorschrift_freigabestatusid,
+        bemerkung,
+        link_zur_vorschrift_dms,
+        link_zur_vorschrift_getex,
+        typschild,
+        letzte_aenderung_datum,
+        letzte_aenderung_benutzerid,
+        websiteid,
+        websitelink,
+        einsatzdatum_modellid,
+        vorschrift_typid,
+        homologation_moeglich,
+        normid,
+        ksuid,
+        vorschrift_statusid,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschriftid
+            ORDER BY
+                tv.letzte_aenderung_datum DESC
+        ) xrow
+    FROM
+        t_h_vorschrift tv
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate
+    UNION ALL
+    SELECT
+        vorschriftid,
+        vorschrift_nummer,
+        vorschrift_bezeichnung,
+        prognose_qualitaet,
+        jira_ticket,
+        vorschrift_freigabestatusid,
+        bemerkung,
+        link_zur_vorschrift_dms,
+        link_zur_vorschrift_getex,
+        typschild,
+        letzte_aenderung_datum,
+        letzte_aenderung_benutzerid,
+        websiteid,
+        websitelink,
+        einsatzdatum_modellid,
+        vorschrift_typid,
+        homologation_moeglich,
+        normid,
+        ksuid,
+        vorschrift_statusid,
+        1 AS xrow
+    FROM
+        t_vorschrift
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), h_vorschrift AS (
+    SELECT
+        *
+    FROM
+        vorschrift_history
+    WHERE
+        xrow = 1 and (vorschrift_statusid = 40 or prognose_qualitaet in (10,20))
+), vorschrift_ref_vorschrift_history AS (
+    SELECT
+        vorschrift_ref_vorschriftid,
+        vorgaenger_vorschriftid,
+        nachfolger_vorschriftid,
+        datum_in_kraft,
+        datum_neue_typen,
+        datum_alle_typen,
+        beziehung_art,
+        homologation_serie,
+        max_homologation_vorschriftid,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschrift_ref_vorschriftid
+            ORDER BY
+                th.letzte_aenderung_datum DESC, aktion ASC
+        ) xrow,
+        aktion
+    FROM
+        t_h_vorschrift_ref_vorschrift th
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate 
+                                 -- INSERT, UPDATE
+    UNION ALL
+    SELECT
+        vorschrift_ref_vorschriftid,
+        vorgaenger_vorschriftid,
+        nachfolger_vorschriftid,
+        datum_in_kraft,
+        datum_neue_typen,
+        datum_alle_typen,
+        beziehung_art,
+        homologation_serie,
+        max_homologation_vorschriftid,
+        1 AS xrow,
+        10 aktion
+    FROM
+        t_vorschrift_ref_vorschrift
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), h_vorschrift_ref_vorschrift AS (
+    SELECT
+        *
+    FROM
+        vorschrift_ref_vorschrift_history
+    WHERE
+        xrow = 1
+        AND aktion IN (
+            10,
+            20
+        )
+), vorschrift_ref_thema_land_history AS (
+    SELECT
+        vorschrift_ref_thema_ref_landid,
+        vorschriftid,
+        themaid,
+        landid,
+        geloescht,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschrift_ref_thema_ref_landid
+            ORDER BY
+                th.letzte_aenderung_datum DESC
+        ) xrow
+    FROM
+        t_h_vorschrift_ref_thema_ref_land th
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate
+    UNION ALL
+    SELECT
+        vorschrift_ref_thema_ref_landid,
+        vorschriftid,
+        themaid,
+        landid,
+        geloescht,
+        1 xrow
+    FROM
+        t_vorschrift_ref_thema_ref_land
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), h_vorschrift_ref_thema_ref_land AS (
+    SELECT
+        *
+    FROM
+        vorschrift_ref_thema_land_history
+    WHERE
+        xrow = 1
+        AND geloescht = 0 and  (themaid in (  SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(aThemenids, ':')  )
+        )  or landid in (  SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(alandids, ':')  ))
+                )
+), vorschrift_ref_einsatzdatum_typ_history AS (
+    SELECT
+        vorschrift_ref_einsatzdatum_typid,
+        vorschriftid,
+        einsatzdatum_typid,
+        einsatzdatum,
+        einsatzdatum_text,
+        letzte_aenderung_datum,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschrift_ref_einsatzdatum_typid
+            ORDER BY
+                th.letzte_aenderung_datum DESC
+        ) xrow
+    FROM
+        t_h_vorschrift_ref_einsatzdatum_typ th
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate
+    UNION ALL
+    SELECT
+        vorschrift_ref_einsatzdatum_typid,
+        vorschriftid,
+        einsatzdatum_typid,
+        einsatzdatum,
+        einsatzdatum_text,
+        letzte_aenderung_datum,
+        1 xrow
+    FROM
+        t_vorschrift_ref_einsatzdatum_typ
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), h_vorschrift_ref_einsatzdatum_typ AS (
+    SELECT
+        *
+    FROM
+        vorschrift_ref_einsatzdatum_typ_history
+    WHERE
+        xrow = 1
+), cte_rahmen_und_un AS (
+-- Auflösen der Rahmenrichtlinien auf Richtlinien
+    SELECT
+        v1.vorschrift_nummer   rr_nummer,
+        v1.vorschriftid        rr_id,
+        vtl.landid             rr_land,
+        v2.vorschriftid,
+        v2.vorschrift_nummer,
+        vrv.datum_in_kraft     in_kraft,
+        vrv.datum_neue_typen   neue_typen,
+        vrv.datum_alle_typen   alle_typen,
+        vrv.homologation_serie   AS homologation_moeglich,
+        vrv.max_homologation_vorschriftid
+    FROM
+        h_vorschrift                      v1
+        JOIN h_vorschrift_ref_thema_ref_land   vtl ON ( v1.vorschriftid = vtl.vorschriftid )
+        JOIN h_vorschrift_ref_vorschrift       vrv ON ( vrv.nachfolger_vorschriftid = v1.vorschriftid
+                                                  AND vrv.beziehung_art = 40 )
+        JOIN h_vorschrift                      v2 ON ( vrv.vorgaenger_vorschriftid = v2.vorschriftid )
+    WHERE
+        v1.vorschrift_typid = 30
+        AND v1.vorschrift_statusid = 40
+        AND v1.vorschrift_freigabestatusid = 20
+        AND v2.vorschrift_statusid = 40
+        AND v2.vorschrift_freigabestatusid = 20
+), 
+-- Verbindung der Rahmenrichtlinien zu den Themen
+ cte_rahmen_aufgeloest AS (
+    SELECT
+        cruu.*,
+        vtl.themaid
+    FROM
+        cte_rahmen_und_un                 cruu
+        JOIN h_vorschrift_ref_thema_ref_land   vtl ON (cruu.vorschriftid = vtl.vorschriftid )
+), cte1 AS (
+    SELECT DISTINCT
+        rr_id,
+        vorschriftid,
+        rr_land,
+        themaid
+    FROM
+        cte_rahmen_aufgeloest
+
+), cte2 (
+    rr_id,
+    vorschriftid,
+    rr_land,
+    themaid,
+    nachfolger_vorschriftid,
+    in_kraft,
+        basis_hoeher,
+    homologation_serie,
+    max_homologation_vorschriftid,
+    auser_kraft
+) AS (
+     SELECT
+        cra.rr_id,
+        cra.vorschriftid,
+        rr_land,
+        themaid,
+        vrv.nachfolger_vorschriftid,
+        ed1.einsatzdatum in_kraft,
+                1 AS basis_hoeher,
+        vrv.homologation_serie,
+        vrv.max_homologation_vorschriftid,
+        eda.einsatzdatum auser_kraft
+    FROM
+        cte_rahmen_aufgeloest               cra
+        JOIN h_vorschrift_ref_vorschrift         vrv ON ( vrv.vorgaenger_vorschriftid = cra.vorschriftid
+                                                  AND vrv.beziehung_art = 10 )
+        JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = vrv.nachfolger_vorschriftid
+                                                        AND ed1.einsatzdatum_typid = 1000 )
+        left outer JOIN h_vorschrift_ref_einsatzdatum_typ   eda ON ( cra.vorschriftid = eda.vorschriftid
+                        AND eda.einsatzdatum_typid in (  1060,1063,1041)
+                        )
+    UNION ALL
+    SELECT
+        cte2.rr_id,
+        cte2.nachfolger_vorschriftid,
+        cte2.rr_land,
+        cte2.themaid,
+        vrv.nachfolger_vorschriftid,
+        ed1.einsatzdatum AS in_kraft,
+       -- eda.einsatzdatum AS auser_kraft,
+        basis_hoeher + 1 AS basis_hoeher,
+        vrv.homologation_serie,
+        vrv.max_homologation_vorschriftid,
+        eda.einsatzdatum auser_kraft
+    FROM
+        cte2
+        JOIN h_vorschrift_ref_vorschrift         vrv ON ( cte2.nachfolger_vorschriftid = vrv.vorgaenger_vorschriftid
+                                                  AND beziehung_art = 10
+                                                  AND cte2.nachfolger_vorschriftid != vrv.max_homologation_vorschriftid )
+
+        JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = vrv.nachfolger_vorschriftid
+                                                        AND ed1.einsatzdatum_typid = 1000 )
+        left outer JOIN h_vorschrift_ref_einsatzdatum_typ   eda ON ( eda.vorschriftid = vrv.vorgaenger_vorschriftid
+                                                        AND eda.einsatzdatum_typid in (  1060,
+                1063,
+                1041) )
+        JOIN h_vorschrift_ref_thema_ref_land     trtl ON ( vrv.nachfolger_vorschriftid = trtl.vorschriftid
+                                                       AND trtl.themaid = cte2.themaid )
+        JOIN h_vorschrift                        hv ON ( vrv.nachfolger_vorschriftid = hv.vorschriftid )
+
+)
+    CYCLE vorschriftid SET is_cycle TO '1' DEFAULT '0', cte_rahmen_und_homologation AS (
+    SELECT
+        rr_id,
+        vorschriftid,
+        rr_land,
+        themaid,
+        0 AS basis_hoeher,
+        in_kraft,
+        neue_typen,
+        alle_typen,
+        null as auser_kraft
+    FROM
+        cte_rahmen_aufgeloest
+    UNION
+    SELECT
+        rr_id,
+        nachfolger_vorschriftid,
+        rr_land,
+        themaid,
+        basis_hoeher,
+        in_kraft,
+        NULL,
+        NULL,
+        auser_kraft
+    FROM
+        cte2
+), cte_rahmen_alle AS (
+   SELECT
+        cte3."RR_ID",
+        cte3."VORSCHRIFTID",
+        cte3."RR_LAND",
+        cte3."THEMAID",
+        nvl(vr.vorschrift_nummer, v.vorschrift_nummer) AS vorschrift_nummer,
+        cte3.in_kraft,
+        cte3.neue_typen,
+        cte3.alle_typen,
+        cte3.auser_kraft,
+        cte3.basis_hoeher
+
+    FROM
+        cte_rahmen_und_homologation   cte3
+        LEFT OUTER JOIN cte_rahmen_aufgeloest         vr ON ( cte3.rr_id = vr.rr_id
+                                                      AND cte3.rr_land = vr.rr_land
+                                                      AND cte3.vorschriftid = vr.vorschriftid
+                                                      AND cte3.themaid = vr.themaid )
+        LEFT OUTER JOIN h_vorschrift                  v ON ( cte3.vorschriftid = v.vorschriftid )
+), cte_normale AS (
+    SELECT
+        tv.vorschriftid,
+        vtl.themaid,
+        vtl.landid,
+        tv.vorschrift_nummer,
+        ed1.einsatzdatum   in_kraft,
+        ed2.einsatzdatum   neue_typen,
+        ed3.einsatzdatum   alle_typen,
+        ed4.einsatzdatum auser_kraft
+    FROM
+        h_vorschrift                        tv
+        JOIN h_vorschrift_ref_thema_ref_land     vtl ON ( tv.vorschriftid = vtl.vorschriftid )
+        LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = tv.vorschriftid
+                                                                   AND ed1.einsatzdatum_typid = 1000 -- in kraft
+                                                                    )
+        LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed2 ON ( ed2.vorschriftid = tv.vorschriftid
+                                                                   AND ( ( alckd_fbu_mode = 0
+                                                                           AND ed2.einsatzdatum_typid IN (
+            1010,
+            1022,
+            1030
+        ) )
+                                                                         OR ( alckd_fbu_mode = 1
+                                                                              AND ed2.einsatzdatum_typid IN (
+            1010,
+            1020,
+            1030
+        ) ) )-- neue typen
+         )
+        LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed3 ON ( ed3.vorschriftid = tv.vorschriftid
+                                                                   AND ( ( alckd_fbu_mode = 0
+                                                                           AND ed3.einsatzdatum_typid IN (
+            1011,
+            1023,
+            1031
+        ) )
+                                                                         OR ( alckd_fbu_mode = 1
+                                                                              AND ed3.einsatzdatum_typid IN (
+            1011,
+            1021,
+            1031
+        ) ) )-- alle typen                                                                                                                                                                        
+         )
+         LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed4 ON ( ed4.vorschriftid = tv.vorschriftid
+                                                                   AND ed4.einsatzdatum_typid IN (
+            1060,
+1063,
+1041
+      --  außer kraft                                                                                                                                                                       
+         ))
+    WHERE
+        vtl.landid IS NOT NULL
+        AND tv.vorschrift_typid IN (
+            10,
+            40
+        )
+), cte_rahmen_und_normale AS (
+    SELECT
+        rr_id,
+        vorschriftid,
+        rr_land AS landid,
+        themaid,
+        vorschrift_nummer,
+        MIN(in_kraft) in_kraft,
+        MIN(neue_typen) neue_typen,
+        MIN(alle_typen) alle_typen,
+        MIN(auser_kraft) auser_kraft,
+        MIN(basis_hoeher) basis_hoeher
+    FROM
+        cte_rahmen_alle
+    GROUP BY
+        rr_id,
+        vorschriftid,
+        rr_land,
+        themaid,
+        vorschrift_nummer
+    UNION ALL
+    SELECT
+        NULL,
+        vorschriftid,
+        landid,
+        themaid,
+        vorschrift_nummer,
+        MIN(in_kraft) in_kraft,
+        MIN(neue_typen) neue_typen,
+        MIN(alle_typen) alle_typen,
+        MIN(auser_kraft) auser_kraft,
+        0
+    FROM
+        cte_normale
+    GROUP BY
+        NULL,
+        vorschriftid,
+        landid,
+        themaid,
+        vorschrift_nummer,
+        0
+), cte_base AS (
+    SELECT
+        vrb.*,
+        CASE
+
+         WHEN vrb.alle_typen < aeopdate
+                 OR vrb.alle_typen <= asopdate THEN
+                2
+
+            WHEN vrb.neue_typen <= asopdate THEN
+                1
+
+
+            ELSE
+                0
+        END AS regel,
+        CASE
+            WHEN add_months(asopdate, ariskhigh) >= vrb.neue_typen
+                 AND asopdate <= vrb.neue_typen THEN
+                2
+            WHEN add_months(asopdate, arisklow) >= vrb.neue_typen
+                 AND asopdate <= vrb.neue_typen THEN
+                1
+            ELSE
+                0
+        END AS risiko
+    FROM
+        cte_rahmen_und_normale vrb
+    WHERE
+        ( ( nvl(nvl(vrb.in_kraft, vrb.neue_typen), vrb.alle_typen) <= asopdate + aforecast
+
+            AND nvl(asearchmode, 0) = 0 )
+          OR vrb.alle_typen <=
+            CASE
+                WHEN asearchmode = 0 THEN
+                    asopdate
+                ELSE
+                    aeopdate
+            END
+            + aforecast
+
+          OR vrb.alle_typen <= aeopdate )
+        AND themaid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(athemenids, ':') )
+        )
+        AND vrb.landid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(alandids, ':') )
+        )
+        AND basis_hoeher = 0
+),  cte_homologationen AS (
+    SELECT
+        vrb.*,
+        CASE
+            WHEN vrb.alle_typen <= aeopdate  OR vrb.alle_typen <= asopdate THEN
+                2
+            WHEN vrb.neue_typen <= asopdate
+                 THEN
+                1
+            ELSE
+                0
+        END AS regel,
+        CASE
+            WHEN add_months(asopdate, ariskhigh) >= vrb.neue_typen
+                 AND asopdate < vrb.neue_typen THEN
+                2
+            WHEN add_months(asopdate, arisklow) >= vrb.neue_typen
+                 AND asopdate < vrb.neue_typen THEN
+                1
+            ELSE
+                0
+        END AS risiko
+    FROM
+        cte_rahmen_und_normale vrb
+    WHERE
+        ( ( ( nvl(nvl(vrb.in_kraft, vrb.neue_typen), vrb.alle_typen) <= asopdate + aforecast
+              AND nvl(asearchmode, 0) = 0 )
+            OR vrb.alle_typen <=
+            CASE
+                WHEN asearchmode = 0 THEN
+                    asopdate
+                ELSE
+                    aeopdate
+            END
+            + aforecast )
+          OR vrb.alle_typen <= aeopdate )
+
+
+        AND themaid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(athemenids, ':') )
+        )
+        AND vrb.landid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(alandids, ':') )
+        )
+        AND basis_hoeher > 0
+), cte_alle_pre_amendments AS (
+    SELECT
+        *
+    FROM
+        cte_base
+    UNION ALL
+    SELECT
+        *
+    FROM
+        cte_homologationen
+), cte_beendete (
+    vorgaenger_vorschriftid,
+    regel
+) AS (
+    SELECT
+        vrv.vorgaenger_vorschriftid,
+        regel
+    FROM
+        cte_alle_pre_amendments       cap
+        JOIN h_vorschrift_ref_vorschrift   vrv ON ( cap.vorschriftid = vrv.nachfolger_vorschriftid
+                                                  AND vrv.beziehung_art = 10 )
+    WHERE
+       cap.alle_typen < asopdate + aforecast
+        OR cap.neue_typen <= asopdate + aforecast
+         or cap.auser_kraft < asopdate
+    UNION ALL
+    SELECT
+        vrv.vorgaenger_vorschriftid,
+        regel
+    FROM
+        cte_beendete                  cap
+        JOIN h_vorschrift_ref_vorschrift   vrv ON ( cap.vorgaenger_vorschriftid = vrv.nachfolger_vorschriftid
+                                                  AND vrv.beziehung_art = 10 )
+)
+    CYCLE vorgaenger_vorschriftid SET is_cycle TO '1' DEFAULT '0', 
+cte_amendments AS (
+    SELECT
+        tv.vorschriftid,
+        tv.vorschrift_nummer,
+        cte.themaid,
+        cte.landid,
+
+        ed1.einsatzdatum  in_kraft,
+        NULL neue_typen,
+        NULL alle_typen,
+        regel,
+        risiko,
+         0 as supplement,
+        0 as supplement_vor_in_kraft,
+         case when ed1.einsatzdatum <= asopdate then 1 else 0 end sop_nach_in_kraft,
+         0 as alle_fzg_vor_sop,
+         0 as neue_typen_vor_sop,
+         0 as alle_fzg_vor_eop
+    FROM
+        h_vorschrift                  tv
+        JOIN h_vorschrift_ref_vorschrift   tvrv ON ( tv.vorschriftid = tvrv.nachfolger_vorschriftid
+                                                   AND tvrv.beziehung_art IN (
+            20,
+            30
+        ) )
+        LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = tv.vorschriftid
+                                                                   AND ed1.einsatzdatum_typid = 1000 -- in kraft
+                                                                    )
+        JOIN cte_alle_pre_amendments       cte ON ( tvrv.vorgaenger_vorschriftid = cte.vorschriftid )
+    WHERE
+        tv.vorschrift_typid = 20
+        AND cte.vorschriftid NOT IN (
+            SELECT
+                vorgaenger_vorschriftid
+            FROM
+                cte_beendete
+        ) and ed1.einsatzdatum <= asopdate
+        AND vorschrift_freigabestatusid = 20
+    UNION ALL
+    SELECT
+        vorschriftid,
+        vorschrift_nummer,
+        themaid,
+        landid,
+        in_kraft,
+        neue_typen,
+        alle_typen,
+        regel,
+        risiko, 
+        0 as supplement,
+        0 as supplement_vor_in_kraft,
+         case when in_kraft <= asopdate then 1 else 0 end ,
+          case when alle_typen <= asopdate then 1 else 0 end ,
+          case when neue_typen <= asopdate then 1 else 0 end ,
+          case when alle_typen <= aeopdate then 1 else 0 end 
+    FROM
+        cte_alle_pre_amendments
+    WHERE
+        vorschriftid NOT IN (
+            SELECT
+                vorgaenger_vorschriftid
+            FROM
+                cte_beendete
+        )
+    UNION ALL
+    SELECT
+        v.vorschriftid,
+        v.vorschrift_nummer AS vorschrift_nummer,
+        cte3.themaid,
+        cte3.landid,
+        cte3.in_kraft,
+        cte3.neue_typen,
+        cte3.alle_typen,
+        0,
+        0,
+        1, 
+        case when cte3.in_kraft <= asopdate then 1 else 0 end,
+        0,
+        0,
+        0,
+        0
+    FROM
+        cte_alle_pre_amendments       cte3
+        JOIN h_vorschrift_ref_vorschrift   href ON ( cte3.vorschriftid = href.nachfolger_vorschriftid
+                                                   AND href.beziehung_art = 102 )
+        LEFT OUTER JOIN h_vorschrift                  v ON ( href.vorgaenger_vorschriftid = v.vorschriftid )
+            WHERE
+        cte3.vorschriftid NOT IN (
+            SELECT
+                vorgaenger_vorschriftid
+            FROM
+                cte_beendete
+        )
+), cte_amendments_singel AS (
+    SELECT
+        vorschriftid,
+        MAX(regel) regel,
+        MAX(risiko) risiko,
+        max(supplement_vor_in_kraft) supplement_vor_in_kraft,
+        max(sop_nach_in_kraft)sop_nach_in_kraft,
+        max(alle_fzg_vor_sop) alle_fzg_vor_sop,
+        max(neue_typen_vor_sop) neue_typen_vor_sop,
+        max(alle_fzg_vor_eop) alle_fzg_vor_eop
+    FROM
+        cte_amendments
+    GROUP BY
+        vorschriftid
+), cte1_result AS (
+    SELECT
+         regel,
+        vorschriftid,
+         risiko,
+         supplement_vor_in_kraft,
+       sop_nach_in_kraft,
+         alle_fzg_vor_sop,
+        neue_typen_vor_sop,
+         alle_fzg_vor_eop
+    FROM
+        cte_amendments_singel vrb
+
+)  -- Select VORSCHRIFTID bulk collect into lresult from cte1_result;
+
+SELECT
+    t_suche_ergebnis_maske(vorschriftid, regel, risiko, supplement_vor_in_kraft ,
+       sop_nach_in_kraft ,
+         alle_fzg_vor_sop,
+        neue_typen_vor_sop ,
+         alle_fzg_vor_eop)
+BULK COLLECT
+INTO lresult
+FROM
+    cte1_result;
+
+  --  end if;
+
+    return lresult;
+ end fSearchResultsBase; --old
+*/
+
+/**
+*/
+    function fSearchResultsBase(aThemenids in varchar2, aLandids in varchar2, aSopDate date, aSearchdate date default sysdate, aSearchMode number default 0,aEOPdate date default null,  alckd_fbu_mode number default 0 , aRiskLow number default 4, aRiskHigh number default 2) return  t_suche_ergebnis_maske_liste
+
+    is
+    lresult t_suche_ergebnis_maske_liste;
+    aForecast  number := 0;
+    lsearchdate date;
+    begin
+   -- Risiko: 0/null kein Risiko
+   --        1 =niedriges Risiko
+    --       2 = hohes Risiko
+
+    -- Regeln: 1 optional
+    --        2 neue Fahrzeuge 
+    --        3 alle Fahrzeuge
+
+
+  if aSearchdate < gProduktivdate then 
+    lsearchdate := gProduktivdate;
+  else 
+    lsearchdate := asearchdate;
+  end if;
+
+  -- Unterscheidung Historische Daten (Searchdate < heute) oder aktuelle Searchdate größer heute             
+  WITH vorschrift_history AS (
+    SELECT
+        vorschriftid,
+        vorschrift_nummer,
+        vorschrift_bezeichnung,
+        prognose_qualitaet,
+        jira_ticket,
+        vorschrift_freigabestatusid,
+        bemerkung,
+        link_zur_vorschrift_dms,
+        link_zur_vorschrift_getex,
+        typschild,
+        letzte_aenderung_datum,
+        letzte_aenderung_benutzerid,
+        websiteid,
+        websitelink,
+        einsatzdatum_modellid,
+        vorschrift_typid,
+        homologation_moeglich,
+        normid,
+        ksuid,
+        vorschrift_statusid,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschriftid
+            ORDER BY
+                tv.letzte_aenderung_datum DESC
+        ) xrow
+    FROM
+        t_h_vorschrift tv
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate
+    UNION ALL
+    SELECT
+        vorschriftid,
+        vorschrift_nummer,
+        vorschrift_bezeichnung,
+        prognose_qualitaet,
+        jira_ticket,
+        vorschrift_freigabestatusid,
+        bemerkung,
+        link_zur_vorschrift_dms,
+        link_zur_vorschrift_getex,
+        typschild,
+        letzte_aenderung_datum,
+        letzte_aenderung_benutzerid,
+        websiteid,
+        websitelink,
+        einsatzdatum_modellid,
+        vorschrift_typid,
+        homologation_moeglich,
+        normid,
+        ksuid,
+        vorschrift_statusid,
+        1 AS xrow
+    FROM
+        t_vorschrift
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), h_vorschrift AS (
+    SELECT
+        *
+    FROM
+        vorschrift_history
+    WHERE
+        xrow = 1 and (vorschrift_statusid = 40 or prognose_qualitaet in (10,20)) and vorschrift_freigabestatusid = 20
+), vorschrift_ref_vorschrift_history AS (
+    SELECT
+        vorschrift_ref_vorschriftid,
+        vorgaenger_vorschriftid,
+        nachfolger_vorschriftid,
+        datum_in_kraft,
+        datum_neue_typen,
+        datum_alle_typen,
+        beziehung_art,
+        homologation_serie,
+        max_homologation_vorschriftid,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschrift_ref_vorschriftid
+            ORDER BY
+                th.letzte_aenderung_datum DESC, aktion ASC
+        ) xrow,
+        aktion
+    FROM
+        t_h_vorschrift_ref_vorschrift th
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate 
+                                 -- INSERT, UPDATE
+    UNION ALL
+    SELECT
+        vorschrift_ref_vorschriftid,
+        vorgaenger_vorschriftid,
+        nachfolger_vorschriftid,
+        datum_in_kraft,
+        datum_neue_typen,
+        datum_alle_typen,
+        beziehung_art,
+        homologation_serie,
+        max_homologation_vorschriftid,
+        1 AS xrow,
+        10 aktion
+    FROM
+        t_vorschrift_ref_vorschrift
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), h_vorschrift_ref_vorschrift AS (
+    SELECT
+        *
+    FROM
+        vorschrift_ref_vorschrift_history
+    WHERE
+        xrow = 1
+        AND aktion IN (
+            10,
+            20
+        )
+), vorschrift_ref_thema_history AS (
+    SELECT
+        vorschrift_ref_themaid,
+        vorschriftid,
+        themaid,
+       -- landid,
+        geloescht,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschrift_ref_themaid
+            ORDER BY
+                th.letzte_aenderung_datum DESC
+        ) xrow
+    FROM
+        t_h_vorschrift_ref_thema th
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate
+    UNION ALL
+    SELECT
+        vorschrift_ref_themaid,
+        vorschriftid,
+        themaid,
+       -- landid,
+        geloescht,
+        1 xrow
+    FROM
+        t_vorschrift_ref_thema
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+),
+vorschrift_ref_land_history AS (
+    SELECT
+        vorschrift_ref_landid,
+        vorschriftid,
+        --themaid,
+        landid,
+        geloescht,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschrift_ref_landid
+            ORDER BY
+                th.letzte_aenderung_datum DESC
+        ) xrow
+    FROM
+        t_h_vorschrift_ref_land th
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate
+    UNION ALL
+    SELECT
+        vorschrift_ref_landid,
+        vorschriftid,
+        --themaid,
+        landid,
+        geloescht,
+        1 xrow
+    FROM
+        t_vorschrift_ref_land
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), 
+/*h_vorschrift_ref_thema_ref_land AS (
+    SELECT
+        *
+    FROM
+        vorschrift_ref_thema_land_history
+    WHERE
+        xrow = 1
+        AND geloescht = 0 and  (themaid in (  SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(aThemenids, ':')  )
+        )  or landid in (  SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(alandids, ':')  ))
+                )
+), */
+h_vorschrift_ref_thema AS (
+    SELECT
+        *
+      FROM
+        vorschrift_ref_thema_history
+     WHERE
+        xrow = 1
+       AND geloescht = 0 and  themaid in (  SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(aThemenids, ':')  )
+        ) 
+),
+h_vorschrift_ref_land AS (
+    SELECT
+         *
+       FROM
+        vorschrift_ref_land_history
+      WHERE
+        xrow = 1
+        AND geloescht = 0 and  landid in (  SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(alandids, ':')  )
+        )
+),
+vorschrift_ref_einsatzdatum_typ_history AS (
+    SELECT
+        vorschrift_ref_einsatzdatum_typid,
+        vorschriftid,
+        einsatzdatum_typid,
+        einsatzdatum,
+        einsatzdatum_text,
+        letzte_aenderung_datum,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschrift_ref_einsatzdatum_typid
+            ORDER BY
+                th.letzte_aenderung_datum DESC
+        ) xrow
+    FROM
+        t_h_vorschrift_ref_einsatzdatum_typ th
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate
+    UNION ALL
+    SELECT
+        vorschrift_ref_einsatzdatum_typid,
+        vorschriftid,
+        einsatzdatum_typid,
+        einsatzdatum,
+        einsatzdatum_text,
+        letzte_aenderung_datum,
+        1 xrow
+    FROM
+        t_vorschrift_ref_einsatzdatum_typ
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), h_vorschrift_ref_einsatzdatum_typ AS (
+    SELECT
+        *
+    FROM
+        vorschrift_ref_einsatzdatum_typ_history
+    WHERE
+        xrow = 1
+), cte_rahmen_und_un AS (
+-- Auflösen der Rahmenrichtlinien auf Richtlinien
+    SELECT
+        v1.vorschrift_nummer   rr_nummer,
+        v1.vorschriftid        rr_id,
+        vtl.landid             rr_land,
+        v2.vorschriftid,
+        v2.vorschrift_nummer,
+        vrv.datum_in_kraft     in_kraft,
+        vrv.datum_neue_typen   neue_typen,
+        vrv.datum_alle_typen   alle_typen,
+        vrv.homologation_serie   AS homologation_moeglich,
+        vrv.max_homologation_vorschriftid
+    FROM
+        h_vorschrift                      v1
+        JOIN h_vorschrift_ref_land   vtl ON ( v1.vorschriftid = vtl.vorschriftid )
+        JOIN h_vorschrift_ref_vorschrift       vrv ON ( vrv.nachfolger_vorschriftid = v1.vorschriftid
+                                                  AND vrv.beziehung_art = 40 )
+        JOIN h_vorschrift                      v2 ON ( vrv.vorgaenger_vorschriftid = v2.vorschriftid )
+    WHERE
+        v1.vorschrift_typid = 30
+        AND v1.vorschrift_statusid = 40
+        AND v1.vorschrift_freigabestatusid = 20
+        AND v2.vorschrift_statusid = 40
+        AND v2.vorschrift_freigabestatusid = 20
+), 
+-- Verbindung der Rahmenrichtlinien zu den Themen
+ cte_rahmen_aufgeloest AS (
+    SELECT
+        cruu.*,
+        vtl.themaid
+    FROM
+        cte_rahmen_und_un                 cruu
+        JOIN h_vorschrift_ref_thema   vtl ON (cruu.vorschriftid = vtl.vorschriftid )
+), 
+cte1 AS (
+    SELECT DISTINCT
+        rr_id,
+        vorschriftid,
+        rr_land,
+        themaid
+    FROM
+        cte_rahmen_aufgeloest
+
+), 
+cte2 (
+    rr_id,
+    vorschriftid,
+    rr_land,
+    themaid,
+    nachfolger_vorschriftid,
+    in_kraft,
+        basis_hoeher,
+    homologation_serie,
+    max_homologation_vorschriftid,
+    auser_kraft
+) AS (
+     SELECT
+        cra.rr_id,
+        cra.vorschriftid,
+        rr_land,
+        themaid,
+        vrv.nachfolger_vorschriftid,
+        ed1.einsatzdatum in_kraft,
+                1 AS basis_hoeher,
+        vrv.homologation_serie,
+        vrv.max_homologation_vorschriftid,
+        eda.einsatzdatum auser_kraft
+    FROM
+        cte_rahmen_aufgeloest               cra
+        JOIN h_vorschrift_ref_vorschrift         vrv ON ( vrv.vorgaenger_vorschriftid = cra.vorschriftid
+                                                  AND vrv.beziehung_art = 10 )
+        JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = vrv.nachfolger_vorschriftid
+                                                        AND ed1.einsatzdatum_typid = 1000 )
+        left outer JOIN h_vorschrift_ref_einsatzdatum_typ   eda ON ( cra.vorschriftid = eda.vorschriftid
+                        AND eda.einsatzdatum_typid in (  1060,1063,1041)
+                        )
+    UNION ALL
+    SELECT
+        cte2.rr_id,
+        cte2.nachfolger_vorschriftid,
+        cte2.rr_land,
+        cte2.themaid,
+        vrv.nachfolger_vorschriftid,
+        ed1.einsatzdatum AS in_kraft,
+       -- eda.einsatzdatum AS auser_kraft,
+        basis_hoeher + 1 AS basis_hoeher,
+        vrv.homologation_serie,
+        vrv.max_homologation_vorschriftid,
+        eda.einsatzdatum auser_kraft
+    FROM
+        cte2
+        JOIN h_vorschrift_ref_vorschrift         vrv ON ( cte2.nachfolger_vorschriftid = vrv.vorgaenger_vorschriftid
+                                                  AND beziehung_art = 10
+                                                  AND cte2.nachfolger_vorschriftid != nvl(vrv.max_homologation_vorschriftid,0) )
+
+        JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = vrv.nachfolger_vorschriftid
+                                                        AND ed1.einsatzdatum_typid = 1000 )
+        left outer JOIN h_vorschrift_ref_einsatzdatum_typ   eda ON ( eda.vorschriftid = vrv.vorgaenger_vorschriftid
+                                                        AND eda.einsatzdatum_typid in (  1060,
+                1063,
+                1041) )
+        JOIN h_vorschrift_ref_thema     trtl ON ( vrv.nachfolger_vorschriftid = trtl.vorschriftid
+                                                       AND trtl.themaid = cte2.themaid )
+        JOIN h_vorschrift                        hv ON ( vrv.nachfolger_vorschriftid = hv.vorschriftid )
+
+)
+    CYCLE vorschriftid SET is_cycle TO '1' DEFAULT '0', cte_rahmen_und_homologation AS (
+    SELECT
+        rr_id,
+        vorschriftid,
+        rr_land,
+        themaid,
+        0 AS basis_hoeher,
+        in_kraft,
+        neue_typen,
+        alle_typen,
+        null as auser_kraft
+    FROM
+        cte_rahmen_aufgeloest
+    UNION
+    SELECT
+        rr_id,
+        nachfolger_vorschriftid,
+        rr_land,
+        themaid,
+        basis_hoeher,
+        in_kraft,
+        NULL,
+        NULL,
+        auser_kraft
+    FROM
+        cte2
+), cte_rahmen_alle AS (
+   SELECT
+        cte3."RR_ID",
+        cte3."VORSCHRIFTID",
+        cte3."RR_LAND",
+        cte3."THEMAID",
+        nvl(vr.vorschrift_nummer, v.vorschrift_nummer) AS vorschrift_nummer,
+        cte3.in_kraft,
+        cte3.neue_typen,
+        cte3.alle_typen,
+        cte3.auser_kraft,
+        cte3.basis_hoeher
+
+    FROM
+        cte_rahmen_und_homologation   cte3
+        LEFT OUTER JOIN cte_rahmen_aufgeloest         vr ON ( cte3.rr_id = vr.rr_id
+                                                      AND cte3.rr_land = vr.rr_land
+                                                      AND cte3.vorschriftid = vr.vorschriftid
+                                                      AND cte3.themaid = vr.themaid )
+        LEFT OUTER JOIN h_vorschrift                  v ON ( cte3.vorschriftid = v.vorschriftid )
+), 
+cte_normale AS (
+    SELECT
+        tv.vorschriftid,
+        vt.themaid,
+        vtl.landid,
+        tv.vorschrift_nummer,
+        ed1.einsatzdatum   in_kraft,
+        ed2.einsatzdatum   neue_typen,
+        ed3.einsatzdatum   alle_typen,
+        ed4.einsatzdatum auser_kraft
+    FROM
+        h_vorschrift                        tv
+        JOIN h_vorschrift_ref_land     vtl ON ( tv.vorschriftid = vtl.vorschriftid )
+        JOIN h_vorschrift_ref_thema     vt ON ( tv.vorschriftid = vt.vorschriftid )
+        LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = tv.vorschriftid
+                                                                   AND ed1.einsatzdatum_typid = 1000 -- in kraft
+                                                                    )
+        LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed2 ON ( ed2.vorschriftid = tv.vorschriftid
+                                                                   AND ( ( alckd_fbu_mode = 0
+                                                                           AND ed2.einsatzdatum_typid IN (
+            1010,
+            1022,
+            1030
+        ) )
+                                                                         OR ( alckd_fbu_mode = 1
+                                                                              AND ed2.einsatzdatum_typid IN (
+            1010,
+            1020,
+            1030
+        ) ) )-- neue typen
+         )
+        LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed3 ON ( ed3.vorschriftid = tv.vorschriftid
+                                                                   AND ( ( alckd_fbu_mode = 0
+                                                                           AND ed3.einsatzdatum_typid IN (
+            1011,
+            1023,
+            1031
+        ) )
+                                                                         OR ( alckd_fbu_mode = 1
+                                                                              AND ed3.einsatzdatum_typid IN (
+            1011,
+            1021,
+            1031
+        ) ) )-- alle typen                                                                                                                                                                        
+         )
+         LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed4 ON ( ed4.vorschriftid = tv.vorschriftid
+                                                                   AND ed4.einsatzdatum_typid IN (
+            1060,
+1063,
+1041
+      --  außer kraft                                                                                                                                                                       
+         ))
+    WHERE
+        vtl.landid IS NOT NULL
+        AND tv.vorschrift_typid IN (
+            10,
+            40
+        )
+), cte_rahmen_und_normale AS (
+    SELECT
+        rr_id,
+        vorschriftid,
+        rr_land AS landid,
+        themaid,
+        vorschrift_nummer,
+        MIN(in_kraft) in_kraft,
+        MIN(neue_typen) neue_typen,
+        MIN(alle_typen) alle_typen,
+        MIN(auser_kraft) auser_kraft,
+        MIN(basis_hoeher) basis_hoeher
+    FROM
+        cte_rahmen_alle
+    GROUP BY
+        rr_id,
+        vorschriftid,
+        rr_land,
+        themaid,
+        vorschrift_nummer
+    UNION ALL
+    SELECT
+        NULL,
+        vorschriftid,
+        landid,
+        themaid,
+        vorschrift_nummer,
+        MIN(in_kraft) in_kraft,
+        MIN(neue_typen) neue_typen,
+        MIN(alle_typen) alle_typen,
+        MIN(auser_kraft) auser_kraft,
+        0
+    FROM
+        cte_normale
+    GROUP BY
+        NULL,
+        vorschriftid,
+        landid,
+        themaid,
+        vorschrift_nummer,
+        0
+), cte_base AS (
+    SELECT
+        vrb.*,
+        CASE
+
+         WHEN vrb.alle_typen < aeopdate
+                 OR vrb.alle_typen <= asopdate THEN
+                2
+
+            WHEN vrb.neue_typen <= asopdate THEN
+                1
+
+
+            ELSE
+                0
+        END AS regel,
+        CASE
+            WHEN add_months(asopdate, ariskhigh) >= vrb.neue_typen
+                 AND asopdate <= vrb.neue_typen THEN
+                2
+            WHEN add_months(asopdate, arisklow) >= vrb.neue_typen
+                 AND asopdate <= vrb.neue_typen THEN
+                1
+            ELSE
+                0
+        END AS risiko
+    FROM
+        cte_rahmen_und_normale vrb
+    WHERE
+        ( ( nvl(nvl(vrb.in_kraft, vrb.neue_typen), vrb.alle_typen) <= asopdate + aforecast
+
+            AND nvl(asearchmode, 0) = 0 )
+          OR vrb.alle_typen <=
+            CASE
+                WHEN asearchmode = 0 THEN
+                    asopdate
+                ELSE
+                    aeopdate
+            END
+            + aforecast
+
+          OR vrb.alle_typen <= aeopdate )
+        AND themaid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(athemenids, ':') )
+        )
+        AND vrb.landid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(alandids, ':') )
+        )
+        AND basis_hoeher = 0
+),  cte_homologationen AS (
+    SELECT
+        vrb.*,
+        CASE
+            WHEN vrb.alle_typen <= aeopdate  OR vrb.alle_typen <= asopdate THEN
+                2
+            WHEN vrb.neue_typen <= asopdate
+                 THEN
+                1
+            ELSE
+                0
+        END AS regel,
+        CASE
+            WHEN add_months(asopdate, ariskhigh) >= vrb.neue_typen
+                 AND asopdate < vrb.neue_typen THEN
+                2
+            WHEN add_months(asopdate, arisklow) >= vrb.neue_typen
+                 AND asopdate < vrb.neue_typen THEN
+                1
+            ELSE
+                0
+        END AS risiko
+    FROM
+        cte_rahmen_und_normale vrb
+    WHERE
+        ( ( ( nvl(nvl(vrb.in_kraft, vrb.neue_typen), vrb.alle_typen) <= asopdate + aforecast
+              AND nvl(asearchmode, 0) = 0 )
+            OR vrb.alle_typen <=
+            CASE
+                WHEN asearchmode = 0 THEN
+                    asopdate
+                ELSE
+                    aeopdate
+            END
+            + aforecast )
+          OR vrb.alle_typen <= aeopdate )
+
+
+        AND themaid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(athemenids, ':') )
+        )
+        AND vrb.landid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(alandids, ':') )
+        )
+        AND basis_hoeher > 0
+), cte_alle_pre_amendments AS (
+    SELECT
+        *
+    FROM
+        cte_base
+    UNION ALL
+    SELECT
+        *
+    FROM
+        cte_homologationen
+), cte_beendete (
+    vorgaenger_vorschriftid,
+    regel
+) AS (
+    SELECT
+        vrv.vorgaenger_vorschriftid,
+        regel
+    FROM
+        cte_alle_pre_amendments       cap
+        JOIN h_vorschrift_ref_vorschrift   vrv ON ( cap.vorschriftid = vrv.nachfolger_vorschriftid
+                                                  AND vrv.beziehung_art = 10 )
+    WHERE
+       cap.alle_typen < asopdate + aforecast
+        OR cap.neue_typen <= asopdate + aforecast
+         or cap.auser_kraft < asopdate
+    UNION ALL
+    SELECT
+        vrv.vorgaenger_vorschriftid,
+        regel
+    FROM
+        cte_beendete                  cap
+        JOIN h_vorschrift_ref_vorschrift   vrv ON ( cap.vorgaenger_vorschriftid = vrv.nachfolger_vorschriftid
+                                                  AND vrv.beziehung_art = 10 )
+)
+    CYCLE vorgaenger_vorschriftid SET is_cycle TO '1' DEFAULT '0', 
+cte_amendments AS (
+    SELECT
+        tv.vorschriftid,
+        tv.vorschrift_nummer,
+        cte.themaid,
+        cte.landid,
+
+        ed1.einsatzdatum  in_kraft,
+        NULL neue_typen,
+        NULL alle_typen,
+        regel,
+        risiko,
+         0 as supplement,
+        0 as supplement_vor_in_kraft,
+         case when ed1.einsatzdatum <= asopdate then 1 else 0 end sop_nach_in_kraft,
+         0 as alle_fzg_vor_sop,
+         0 as neue_typen_vor_sop,
+         0 as alle_fzg_vor_eop
+    FROM
+        h_vorschrift                  tv
+        JOIN h_vorschrift_ref_vorschrift   tvrv ON ( tv.vorschriftid = tvrv.nachfolger_vorschriftid
+                                                   AND tvrv.beziehung_art IN (
+            20,
+            30
+        ) )
+        LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = tv.vorschriftid
+                                                                   AND ed1.einsatzdatum_typid = 1000 -- in kraft
+                                                                    )
+        JOIN cte_alle_pre_amendments       cte ON ( tvrv.vorgaenger_vorschriftid = cte.vorschriftid )
+    WHERE
+        tv.vorschrift_typid = 20
+        AND cte.vorschriftid NOT IN (
+            SELECT
+                vorgaenger_vorschriftid
+            FROM
+                cte_beendete
+        ) and ed1.einsatzdatum <= asopdate
+        AND vorschrift_freigabestatusid = 20
+    UNION ALL
+    SELECT
+        vorschriftid,
+        vorschrift_nummer,
+        themaid,
+        landid,
+        in_kraft,
+        neue_typen,
+        alle_typen,
+        regel,
+        risiko, 
+        0 as supplement,
+        0 as supplement_vor_in_kraft,
+         case when in_kraft <= asopdate then 1 else 0 end ,
+          case when alle_typen <= asopdate then 1 else 0 end ,
+          case when neue_typen <= asopdate then 1 else 0 end ,
+          case when alle_typen <= aeopdate then 1 else 0 end 
+    FROM
+        cte_alle_pre_amendments
+    WHERE
+        vorschriftid NOT IN (
+            SELECT
+                vorgaenger_vorschriftid
+            FROM
+                cte_beendete
+        )
+    UNION ALL
+    SELECT
+        v.vorschriftid,
+        v.vorschrift_nummer AS vorschrift_nummer,
+        cte3.themaid,
+        cte3.landid,
+        cte3.in_kraft,
+        cte3.neue_typen,
+        cte3.alle_typen,
+        0,
+        0,
+        1, 
+        case when cte3.in_kraft <= asopdate then 1 else 0 end,
+        0,
+        0,
+        0,
+        0
+    FROM
+        cte_alle_pre_amendments       cte3
+        JOIN h_vorschrift_ref_vorschrift   href ON ( cte3.vorschriftid = href.nachfolger_vorschriftid
+                                                   AND href.beziehung_art = 102 )
+        LEFT OUTER JOIN h_vorschrift                  v ON ( href.vorgaenger_vorschriftid = v.vorschriftid )
+            WHERE
+        cte3.vorschriftid NOT IN (
+            SELECT
+                vorgaenger_vorschriftid
+            FROM
+                cte_beendete
+        )
+), cte_amendments_singel AS (
+    SELECT
+        vorschriftid,
+        MAX(regel) regel,
+        MAX(risiko) risiko,
+        max(supplement_vor_in_kraft) supplement_vor_in_kraft,
+        max(sop_nach_in_kraft)sop_nach_in_kraft,
+        max(alle_fzg_vor_sop) alle_fzg_vor_sop,
+        max(neue_typen_vor_sop) neue_typen_vor_sop,
+        max(alle_fzg_vor_eop) alle_fzg_vor_eop
+    FROM
+        cte_amendments
+    GROUP BY
+        vorschriftid
+), cte1_result AS (
+    SELECT
+         regel,
+        vorschriftid,
+         risiko,
+         supplement_vor_in_kraft,
+       sop_nach_in_kraft,
+         alle_fzg_vor_sop,
+        neue_typen_vor_sop,
+         alle_fzg_vor_eop
+    FROM
+        cte_amendments_singel vrb
+
+)/* Select VORSCHRIFTID bulk collect into lresult
+                      from cte1_result;
+
+          */
+SELECT
+    t_suche_ergebnis_maske(vorschriftid, regel, risiko, supplement_vor_in_kraft ,
+       sop_nach_in_kraft ,
+         alle_fzg_vor_sop,
+        neue_typen_vor_sop ,
+         alle_fzg_vor_eop)
+BULK COLLECT
+INTO lresult
+FROM
+    cte1_result;
+
+  --  end if;
+
+    return lresult;
+end fSearchResultsBase;
+
+   -- Rückgabe Aller anhängenden und berechneten informationen der Suchergebnisse
+/* 
+ ---old -- function fSearchResultsFull(aThemenids in varchar2, aLandids in varchar2, aSopDate date, asearchdate date default sysdate, aSearchMode number default 0,aEOPdate date default null,  alckd_fbu_mode number default 0 , aRiskLow number default 4, aRiskHigh number default 2) return T_SUCHE_ERGEBNIS_LISTE
+
+    is
+    lresult T_SUCHE_ERGEBNIS_LISTE;
+    aForecast number := 0 ;
+    lsearchdate date;
+    begin
+if aSearchdate < gProduktivdate then 
+lsearchdate := gProduktivdate;
+else 
+lsearchdate := asearchdate;
+end if;
+-- Unterscheidung Historische Daten (Searchdate < heute) oder aktuelle Searchdate größer heute             
+WITH vorschrift_history AS (
+    SELECT
+        vorschriftid,
+        vorschrift_nummer,
+        vorschrift_bezeichnung,
+        prognose_qualitaet,
+        jira_ticket,
+        vorschrift_freigabestatusid,
+        bemerkung,
+        link_zur_vorschrift_dms,
+        link_zur_vorschrift_getex,
+        typschild,
+        letzte_aenderung_datum,
+        letzte_aenderung_benutzerid,
+        websiteid,
+        websitelink,
+        einsatzdatum_modellid,
+        vorschrift_typid,
+        homologation_moeglich,
+        normid,
+        ksuid,
+        vorschrift_statusid,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschriftid
+            ORDER BY
+                tv.letzte_aenderung_datum DESC
+        ) xrow
+    FROM
+        t_h_vorschrift tv
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate
+    UNION ALL
+    SELECT
+        vorschriftid,
+        vorschrift_nummer,
+        vorschrift_bezeichnung,
+        prognose_qualitaet,
+        jira_ticket,
+        vorschrift_freigabestatusid,
+        bemerkung,
+        link_zur_vorschrift_dms,
+        link_zur_vorschrift_getex,
+        typschild,
+        letzte_aenderung_datum,
+        letzte_aenderung_benutzerid,
+        websiteid,
+        websitelink,
+        einsatzdatum_modellid,
+        vorschrift_typid,
+        homologation_moeglich,
+        normid,
+        ksuid,
+        vorschrift_statusid,
+        1 AS xrow
+    FROM
+        t_vorschrift
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), h_vorschrift AS (
+    SELECT
+        *
+    FROM
+        vorschrift_history
+    WHERE
+        xrow = 1  and vorschrift_statusid = 40 or prognose_qualitaet in (10,20)
+), vorschrift_ref_vorschrift_history AS (
+    SELECT
+        vorschrift_ref_vorschriftid,
+        vorgaenger_vorschriftid,
+        nachfolger_vorschriftid,
+        datum_in_kraft,
+        datum_neue_typen,
+        datum_alle_typen,
+        beziehung_art,
+        homologation_serie,
+        max_homologation_vorschriftid,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschrift_ref_vorschriftid
+            ORDER BY
+                th.letzte_aenderung_datum DESC, aktion ASC
+        ) xrow,
+        aktion
+    FROM
+        t_h_vorschrift_ref_vorschrift th
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate 
+                                 -- INSERT, UPDATE
+    UNION ALL
+    SELECT
+        vorschrift_ref_vorschriftid,
+        vorgaenger_vorschriftid,
+        nachfolger_vorschriftid,
+        datum_in_kraft,
+        datum_neue_typen,
+        datum_alle_typen,
+        beziehung_art,
+        homologation_serie,
+        max_homologation_vorschriftid,
+        1 AS xrow,
+        10 aktion
+    FROM
+        t_vorschrift_ref_vorschrift
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), h_vorschrift_ref_vorschrift AS (
+    SELECT
+        *
+    FROM
+        vorschrift_ref_vorschrift_history
+    WHERE
+        xrow = 1
+        AND aktion IN (
+            10,
+            20
+        )
+), vorschrift_ref_thema_land_history AS (
+    SELECT
+        vorschrift_ref_thema_ref_landid,
+        vorschriftid,
+        themaid,
+        landid,
+        geloescht,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschrift_ref_thema_ref_landid
+            ORDER BY
+                th.letzte_aenderung_datum DESC
+        ) xrow
+    FROM
+        t_h_vorschrift_ref_thema_ref_land th
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate
+    UNION ALL
+    SELECT
+        vorschrift_ref_thema_ref_landid,
+        vorschriftid,
+        themaid,
+        landid,
+        geloescht,
+        1 xrow
+    FROM
+        t_vorschrift_ref_thema_ref_land
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), h_vorschrift_ref_thema_ref_land AS (
+    SELECT
+        *
+    FROM
+        vorschrift_ref_thema_land_history
+    WHERE
+        xrow = 1
+        AND geloescht = 0  and  (themaid in (  SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(aThemenids, ':')  )
+        )  or landid in (  SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(alandids, ':')  ))
+                )
+), vorschrift_ref_einsatzdatum_typ_history AS (
+    SELECT
+        vorschrift_ref_einsatzdatum_typid,
+        vorschriftid,
+        einsatzdatum_typid,
+        einsatzdatum,
+        einsatzdatum_text,
+        letzte_aenderung_datum,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschrift_ref_einsatzdatum_typid
+            ORDER BY
+                th.letzte_aenderung_datum DESC
+        ) xrow
+    FROM
+        t_h_vorschrift_ref_einsatzdatum_typ th
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate
+    UNION ALL
+    SELECT
+        vorschrift_ref_einsatzdatum_typid,
+        vorschriftid,
+        einsatzdatum_typid,
+        einsatzdatum,
+        einsatzdatum_text,
+        letzte_aenderung_datum,
+        1 xrow
+    FROM
+        t_vorschrift_ref_einsatzdatum_typ
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), h_vorschrift_ref_einsatzdatum_typ AS (
+    SELECT
+        *
+    FROM
+        vorschrift_ref_einsatzdatum_typ_history
+    WHERE
+        xrow = 1
+), cte_rahmen_und_un AS (
+-- Auflösen der Rahmenrichtlinien auf Richtlinien
+    SELECT
+        v1.vorschrift_nummer   rr_nummer,
+        v1.vorschriftid        rr_id,
+        vtl.landid             rr_land,
+        v2.vorschriftid,
+        v2.vorschrift_nummer,
+        vrv.datum_in_kraft     in_kraft,
+        vrv.datum_neue_typen   neue_typen,
+        vrv.datum_alle_typen   alle_typen,
+        vrv.homologation_serie   AS homologation_moeglich,
+        vrv.max_homologation_vorschriftid
+    FROM
+        h_vorschrift                      v1
+         JOIN h_vorschrift_ref_thema_ref_land   vtl ON ( v1.vorschriftid = vtl.vorschriftid )
+        JOIN h_vorschrift_ref_vorschrift       vrv ON ( vrv.nachfolger_vorschriftid = v1.vorschriftid
+                                                  AND vrv.beziehung_art = 40 )
+        JOIN h_vorschrift                      v2 ON ( vrv.vorgaenger_vorschriftid = v2.vorschriftid )
+    WHERE
+        v1.vorschrift_typid = 30
+        AND v1.vorschrift_statusid = 40
+        AND v1.vorschrift_freigabestatusid = 20
+        AND v2.vorschrift_statusid = 40
+        AND v2.vorschrift_freigabestatusid = 20
+), 
+-- Verbindung der Rahmenrichtlinien zu den Themen
+ cte_rahmen_aufgeloest AS (
+    SELECT
+        cruu.*,
+        vtl.themaid
+    FROM
+        cte_rahmen_und_un                 cruu
+        JOIN h_vorschrift_ref_thema_ref_land   vtl ON (cruu.vorschriftid = vtl.vorschriftid )
+), cte1 AS (
+    SELECT DISTINCT
+        rr_id,
+        vorschriftid,
+        rr_land,
+        themaid
+    FROM
+        cte_rahmen_aufgeloest
+
+), cte2 (
+    rr_id,
+    vorschriftid,
+    rr_land,
+    themaid,
+    nachfolger_vorschriftid,
+    in_kraft,
+        basis_hoeher,
+    homologation_serie,
+    max_homologation_vorschriftid,
+    auser_kraft
+) AS (
+    SELECT
+        cra.rr_id,
+        cra.vorschriftid,
+        rr_land,
+        themaid,
+        vrv.nachfolger_vorschriftid,
+        ed1.einsatzdatum in_kraft,
+                1 AS basis_hoeher,
+        vrv.homologation_serie,
+        vrv.max_homologation_vorschriftid,
+        eda.einsatzdatum auser_kraft
+    FROM
+        cte_rahmen_aufgeloest               cra
+        JOIN h_vorschrift_ref_vorschrift         vrv ON ( vrv.vorgaenger_vorschriftid = cra.vorschriftid
+                                                  AND vrv.beziehung_art = 10 )
+        JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = vrv.nachfolger_vorschriftid
+                                                        AND ed1.einsatzdatum_typid = 1000 )
+        left outer JOIN h_vorschrift_ref_einsatzdatum_typ   eda ON ( cra.vorschriftid = eda.vorschriftid
+                        AND eda.einsatzdatum_typid in (  1060,1063,1041)
+                        )
+    UNION ALL
+    SELECT
+        cte2.rr_id,
+        cte2.nachfolger_vorschriftid,
+        cte2.rr_land,
+        cte2.themaid,
+        vrv.nachfolger_vorschriftid,
+        ed1.einsatzdatum AS in_kraft,
+       -- eda.einsatzdatum AS auser_kraft,
+        basis_hoeher + 1 AS basis_hoeher,
+        vrv.homologation_serie,
+        vrv.max_homologation_vorschriftid,
+        eda.einsatzdatum auser_kraft
+    FROM
+        cte2
+        JOIN h_vorschrift_ref_vorschrift         vrv ON ( cte2.nachfolger_vorschriftid = vrv.vorgaenger_vorschriftid
+                                                  AND beziehung_art = 10
+                                                  AND cte2.nachfolger_vorschriftid != vrv.max_homologation_vorschriftid )
+
+        JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = vrv.nachfolger_vorschriftid
+                                                        AND ed1.einsatzdatum_typid = 1000 )
+        left outer JOIN h_vorschrift_ref_einsatzdatum_typ   eda ON ( eda.vorschriftid = vrv.nachfolger_vorschriftid
+                                                        AND eda.einsatzdatum_typid in (  1060,
+                1063,
+                1041) )
+        JOIN h_vorschrift_ref_thema_ref_land     trtl ON ( vrv.nachfolger_vorschriftid = trtl.vorschriftid
+                                                       AND trtl.themaid = cte2.themaid )
+        JOIN h_vorschrift                        hv ON ( vrv.nachfolger_vorschriftid = hv.vorschriftid )
+
+)
+    CYCLE vorschriftid SET is_cycle TO '1' DEFAULT '0', cte_rahmen_und_homologation AS (
+    SELECT
+        rr_id,
+        vorschriftid,
+        rr_land,
+        themaid,
+        0 AS basis_hoeher,
+        in_kraft,
+        neue_typen,
+        alle_typen,
+        null as auser_kraft
+    FROM
+        cte_rahmen_aufgeloest
+    UNION
+    SELECT
+        rr_id,
+        nachfolger_vorschriftid,
+        rr_land,
+        themaid,
+        basis_hoeher,
+        in_kraft,
+        NULL,
+        NULL,
+        auser_kraft
+    FROM
+        cte2
+), cte_rahmen_alle AS (
+    SELECT
+        cte3."RR_ID",
+        cte3."VORSCHRIFTID",
+        cte3."RR_LAND",
+        cte3."THEMAID",
+        nvl(vr.vorschrift_nummer, v.vorschrift_nummer) AS vorschrift_nummer,
+        cte3.in_kraft,
+        cte3.neue_typen,
+        cte3.alle_typen,
+        cte3.auser_kraft,
+        cte3.basis_hoeher
+
+    FROM
+        cte_rahmen_und_homologation   cte3
+        LEFT OUTER JOIN cte_rahmen_aufgeloest         vr ON ( cte3.rr_id = vr.rr_id
+                                                      AND cte3.rr_land = vr.rr_land
+                                                      AND cte3.vorschriftid = vr.vorschriftid
+                                                      AND cte3.themaid = vr.themaid )
+        LEFT OUTER JOIN h_vorschrift                  v ON ( cte3.vorschriftid = v.vorschriftid )
+), cte_normale AS (
+    SELECT
+        tv.vorschriftid,
+        vtl.themaid,
+        vtl.landid,
+        tv.vorschrift_nummer,
+        ed1.einsatzdatum   in_kraft,
+        ed2.einsatzdatum   neue_typen,
+        ed3.einsatzdatum   alle_typen,
+        ed4.einsatzdatum auser_kraft
+    FROM
+        h_vorschrift                        tv
+        JOIN h_vorschrift_ref_thema_ref_land     vtl ON ( tv.vorschriftid = vtl.vorschriftid )
+        LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = tv.vorschriftid
+                                                                   AND ed1.einsatzdatum_typid = 1000 -- in kraft
+                                                                    )
+        LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed2 ON ( ed2.vorschriftid = tv.vorschriftid
+                                                                   AND ( ( alckd_fbu_mode = 0
+                                                                           AND ed2.einsatzdatum_typid IN (
+            1010,
+            1022,
+            1030
+        ) )
+                                                                         OR ( alckd_fbu_mode = 1
+                                                                              AND ed2.einsatzdatum_typid IN (
+            1010,
+            1020,
+            1030
+        ) ) )-- neue typen
+         )
+        LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed3 ON ( ed3.vorschriftid = tv.vorschriftid
+                                                                   AND ( ( alckd_fbu_mode = 0
+                                                                           AND ed3.einsatzdatum_typid IN (
+            1011,
+            1023,
+            1031
+        ) )
+                                                                         OR ( alckd_fbu_mode = 1
+                                                                              AND ed3.einsatzdatum_typid IN (
+            1011,
+            1021,
+            1031
+        ) ) )-- alle typen                                                                                                                                                                        
+         )
+         LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed4 ON ( ed4.vorschriftid = tv.vorschriftid
+                                                                   AND ed4.einsatzdatum_typid IN (
+            1060,
+1063,
+1041
+      --  außer kraft                                                                                                                                                                       
+         ))
+    WHERE
+        vtl.landid IS NOT NULL
+        AND tv.vorschrift_typid IN (
+            10,
+            40
+        )
+), cte_rahmen_und_normale AS (
+    SELECT
+        rr_id,
+        vorschriftid,
+        rr_land AS landid,
+        themaid,
+        vorschrift_nummer,
+        MIN(in_kraft) in_kraft,
+        MIN(neue_typen) neue_typen,
+        MIN(alle_typen) alle_typen,
+        MIN(auser_kraft) auser_kraft,
+        MIN(basis_hoeher) basis_hoeher
+    FROM
+        cte_rahmen_alle
+    GROUP BY
+        rr_id,
+        vorschriftid,
+        rr_land,
+        themaid,
+        vorschrift_nummer
+    UNION ALL
+    SELECT
+        NULL,
+        vorschriftid,
+        landid,
+        themaid,
+        vorschrift_nummer,
+        MIN(in_kraft) in_kraft,
+        MIN(neue_typen) neue_typen,
+        MIN(alle_typen) alle_typen,
+        MIN(auser_kraft) auser_kraft,
+        0
+    FROM
+        cte_normale
+    GROUP BY
+        NULL,
+        vorschriftid,
+        landid,
+        themaid,
+        vorschrift_nummer,
+        0
+), cte_base AS (
+    SELECT
+        vrb.*,
+        CASE
+
+         WHEN vrb.alle_typen < aeopdate
+                 OR vrb.alle_typen <= asopdate THEN
+                2
+
+            WHEN vrb.neue_typen <= asopdate THEN
+                1
+
+
+            ELSE
+                0
+        END AS regel,
+        CASE
+            WHEN add_months(asopdate, ariskhigh) >= vrb.neue_typen
+                 AND asopdate <= vrb.neue_typen THEN
+                2
+            WHEN add_months(asopdate, arisklow) >= vrb.neue_typen
+                 AND asopdate <= vrb.neue_typen THEN
+                1
+            ELSE
+                0
+        END AS risiko
+    FROM
+        cte_rahmen_und_normale vrb
+    WHERE
+        ( ( nvl(nvl(vrb.in_kraft, vrb.neue_typen), vrb.alle_typen) <= asopdate + aforecast
+
+            AND nvl(asearchmode, 0) = 0 )
+          OR vrb.alle_typen <=
+            CASE
+                WHEN asearchmode = 0 THEN
+                    asopdate
+                ELSE
+                    aeopdate
+            END
+            + aforecast
+
+          OR vrb.alle_typen <= aeopdate )
+        AND themaid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(athemenids, ':') )
+        )
+        AND vrb.landid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(alandids, ':') )
+        )
+        AND basis_hoeher = 0
+),  cte_homologationen AS (
+    SELECT
+        vrb.*,
+        CASE
+            WHEN vrb.alle_typen <= aeopdate  OR vrb.alle_typen <= asopdate THEN
+                2
+            WHEN vrb.neue_typen <= asopdate
+                 THEN
+                1
+            ELSE
+                0
+        END AS regel,
+        CASE
+            WHEN add_months(asopdate, ariskhigh) >= vrb.neue_typen
+                 AND asopdate < vrb.neue_typen THEN
+                2
+            WHEN add_months(asopdate, arisklow) >= vrb.neue_typen
+                 AND asopdate < vrb.neue_typen THEN
+                1
+            ELSE
+                0
+        END AS risiko
+    FROM
+        cte_rahmen_und_normale vrb
+    WHERE
+        ( ( ( nvl(nvl(vrb.in_kraft, vrb.neue_typen), vrb.alle_typen) <= asopdate + aforecast
+              AND nvl(asearchmode, 0) = 0 )
+            OR vrb.alle_typen <=
+            CASE
+                WHEN asearchmode = 0 THEN
+                    asopdate
+                ELSE
+                    aeopdate
+            END
+            + aforecast )
+          OR vrb.alle_typen <= aeopdate )
+
+
+        AND themaid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(athemenids, ':') )
+        )
+        AND vrb.landid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(alandids, ':') )
+        )
+        AND basis_hoeher > 0
+), cte_alle_pre_amendments AS (
+    SELECT
+        *
+    FROM
+        cte_base
+    UNION ALL
+    SELECT
+        *
+    FROM
+        cte_homologationen
+), cte_beendete (
+    vorgaenger_vorschriftid,
+    regel
+) AS (
+    SELECT
+        vrv.vorgaenger_vorschriftid,
+        regel
+    FROM
+        cte_alle_pre_amendments       cap
+        JOIN h_vorschrift_ref_vorschrift   vrv ON ( cap.vorschriftid = vrv.nachfolger_vorschriftid
+                                                  AND vrv.beziehung_art = 10 )
+    WHERE
+        cap.alle_typen < asopdate + aforecast
+        OR cap.neue_typen <= asopdate + aforecast
+         or cap.auser_kraft < asopdate
+    UNION ALL
+    SELECT
+        vrv.vorgaenger_vorschriftid,
+        regel
+    FROM
+        cte_beendete                  cap
+        JOIN h_vorschrift_ref_vorschrift   vrv ON ( cap.vorgaenger_vorschriftid = vrv.nachfolger_vorschriftid
+                                                  AND vrv.beziehung_art = 10 )
+)
+    CYCLE vorgaenger_vorschriftid SET is_cycle TO '1' DEFAULT '0', cte_amendments AS (
+    SELECT
+        tv.vorschriftid,
+        tv.vorschrift_nummer,
+        cte.themaid,
+        cte.landid,
+
+        ed1.einsatzdatum  in_kraft,
+        NULL neue_typen,
+        NULL alle_typen,
+        regel,
+        risiko
+    FROM
+        h_vorschrift                  tv
+        JOIN h_vorschrift_ref_vorschrift   tvrv ON ( tv.vorschriftid = tvrv.nachfolger_vorschriftid
+                                                   AND tvrv.beziehung_art IN (
+            20,
+            30
+        ) )
+        LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = tv.vorschriftid
+                                                                   AND ed1.einsatzdatum_typid = 1000 -- in kraft
+                                                                    )
+        JOIN cte_alle_pre_amendments       cte ON ( tvrv.vorgaenger_vorschriftid = cte.vorschriftid )
+    WHERE
+        tv.vorschrift_typid = 20
+        AND cte.vorschriftid NOT IN (
+            SELECT
+                vorgaenger_vorschriftid
+            FROM
+                cte_beendete
+        ) and ed1.einsatzdatum <= asopdate
+        AND vorschrift_freigabestatusid = 20
+    UNION ALL
+    SELECT
+        vorschriftid,
+        vorschrift_nummer,
+        themaid,
+        landid,
+        in_kraft,
+        neue_typen,
+        alle_typen,
+        regel,
+        risiko
+    FROM
+        cte_alle_pre_amendments
+    WHERE
+        vorschriftid NOT IN (
+            SELECT
+                vorgaenger_vorschriftid
+            FROM
+                cte_beendete
+        )
+    UNION ALL
+    SELECT
+        v.vorschriftid,
+        v.vorschrift_nummer AS vorschrift_nummer,
+        cte3.themaid,
+        cte3.landid,
+        cte3.in_kraft,
+        cte3.neue_typen,
+        cte3.alle_typen,
+        0,
+        0
+    FROM
+        cte_alle_pre_amendments       cte3
+        JOIN h_vorschrift_ref_vorschrift   href ON ( cte3.vorschriftid = href.nachfolger_vorschriftid
+                                                   AND href.beziehung_art = 102 )
+        LEFT OUTER JOIN h_vorschrift                  v ON ( href.vorgaenger_vorschriftid = v.vorschriftid )
+            WHERE
+        cte3.vorschriftid NOT IN (
+            SELECT
+                vorgaenger_vorschriftid
+            FROM
+                cte_beendete
+        )
+), cte_regeln_distinct AS (
+    SELECT
+        vorschriftid,
+        themaid,
+        landid,
+        MAX(regel) regel,
+        MAX(risiko) risiko,
+        MIN(in_kraft) in_kraft,
+        MIN(neue_typen) neue_typen,
+        MIN(alle_typen) alle_typen
+    FROM
+        cte_amendments
+    GROUP BY
+        vorschriftid,
+        themaid,
+        landid
+), cte_result AS (
+    SELECT
+        *
+    FROM
+        cte_regeln_distinct
+)
+SELECT
+    t_suche_ergebnis(vorschriftid, in_kraft, neue_typen, alle_typen, landid,
+                     themaid, regel, risiko)
+BULK COLLECT
+INTO lresult
+FROM
+    cte_result;
+
+  --  end if;
+    RETURN lresult;
+END fsearchresultsfull;
+*/
+
+--
+  function fSearchResultsFull(aThemenids in varchar2, aLandids in varchar2, aSopDate date, asearchdate date default sysdate, aSearchMode number default 0,aEOPdate date default null,  alckd_fbu_mode number default 0 , aRiskLow number default 4, aRiskHigh number default 2, amodelljahranfang number default 0, amodelljahrende number default 0) return T_SUCHE_ERGEBNIS_LISTE
+
+    is
+    lresult T_SUCHE_ERGEBNIS_LISTE;
+    aForecast number := 0 ;
+    lsearchdate date;
+    begin
+    if aSearchdate < gProduktivdate then 
+       lsearchdate := gProduktivdate;
+    else 
+       lsearchdate := asearchdate;
+    end if;
+--Vorschriftdaten Unterscheidung Historische Daten (Searchdate < heute) oder aktuelle Searchdate größer heute             
+
+
+
+
+WITH vorschrift_history AS (
+    SELECT
+        vorschriftid,
+        vorschrift_nummer,
+        vorschrift_bezeichnung,
+        tp.PROGNOSE_QUALITAETID prognose_qualitaet,
+        jira_ticket,
+        vorschrift_freigabestatusid,
+        bemerkung,
+        link_zur_vorschrift_dms,
+        link_zur_vorschrift_getex,
+        typschild,
+        letzte_aenderung_datum,
+        letzte_aenderung_benutzerid,
+        websiteid,
+        websitelink,
+        einsatzdatum_modellid,
+        vorschrift_typid,
+        homologation_moeglich,
+        normid,
+        ksuid,
+        vorschrift_statusid,
+        LEAD_VKO_BENUTZERID,
+        MJ_SCHALTER_STATUS,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschriftid
+            ORDER BY
+                tv.letzte_aenderung_datum DESC
+        ) xrow
+    FROM
+        t_h_vorschrift tv
+        left outer join t_prognose_qualitaet tp on (nvl(tv.PROGNOSE_QUALITAETID,prognose_qualitaet) = tp.PROGNOSE_QUALITAETID)
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate
+    UNION ALL
+    SELECT
+        vorschriftid,
+        vorschrift_nummer,
+        vorschrift_bezeichnung,
+        tp.PROGNOSE_QUALITAETID prognose_qualitaet,
+        jira_ticket,
+        vorschrift_freigabestatusid,
+        bemerkung,
+        link_zur_vorschrift_dms,
+        link_zur_vorschrift_getex,
+        typschild,
+        letzte_aenderung_datum,
+        letzte_aenderung_benutzerid,
+        websiteid,
+        websitelink,
+        einsatzdatum_modellid,
+        vorschrift_typid,
+        homologation_moeglich,
+        normid,
+        ksuid,
+        vorschrift_statusid,
+        LEAD_VKO_BENUTZERID,
+        MJ_SCHALTER_STATUS,
+        1 AS xrow
+    FROM
+        t_vorschrift tv
+        left outer join t_prognose_qualitaet tp on (nvl(tv.PROGNOSE_QUALITAETID,prognose_qualitaet) = tp.PROGNOSE_QUALITAETID)
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), h_vorschrift AS (
+    SELECT
+        *
+    FROM
+        vorschrift_history
+    WHERE
+        xrow = 1  and ((vorschrift_statusid = 40 or prognose_qualitaet in (10,20,30))  )and vorschrift_freigabestatusid = 20
+
+
+)
+-- Vorschriften Verknüpfungen mit  Unterscheidung Historische Daten (Searchdate < heute) oder aktuelle Searchdate größer heute     
+, vorschrift_ref_vorschrift_history AS (
+    SELECT
+        vorschrift_ref_vorschriftid,
+        vorgaenger_vorschriftid,
+        nachfolger_vorschriftid,
+        datum_in_kraft,
+        datum_neue_typen,
+        datum_alle_typen,
+        beziehung_art,
+        homologation_serie,
+        max_homologation_vorschriftid,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschrift_ref_vorschriftid
+            ORDER BY
+                th.letzte_aenderung_datum DESC, aktion ASC
+        ) xrow,
+        aktion
+    FROM
+        t_h_vorschrift_ref_vorschrift th
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate 
+                                 -- INSERT, UPDATE
+    UNION ALL
+    SELECT
+        vorschrift_ref_vorschriftid,
+        vorgaenger_vorschriftid,
+        nachfolger_vorschriftid,
+        datum_in_kraft,
+        datum_neue_typen,
+        datum_alle_typen,
+        beziehung_art,
+        homologation_serie,
+        max_homologation_vorschriftid,
+        1 AS xrow,
+        10 aktion
+    FROM
+        t_vorschrift_ref_vorschrift
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), h_vorschrift_ref_vorschrift AS (
+    SELECT
+        *
+    FROM
+        vorschrift_ref_vorschrift_history
+    WHERE
+        xrow = 1
+        AND aktion IN (
+            10,
+            20
+        )
+), --Themen Unterscheidung Historische Daten (Searchdate < heute) oder aktuelle Searchdate größer heute     
+vorschrift_ref_thema_history AS (
+    SELECT
+        vorschrift_ref_themaid,
+        vorschriftid,
+        themaid,
+        --landid,
+        geloescht,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschrift_ref_themaid
+            ORDER BY
+                th.letzte_aenderung_datum DESC
+        ) xrow
+    FROM
+        t_h_vorschrift_ref_thema th
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate
+    UNION ALL
+    SELECT
+        vorschrift_ref_themaid,
+        vorschriftid,
+        themaid,
+       -- landid,
+        geloescht,
+        1 xrow
+    FROM
+        t_vorschrift_ref_thema
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), -- Land  Unterscheidung Historische Daten (Searchdate < heute) oder aktuelle Searchdate größer heute     
+vorschrift_ref_land_history AS (
+    SELECT
+        vorschrift_ref_landid,
+        vorschriftid,
+        landid,
+        geloescht,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschrift_ref_landid
+            ORDER BY
+                th.letzte_aenderung_datum DESC
+        ) xrow
+    FROM
+        t_h_vorschrift_ref_land th
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate
+    UNION ALL
+    SELECT
+        vorschrift_ref_landid,
+        vorschriftid,
+        landid,
+        geloescht,
+        1 xrow
+    FROM
+        t_vorschrift_ref_land
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), -- Themen Unterscheidung Historische Daten (Searchdate < heute) oder aktuelle Searchdate größer heute    
+h_vorschrift_ref_thema AS (
+    SELECT
+        *
+    FROM
+        vorschrift_ref_thema_history
+    WHERE
+        xrow = 1
+        AND geloescht = 0  and  (themaid in (  SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(aThemenids, ':')  )
+            )  
+       )
+),
+h_vorschrift_ref_land AS (
+    SELECT
+        *
+    FROM
+        vorschrift_ref_land_history
+    WHERE
+        xrow = 1
+        AND geloescht = 0  and  ( landid in (  SELECT
+                    column_value
+                  FROM  TABLE ( apex_string.split(alandids, ':')  ))
+                )
+),-- Einsatzdaten  Unterscheidung Historische Daten (Searchdate < heute) oder aktuelle Searchdate größer heute    
+vorschrift_ref_einsatzdatum_typ_history AS (
+    SELECT
+        vorschrift_ref_einsatzdatum_typid,
+        vorschriftid,
+        einsatzdatum_typid,
+        einsatzdatum,
+        einsatzdatum_text,
+        letzte_aenderung_datum,
+        MODELJAHR,
+        ROW_NUMBER() OVER(
+            PARTITION BY vorschrift_ref_einsatzdatum_typid
+            ORDER BY
+                th.letzte_aenderung_datum DESC
+        ) xrow
+    FROM
+        t_h_vorschrift_ref_einsatzdatum_typ th
+    WHERE
+        lsearchdate < trunc(sysdate, 'DD')
+        AND letzte_aenderung_datum <= lsearchdate
+    UNION ALL
+    SELECT
+        vorschrift_ref_einsatzdatum_typid,
+        vorschriftid,
+        einsatzdatum_typid,
+        einsatzdatum,
+        einsatzdatum_text,
+        letzte_aenderung_datum,
+        MODELJAHR,
+        1 xrow
+    FROM
+        t_vorschrift_ref_einsatzdatum_typ
+    WHERE
+        lsearchdate >= trunc(sysdate, 'DD')
+), h_vorschrift_ref_einsatzdatum_typ AS (
+     SELECT
+        th.*, tet.EINSATZDATUM_MODELLID
+    FROM
+        vorschrift_ref_einsatzdatum_typ_history th
+        join t_einsatzdatum_typ tet on (th.EINSATZDATUM_TYPID = tet.EINSATZDATUM_TYPID)
+    WHERE
+        xrow = 1
+), cte_rahmen_und_un AS (
+-- Auflösen der Rahmenrichtlinien auf Richtlinien
+    SELECT
+        v1.vorschrift_nummer   rr_nummer,
+        v1.vorschriftid        rr_id,
+        vtl.landid             rr_land,
+        v2.vorschriftid,
+        v2.vorschrift_nummer,
+        nvl(vrv.datum_in_kraft,ed1_un.einsatzdatum)    in_kraft,
+        vrv.datum_neue_typen   neue_typen,
+        vrv.datum_alle_typen   alle_typen,
+        vrv.homologation_serie   AS homologation_moeglich,
+        vrv.max_homologation_vorschriftid,
+        v1.einsatzdatum_modellid,
+         v1.MJ_SCHALTER_STATUS,
+        v2.vorschrift_typid
+    FROM
+        h_vorschrift                      v1
+         JOIN h_vorschrift_ref_land   vtl ON ( v1.vorschriftid = vtl.vorschriftid )
+        JOIN h_vorschrift_ref_vorschrift       vrv ON ( vrv.nachfolger_vorschriftid = v1.vorschriftid
+                                                  AND vrv.beziehung_art = 40 )
+        JOIN h_vorschrift                      v2 ON ( vrv.vorgaenger_vorschriftid = v2.vorschriftid )
+
+        left JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = v1.vorschriftid
+                                                        AND ed1.einsatzdatum_typid = 1000 )
+    left JOIN h_vorschrift_ref_einsatzdatum_typ   ed1_un ON ( ed1_un.vorschriftid = v2.vorschriftid
+                                                        AND ed1_un.einsatzdatum_typid = 1000 )
+       left JOIN h_vorschrift_ref_einsatzdatum_typ   ed2 ON ( ed2.vorschriftid = v1.vorschriftid
+                                                        AND ed2.einsatzdatum_typid in (  1060,1063,1041))
+    WHERE
+        v1.vorschrift_typid = 30
+        AND vtl.landid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(aLandids, ':') )
+        )
+
+        and  ed1.einsatzdatum <= aeopdate and (ed2.einsatzdatum >= asopdate or ed2.einsatzdatum is null)
+
+),
+-- Verbindung der Rahmenrichtlinien zu den Themen
+ cte_rahmen_aufgeloest AS (
+    SELECT
+        cruu.*,
+        vtl.themaid
+    FROM
+        cte_rahmen_und_un                 cruu
+        JOIN h_vorschrift_ref_thema   vtl ON (cruu.vorschriftid = vtl.vorschriftid )
+        where   themaid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(aThemenids, ':') )
+        )
+), cte1 AS (
+    SELECT DISTINCT
+        rr_id,
+        vorschriftid,
+        rr_land,
+        themaid,
+        einsatzdatum_modellid,
+        MJ_SCHALTER_STATUS,
+        vorschrift_typid
+    FROM
+        cte_rahmen_aufgeloest
+
+), 
+-- Durchgehen der Homologation
+cte2 (
+    rr_id,
+    vorschriftid,
+    rr_land,
+    themaid,
+
+    in_kraft,
+        basis_hoeher,
+    homologation_serie,
+    max_homologation_vorschriftid,
+    auser_kraft,
+    einsatzdatum_modellid,
+    MJ_SCHALTER_STATUS,
+        vorschrift_typid
+) AS (
+     SELECT
+        cra.rr_id,
+         vrv.nachfolger_vorschriftid vorschriftid,
+        rr_land,
+        themaid,
+
+        ed1.einsatzdatum in_kraft,
+                1 AS basis_hoeher,
+        cra.homologation_moeglich homologation_serie,
+        cra.max_homologation_vorschriftid,
+        eda.einsatzdatum auser_kraft,
+        cra.einsatzdatum_modellid,
+        cra.MJ_SCHALTER_STATUS,
+        cra.vorschrift_typid
+
+       -- null as nf_in_krft
+    FROM
+        cte_rahmen_aufgeloest               cra
+        JOIN h_vorschrift_ref_vorschrift         vrv ON ( vrv.vorgaenger_vorschriftid = cra.vorschriftid
+                                                  AND vrv.beziehung_art = 10 
+                                                  and  cra.vorschriftid != nvl(cra.max_homologation_vorschriftid,0)
+                                                  and cra.homologation_moeglich = 10
+                                                  )
+        JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = vrv.nachfolger_vorschriftid
+                                                        AND ed1.einsatzdatum_typid = 1000 )
+        left outer JOIN h_vorschrift_ref_einsatzdatum_typ   eda ON ( cra.vorschriftid = eda.vorschriftid
+                        AND eda.einsatzdatum_typid in (  1060,1063,1041)
+                        )
+    UNION ALL
+    SELECT
+        cte2.rr_id,
+        vrv.nachfolger_vorschriftid,
+        cte2.rr_land,
+        cte2.themaid,
+
+        ed1.einsatzdatum AS in_kraft,
+       -- eda.einsatzdatum AS auser_kraft,
+        basis_hoeher + 1 AS basis_hoeher,
+        cte2.homologation_serie,
+        cte2.max_homologation_vorschriftid,
+        eda.einsatzdatum auser_kraft,
+        hv.einsatzdatum_modellid,
+        hv.MJ_SCHALTER_STATUS,
+        hv.vorschrift_typid
+    FROM
+        cte2
+        JOIN h_vorschrift_ref_vorschrift         vrv ON ( cte2.vorschriftid = vrv.vorgaenger_vorschriftid
+                                                  AND beziehung_art = 10
+                                                  AND cte2.vorschriftid != nvl(cte2.max_homologation_vorschriftid,0)
+                                                 and cte2.homologation_serie = 10 )
+
+        JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = vrv.nachfolger_vorschriftid
+                                                        AND ed1.einsatzdatum_typid = 1000 )
+        left outer JOIN h_vorschrift_ref_einsatzdatum_typ   eda ON ( eda.vorschriftid = vrv.nachfolger_vorschriftid
+                                                        AND eda.einsatzdatum_typid in (  1060,
+                1063,
+                1041) )
+        JOIN h_vorschrift_ref_thema     trtl ON ( vrv.nachfolger_vorschriftid = trtl.vorschriftid
+                                                       AND trtl.themaid = cte2.themaid )
+        JOIN h_vorschrift                        hv ON ( vrv.nachfolger_vorschriftid = hv.vorschriftid )
+)
+    CYCLE vorschriftid SET is_cycle TO '1' DEFAULT '0', 
+
+    cte_rahmen_und_homologation AS (
+    SELECT
+        rr_id,
+        vorschriftid,
+        rr_land,
+        themaid,
+        0 AS basis_hoeher,
+        in_kraft,
+        neue_typen,
+        alle_typen,
+        null as auser_kraft,
+        einsatzdatum_modellid,
+        MJ_SCHALTER_STATUS,
+        vorschrift_typid
+    FROM
+        cte_rahmen_aufgeloest
+    UNION
+    SELECT
+        rr_id,
+        vorschriftid,
+        rr_land,
+        themaid,
+        basis_hoeher,
+        in_kraft,
+        NULL,
+        NULL,
+        auser_kraft,
+        einsatzdatum_modellid,
+        MJ_SCHALTER_STATUS,
+        vorschrift_typid
+    FROM
+        cte2
+), cte_rahmen_alle AS (
+    SELECT
+        cte3."RR_ID",
+        cte3."VORSCHRIFTID",
+        cte3."RR_LAND",
+        cte3."THEMAID",
+        nvl(vr.vorschrift_nummer, v.vorschrift_nummer) AS vorschrift_nummer,
+        cte3.in_kraft,
+        cte3.neue_typen,
+        cte3.alle_typen,
+        cte3.auser_kraft,
+        cte3.basis_hoeher,
+        v.einsatzdatum_modellid,
+        v.MJ_SCHALTER_STATUS,
+        v.vorschrift_typid
+
+    FROM
+        cte_rahmen_und_homologation   cte3
+        LEFT OUTER JOIN cte_rahmen_aufgeloest         vr ON ( cte3.rr_id = vr.rr_id
+                                                      AND cte3.rr_land = vr.rr_land
+                                                      AND cte3.vorschriftid = vr.vorschriftid
+                                                      AND cte3.themaid = vr.themaid )
+        LEFT OUTER JOIN h_vorschrift                  v ON ( cte3.vorschriftid = v.vorschriftid )
+), cte_normale AS (
+    SELECT
+        tv.vorschriftid,
+        vt.themaid,
+        vl.landid,
+        tv.vorschrift_nummer,
+        ed1.einsatzdatum   in_kraft,
+        ed2.einsatzdatum   neue_typen,
+        ed3.einsatzdatum   alle_typen,
+        ed4.einsatzdatum auser_kraft,
+        extract (year from  ed2.MODELJAHR) as phase_in,
+          extract (year from  ed3.MODELJAHR) as phase_out,
+          extract (year from ed4.MODELJAHR) as MJ_auser_kraft,
+          tv.einsatzdatum_modellid,
+          MJ_SCHALTER_STATUS,
+          tv.vorschrift_typid
+    FROM
+        h_vorschrift                        tv
+        JOIN h_vorschrift_ref_thema     vt ON ( tv.vorschriftid = vt.vorschriftid )
+        JOIN h_vorschrift_ref_land     vl ON ( tv.vorschriftid = vl.vorschriftid )
+        LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = tv.vorschriftid
+                                                                   AND ed1.einsatzdatum_typid = 1000 -- in kraft
+                                                                    )
+        LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed2 ON ( ed2.vorschriftid = tv.vorschriftid
+
+                                                                   AND ( ( alckd_fbu_mode = 0
+                                                                           AND ed2.einsatzdatum_typid IN (
+            1010,
+            1022,
+            1030
+        ) and tv.einsatzdatum_modellid = ed2.EINSATZDATUM_MODELLID)
+
+                                                                         OR ( alckd_fbu_mode = 1
+                                                                              AND ed2.einsatzdatum_typid IN (
+            1010,
+            1020,
+            1030
+        )and tv.einsatzdatum_modellid = ed2.EINSATZDATUM_MODELLID ) )-- neue typen
+         )
+        LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed3 ON ( ed3.vorschriftid = tv.vorschriftid
+
+                                                                   AND ( ( alckd_fbu_mode = 0
+                                                                           AND ed3.einsatzdatum_typid IN (
+            1011,
+            1023,
+            1031
+        )and tv.einsatzdatum_modellid = ed3.EINSATZDATUM_MODELLID )
+
+                                                                         OR ( alckd_fbu_mode = 1
+                                                                              AND ed3.einsatzdatum_typid IN (
+            1011,
+            1021,
+            1031
+        )and tv.einsatzdatum_modellid = ed3.EINSATZDATUM_MODELLID ) )-- alle typen                                                                                                                                                                        
+         )
+         LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed4 ON ( ed4.vorschriftid = tv.vorschriftid
+                                                                   AND ed4.einsatzdatum_typid IN (
+            1060,
+1063,
+1041
+      --  außer kraft                                                                                                                                                                       
+         ))
+    WHERE
+        vl.landid IS NOT NULL
+        AND tv.vorschrift_typid IN (
+            10,
+            40
+        )
+        AND vt.themaid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(athemenids, ':') )
+        )
+        AND vl.landid IN (
+            SELECT
+                column_value
+            FROM
+                TABLE ( apex_string.split(alandids, ':') )
+        )
+), cte_rahmen_und_normale AS (
+    SELECT
+        rr_id,
+        vorschriftid,
+        rr_land AS landid,
+        themaid,
+        vorschrift_nummer,
+         in_kraft,
+         neue_typen,
+         alle_typen,
+         auser_kraft,
+         basis_hoeher,
+         null as phase_in,
+         null as phase_out,
+         null as MJ_auser_kraft,
+         0 as is_supplement,
+         40 as vernetzung,
+         einsatzdatum_modellid,
+         vorschrift_typid
+    FROM
+        cte_rahmen_alle
+
+    UNION ALL
+    SELECT
+        NULL,
+        vorschriftid,
+        landid,
+        themaid,
+        vorschrift_nummer,
+         in_kraft,
+         neue_typen,
+         alle_typen,
+        auser_kraft,
+        0,
+         phase_in,
+         phase_out,
+         null as MJ_auser_kraft,
+         0 as is_supplement,
+         null,
+         einsatzdatum_modellid,
+         vorschrift_typid
+
+    FROM
+        cte_normale
+
+),cte_supplement as (
+Select 
+tv.vorschriftid,cb.landid,
+        cb.themaid,
+        tv.vorschrift_nummer,
+        ed1.einsatzdatum in_kraft,
+         cb.neue_typen,
+         cb.alle_typen,
+         cb.auser_kraft,
+         cb.basis_hoeher,
+         null as phase_in,
+         null as phase_out,
+         null as MJ_auser_kraft,
+         1 as is_supplement,
+         30 as Vernetzung,
+         tv.einsatzdatum_modellid,
+         tv.vorschrift_typid
+
+
+
+from     h_vorschrift                        tv
+JOIN h_vorschrift_ref_vorschrift         vrv ON ( vrv.nachfolger_vorschriftid = tv.vorschriftid
+                                                  AND beziehung_art = 30 )
+LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = tv.vorschriftid
+                                                                   AND ed1.einsatzdatum_typid = 1000 -- in kraft
+                                                                    )
+join cte_rahmen_und_normale cb on (vrv.VORGAENGER_VORSCHRIFTID = cb.vorschriftid)
+
+
+
+), cte_equival (   
+rr_id,
+vorschriftid,
+landid,
+themaid,
+vorschrift_nummer,
+in_kraft,
+neue_typen,
+alle_typen,
+auser_kraft,
+basis_hoeher,
+phase_in,
+phase_out,
+MJ_auser_kraft,
+is_supplement,
+equivalentid,
+vernetzung,
+einsatzdatum_modellid,
+max_homologation_vorschriftid,
+HOMOLOGATION_SERIE,
+vorschrift_typid
+
+) as (
+Select 
+null rr_id,
+cb.vorschriftid,
+landid,
+cb.themaid,
+cb.vorschrift_nummer,
+ed1.einsatzdatum in_kraft,
+neue_typen,
+alle_typen,
+auser_kraft,
+0 basis_hoeher,
+null as phase_in,
+null as phase_out,
+null as MJ_auser_kraft,
+0 as is_supplement,
+tv.vorschriftid as equivalentid,
+102 as Vernetzung,
+cb.einsatzdatum_modellid,
+vrv.max_homologation_vorschriftid,
+vrv.HOMOLOGATION_SERIE,
+tv.vorschrift_typid
+
+
+from  cte_rahmen_und_normale cb                          
+ JOIN h_vorschrift_ref_vorschrift         vrv ON (vrv.nachfolger_vorschriftid = cb.vorschriftid 
+                                                  AND beziehung_art = 102 )
+
+join h_vorschrift tv on  (vrv.vorgaenger_vorschriftid = tv.vorschriftid)
+JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = tv.vorschriftid
+                                                                   AND ed1.einsatzdatum_typid = 1000 -- in kraft 
+                                                                   )
+
+union all
+Select  
+null rr_id,
+cb.vorschriftid,
+landid,
+cb.themaid,
+cb.vorschrift_nummer,
+ed1.einsatzdatum in_kraft,
+neue_typen,
+alle_typen,
+auser_kraft,
+basis_hoeher+1  basis_hoeher,
+null as phase_in,
+null as phase_out,
+null as MJ_auser_kraft,
+0 as is_supplement,
+tv.vorschriftid as equivalentid,
+102 as Vernetzung,
+cb.einsatzdatum_modellid,
+cb.max_homologation_vorschriftid,
+cb.HOMOLOGATION_SERIE,
+tv.vorschrift_typid
+
+from  cte_equival  cb                          
+ JOIN h_vorschrift_ref_vorschrift   vrv ON (  cb.equivalentid =  vrv.vorgaenger_vorschriftid
+                                                  AND beziehung_art = 10
+                                                  AND  cb.equivalentid != nvl(cb.max_homologation_vorschriftid,0) 
+                                                  and nvl(cb.HOMOLOGATION_SERIE,0) = 10)
+
+join h_vorschrift tv on  (vrv.nachfolger_vorschriftid = tv.vorschriftid)
+JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = tv.vorschriftid
+                                                                   AND ed1.einsatzdatum_typid = 1000 -- in kraft
+                                                                  )
+
+)   CYCLE equivalentid SET is_cycle TO '1' DEFAULT '0' ,
+
+cte_base1 as (
+Select  rr_id,
+        vorschriftid,
+        landid,
+        themaid,
+        vorschrift_nummer,
+         in_kraft,
+         neue_typen,
+         alle_typen,
+         auser_kraft,
+         basis_hoeher,
+         phase_in,
+         phase_out,
+          MJ_auser_kraft,
+        is_supplement,
+        null equivalentid,
+        Vernetzung,
+        einsatzdatum_modellid,
+        vorschrift_typid
+
+from cte_rahmen_und_normale
+union all
+Select  rr_id,
+        vorschriftid,
+        landid,
+        themaid,
+        vorschrift_nummer,
+         in_kraft,
+         neue_typen,
+         alle_typen,
+         auser_kraft,
+         basis_hoeher,
+          phase_in,
+          phase_out,
+          MJ_auser_kraft,
+         is_supplement,
+         equivalentid,
+        Vernetzung,
+        einsatzdatum_modellid,
+        vorschrift_typid
+
+from
+cte_equival
+union all
+Select  null rr_id,
+        vorschriftid,
+        landid,
+        themaid,
+        vorschrift_nummer,
+         in_kraft,
+         neue_typen,
+         alle_typen,
+         auser_kraft,
+         basis_hoeher,
+          phase_in,
+          phase_out,
+           MJ_auser_kraft,
+          is_supplement,
+        null equivalentid,
+        Vernetzung,
+        einsatzdatum_modellid,
+        vorschrift_typid
+
+from
+cte_supplement
+
+),
+cte_regeln as (
+
+
+SELECT
+    ms_parameterid,
+    nummer,
+    bemerkung,
+    case vernetzungsart when 'demands' then 40
+    when 'Supplement' then 30
+    when 'UN-R Supplement' then 30
+   when 'equivalent' then 102
+ when 'keine' then 0
+    else 0 end vernetzungsart,
+    case fahrzeugzulassung when 'alter Typ' then 10
+    when 'neuer Typ' then 0 else null end fahrzeugzulassung,
+    fahrzeugklasse,    themengebiet,    land,
+    datumsangaben_original_vernetzung,
+       case     vorschriften_typ when 'nicht relevant' then null when 'Rahmenrichtlinie' then 30
+   when 'Supplement' then 20 when 'Vorschrift oder Norm' then 10
+   else null end vorschriften_typ,
+    case fbu_ckd_relevantes_land when 'ja' then 20 when 'nein' then 0 else null end  fbu_ckd_relevantes_land,
+   case  parameter_ckd_fbu_datum when 'CKD Spalten' then 1 when 'FBU Spalten' then 0   end as parameter_ckd_fbu_datum,
+    quellvorschrift_gueltig,
+    sop_ist_vor_datum_in_kraft,    sop_gleich_oder_nach_datum_in_kraft,
+    sop_ist_vor_datum_neue_typen,    sop_ist_nach_oder_gleich_datum_neue_typen,
+    sop_ist_vor_datum_alle_fahrzeuge,    sop_ist_nach_oder_glecih_datum_alle_fahrzeuge_,
+    sop_ist_vor_datum_ausser_kraft,    sop_ist_nach_oder_gleich_datum_ausser_kraft,
+    eop_liegt_vor_datum_alle_fahrzeuge,    eop_liegt_nach_oder_gleich_datum_alle_fahrzeuge,
+    eop_liegt_vor_datum_in_kraft,    eop_liegt_nach_oder_gleich_datum_in_kraft,
+    hoehere_serie_moeglich,
+    deckelung_der_hoeheren_serie,
+    sop_ist_vor_datum_in_kraft_des_nachfolgers,
+    sop_ist_gleich_oder_nach_datum_in_kraft_des_nachfolgers,
+    eop_ist_vor_datum_in_kraft_des_nachfolgers,
+    eop_ist_gleich_oder_nach_datum_in_kraft_des_nachfolgers,
+    nachfolger_anzeigen,
+    lesende_tabelle_fuer_datumsangaben,
+    ausgabe_fuer_anderes_tool_oder_fuer_mensch,
+    vernetzungsartid,
+    interner_db_status,
+    status,
+    prognose_qualitaet,
+    search_mode,
+    parameter_mj_datumsformat,
+    mj_einsatz_jahr_kleiner_phasein_start_jahr,
+    mj_einsatz_jahr_groesser_gleich_phasein_start_jahr,
+    mj_einsatz_jahr_kleiner_phasein_ende_jahr,
+    mj_einsatz_jahr_groesser_gleich_phasein_ende_jahr,
+    mj_einsatz_jahr_kleiner_gleich_ausser_kraft_jahr,
+    mj_einsatz_jahr_groesser_ausser_kraft_jahr,
+    nvl(supplement,0) supplement,
+    ausgabe_der_vorschrift_bei_report_baureihe,
+    mj_sop_vor_phasein_start_or_phasein_leer,
+    mj_sop_nach_phasein_start,
+    mj_sop_vor_phasein_end_or_phasein_leer,
+    mj_sop_nach_phasein_end,
+    mj_eop_vor_phasein_start_or_phasein_leer,
+    mj_eop_nach_phasein_start,
+    mj_eop_vor_phasein_end_or_phasein_leer,
+    mj_eop_nach_phasein_end,
+    mj_sop_vor_oder_gleich_ausser_kraft,
+    mj_sop_nach_ausser_kraft,
+    IN_KRAFT_RELEVANT,
+NEUE_TYPEN_RELEVANT,
+ALLE_FAHRZEUGE_RELEVANT,
+PHASE_IN_RELEVANT,
+PHASE_OUT_RELEVANT,
+KLEINER_ODER_GLEICH_LETZTE_MÖGLICHE_VORSCHRIFT_ZUR_HOMOLOGATION,
+SOP_IST_GLEICH_ODER_NACH_DATUM_IN_KRAFT_DES_NACHFOLGERS as SOP__IST_GLEICH_ODER_NACH_IN_KRAFT_,
+datum_mj_status ,
+ALLE_FAHRZEUGE_RELEVANT_EOP
+
+
+FROM
+    t_ms_parameter
+    where nummer not in (1008,1011)
+),cte_base_berechnungen as (
+Select distinct cb1.* ,
+            case when in_kraft is null then 0 else 10 end as in_kraft_null,
+            case when neue_typen is null then 0 else 10 end as neue_typen_null,
+            case when alle_typen is null then 0 else 10 end as alle_typen_null,
+            case when auser_kraft is null then 0 else 10 end as auser_kraft_null,
+            case when asopdate < in_kraft /*or in_kraft is null*/ then 1  else 0 end vor_kraft,
+            case when asopdate >= in_kraft then 1  else 0 end nach_kraft,
+            case when asopdate < neue_typen /*or neue_typen is null*/ then 1  else 0 end  vor_neue_typen,
+            case when asopdate >= neue_typen then 1  else 0 end nach_neue_typen,
+            case when asopdate < alle_typen /*or alle_typen is null*/ then 1  else 0 end vor_alle,
+            case when asopdate >= alle_typen then 1  else 0 end  nach_alle,
+            case when asopdate < auser_kraft /*or auser_kraft is null*/ then 1  else 0 end  vor_ende,
+            case when asopdate >= auser_kraft then 1  else 0 end nach_ende,
+            case when trunc(aeopdate) < trunc(alle_typen) then 1  else 0 end eop_vor_alle,
+            case when trunc(aeopdate) >= trunc(alle_typen) then 1  else 0 end eop_nach_alle,
+            case when aeopdate < in_kraft then 1  else 0 end eop_vor_kraft,
+            case when aeopdate >= in_kraft then 1  else 0 end  eop_nach_kraft,
+
+            --amodelljahranfang , amodelljahrende number
+            case when amodelljahranfang < phase_in /*or phase_in is null*/ then 1 else 0 end  as mja_vor_pi,
+            case when amodelljahranfang >= phase_in then 1 else 0 end mja_nach_pi,
+            case when amodelljahrende < phase_in /*or phase_in is null*/ then 1 else 0 end mje_vor_pi,
+            case when amodelljahrende >= phase_in then 1 else 0 end mje_nach_pi,
+            case when amodelljahranfang >= phase_out /*or phase_out is null*/ then 1 else 0 end mja_nach_pe, 
+            case when amodelljahrende >= phase_out then 1 else 0 end mje_nach_pe,
+            case when amodelljahrende < phase_out  /*or phase_out is null*/  then 1 else 0 end mje_vor_pe,
+            case when amodelljahranfang < phase_out  /*or phase_out is null*/ then 1 else 0 end  mja_vor_pe,
+            case when amodelljahranfang <  MJ_auser_kraft /*or  MJ_auser_kraft is null*/ then 1 else 0 end  mja_vor_ak,  
+            case when amodelljahrende >=  MJ_auser_kraft then 1 else 0 end  mja_nach_ak,
+              -- Datum neue_typen,   alle_typen,
+             case when MJ_SCHALTER_STATUS = 0 and ( asopdate < neue_typen /*or neue_typen is null*/) then 1 else 0 end  as D_mja_vor_pi,
+             case when MJ_SCHALTER_STATUS = 0 and (  asopdate >= neue_typen) then 1 else 0 end  D_mja_nach_pi,
+            case when MJ_SCHALTER_STATUS = 0 and ( aeopdate < neue_typen /*or neue_typen is null*/ )then 1 else 0 end  D_mje_vor_pi,
+           case when MJ_SCHALTER_STATUS = 0 and ( aeopdate >= neue_typen )then 1 else 0 end   D_mje_nach_pi,
+             case when MJ_SCHALTER_STATUS = 0 and ( asopdate >= alle_typen /*or alle_typen is null*/) then 1 else 0 end  D_mja_nach_pe, 
+            case when MJ_SCHALTER_STATUS = 0 and ( aeopdate >= alle_typen) then 1 else 0 end  D_mje_nach_pe,
+            case when MJ_SCHALTER_STATUS = 0 and ( aeopdate < alle_typen  /*or alle_typen is null */) then 1 else 0 end  D_mje_vor_pe,
+           case when MJ_SCHALTER_STATUS = 0 and ( asopdate < alle_typen  /*or alle_typen is null*/ )then 1 else 0 end   D_mja_vor_pe,
+            case when asopdate < auser_kraft /*or auser_kraft is null*/ then 1 else 0 end  D_mja_vor_ak, 
+            case when asopdate >=  auser_kraft then 1 else 0 end  d_mja_nach_ak,
+           -- case when hv.prognose_qualitaet in  (10,20)  then 60 else 0 end as prognose,
+            case when  hv.vorschrift_statusid in (20,30) then 60 else 0 end as vorschrift_status
+from cte_base1 cb1
+left join h_vorschrift hv on (cb1.vorschriftid = hv.vorschriftid )
+
+
+), cte_base AS (
+    SELECT
+        vrb.*,
+
+cr.nummer as regel,
+        CASE
+            WHEN add_months(asopdate, ariskhigh) >= vrb.neue_typen
+
+                 AND asopdate <= vrb.neue_typen THEN
+                2
+            WHEN add_months(asopdate, arisklow) >= vrb.neue_typen
+
+                 AND asopdate <= vrb.neue_typen THEN
+                1
+            ELSE
+                0
+        END AS risiko,
+        cr.supplement,
+        sop_ist_vor_datum_in_kraft,
+        sop_gleich_oder_nach_datum_in_kraft
+    FROM
+ cte_base_berechnungen  vrb
+
+          join cte_regeln cr on (case when vorschrift_typid in (10,40) and vorschriften_typ =10 then 10 else vorschrift_typid end  = nvl(vorschriften_typ,vorschrift_typid) and
+                                (cr.fahrzeugzulassung = asearchmode  or fahrzeugzulassung is null)  and
+                                Nvl(cr.fbu_ckd_relevantes_land, einsatzdatum_modellid)=  case when einsatzdatum_modellid in (10) and fbu_ckd_relevantes_land is not null then 0 else einsatzdatum_modellid  end and
+       (IN_KRAFT_RELEVANT = in_kraft_null or( IN_KRAFT_RELEVANT = in_kraft_null  and
+      ( nvl(vor_kraft ,1) = nvl(sop_ist_vor_datum_in_kraft,-1) or sop_ist_vor_datum_in_kraft=2) and
+       (nach_kraft = nvl(sop_gleich_oder_nach_datum_in_kraft,-1)  or sop_gleich_oder_nach_datum_in_kraft=2)
+       ))and
+       (NEUE_TYPEN_RELEVANT =  neue_typen_null or (NEUE_TYPEN_RELEVANT =  neue_typen_null  and
+      ( nvl(vor_neue_typen,1) = nvl(sop_ist_vor_datum_neue_typen,-1) or sop_ist_vor_datum_neue_typen=2 ) and
+      ( nach_neue_typen = nvl(sop_ist_nach_oder_gleich_datum_neue_typen,-1)  or sop_ist_nach_oder_gleich_datum_neue_typen=2)
+       ))and
+       (ALLE_FAHRZEUGE_RELEVANT = alle_typen_null or (ALLE_FAHRZEUGE_RELEVANT = alle_typen_null and
+     (  nvl(vor_alle,1) = nvl(sop_ist_vor_datum_alle_fahrzeuge,-1) or sop_ist_vor_datum_alle_fahrzeuge=2 ) and
+      (nach_alle= nvl(sop_ist_nach_oder_glecih_datum_alle_fahrzeuge_,-1)  or sop_ist_nach_oder_glecih_datum_alle_fahrzeuge_=2)
+       ))and
+     (  nvl(vor_ende,-1) = nvl(sop_ist_vor_datum_ausser_kraft,-1)  or sop_ist_vor_datum_ausser_kraft=2)and
+     (  nvl(nach_ende,-1) = nvl(sop_ist_nach_oder_gleich_datum_ausser_kraft ,-1) or sop_ist_nach_oder_gleich_datum_ausser_kraft=2)and
+    ((ALLE_FAHRZEUGE_RELEVANT_EOP = 0 and vrb.alle_typen is null) or 
+     (  nvl(eop_vor_alle,-1) = nvl(eop_liegt_vor_datum_alle_fahrzeuge,-1)  or eop_liegt_vor_datum_alle_fahrzeuge=2))and
+   ((ALLE_FAHRZEUGE_RELEVANT_EOP = 0 and vrb.alle_typen is null) or 
+     (  nvl(eop_nach_alle,-1) = nvl( eop_liegt_nach_oder_gleich_datum_alle_fahrzeuge,-1)  or eop_liegt_nach_oder_gleich_datum_alle_fahrzeuge=2))and
+     (  nvl(eop_vor_kraft,-1) = nvl(eop_liegt_vor_datum_in_kraft,-1)  or eop_liegt_vor_datum_in_kraft=2)and
+     (  nvl(eop_nach_kraft,-1) = nvl(eop_liegt_nach_oder_gleich_datum_in_kraft ,-1)  or eop_liegt_nach_oder_gleich_datum_in_kraft=2)and
+      ( nvl2(hoehere_serie_moeglich, case when basis_hoeher > 0 then 1 else basis_hoeher end,-1) = nvl(hoehere_serie_moeglich,-1) or nvl(hoehere_serie_moeglich,2)=2) and
+      ( KLEINER_ODER_GLEICH_LETZTE_MÖGLICHE_VORSCHRIFT_ZUR_HOMOLOGATION = case when basis_hoeher > 0 then 1 else basis_hoeher end or KLEINER_ODER_GLEICH_LETZTE_MÖGLICHE_VORSCHRIFT_ZUR_HOMOLOGATION = 2)
+      and (SOP__IST_GLEICH_ODER_NACH_IN_KRAFT_ = case when basis_hoeher > 0 then 1 else basis_hoeher end or nvl(SOP__IST_GLEICH_ODER_NACH_IN_KRAFT_,2) =2) 
+       and ( case when nvl(cr.supplement,0) = 0 and nvl(vrb.is_supplement,0) = 0 then 1 when  nvl(cr.supplement,0) = 1  then 1  else 0 end = 1 or cr.supplement  =2  or cr.supplement  =2 ) and
+      nvl( vrb.vernetzung,0) = nvl(cr.vernetzungsart,0) and
+       nvl( parameter_mj_datumsformat, 30 ) in (10,30)
+       and (alckd_fbu_mode = nvl(parameter_ckd_fbu_datum,alckd_fbu_mode))
+    --  and ((prognose = 0 and prognose_qualitaet != '60') or prognose = prognose_qualitaet)
+     and (((vorschrift_status = 0 and status != '60') or vorschrift_status = status)or status = 50)
+       and datum_mj_status in (1,3) and (cr.nummer< 1000 or (cr.nummer> 1007 and cr.nummer< 1100)or cr.nummer> 5000 ))
+ union All
+   SELECT
+        vrb.*,
+
+    cr.nummer as regel,
+        CASE
+            WHEN add_months(asopdate, ariskhigh) >= vrb.neue_typen
+
+                 AND asopdate <= vrb.neue_typen THEN
+                2
+            WHEN add_months(asopdate, arisklow) >= vrb.neue_typen
+
+                 AND asopdate <= vrb.neue_typen THEN
+                1
+            ELSE
+                0
+        END AS risiko,
+        cr.supplement,
+        sop_ist_vor_datum_in_kraft,
+        sop_gleich_oder_nach_datum_in_kraft
+    FROM
+         cte_base_berechnungen  vrb
+        join cte_regeln cr on (
+                                (cr.fahrzeugzulassung = asearchmode  or fahrzeugzulassung is null)  and
+                                 einsatzdatum_modellid in (30)  and
+
+         (             ( cr.PARAMETER_MJ_DATUMSFORMAT =  10 and 
+                         (( IN_KRAFT_RELEVANT = 0 and in_kraft is null )or (--IN_KRAFT_RELEVANT = 10 and
+                      (  nvl(vor_kraft ,1)  = nvl(sop_ist_vor_datum_in_kraft,1) or sop_ist_vor_datum_in_kraft=2) and
+                       (nach_kraft = nvl(sop_gleich_oder_nach_datum_in_kraft,-1)  or sop_gleich_oder_nach_datum_in_kraft=2)
+                       ))and
+                      ((  PHASE_IN_RELEVANT = 0 and neue_typen is null) or (--PHASE_IN_RELEVANT= 10 and
+                      ( D_mja_vor_pi =nvl(mj_sop_vor_phasein_start_or_phasein_leer,1)  or mj_sop_vor_phasein_start_or_phasein_leer=2)and
+                       (D_mja_nach_pi =nvl(mj_sop_nach_phasein_start,-1)  or mj_sop_nach_phasein_start=2) and
+                       (D_mje_vor_pi =nvl(mj_eop_vor_phasein_start_or_phasein_leer,-1)  or mj_eop_vor_phasein_start_or_phasein_leer=2)and
+                       (D_mje_nach_pi =nvl(mj_eop_nach_phasein_start,-1)  or mj_eop_nach_phasein_start=2)
+                       )) and
+                        ((  PHASE_OUT_RELEVANT = 0 and alle_typen is null) or (--PHASE_OUT_RELEVANT = 10 and
+                       (D_mja_nach_pe =nvl(mj_sop_nach_phasein_end,-1)  or mj_sop_nach_phasein_end=2)and
+                      ( D_mje_nach_pe = nvl(mj_eop_nach_phasein_end,-1)  or mj_eop_nach_phasein_end=2)
+                       ))and
+                      (D_mje_vor_pe =nvl( mj_eop_vor_phasein_end_or_phasein_leer,-1)  or mj_eop_vor_phasein_end_or_phasein_leer=2)and
+                     ( D_mja_vor_pe =nvl(mj_sop_vor_phasein_end_or_phasein_leer,-1)  or mj_sop_vor_phasein_end_or_phasein_leer=2)and
+
+                      ( D_mja_vor_ak  = nvl(  mj_sop_vor_oder_gleich_ausser_kraft,-1) or mj_sop_vor_oder_gleich_ausser_kraft=2) and
+                      ( D_mja_nach_ak = nvl( mj_sop_nach_ausser_kraft,-1)  or mj_sop_nach_ausser_kraft=2)
+                       )
+                  or  ( cr.PARAMETER_MJ_DATUMSFORMAT =  20 and
+                        ( mja_vor_pi =nvl(mj_einsatz_jahr_kleiner_phasein_start_jahr,-1)  or mj_einsatz_jahr_kleiner_phasein_start_jahr=2)    and
+                        (mja_nach_pi =nvl(mj_einsatz_jahr_groesser_gleich_phasein_start_jahr,-1)  or mj_einsatz_jahr_groesser_gleich_phasein_start_jahr=2) and
+                        (mja_vor_pe =nvl(mj_einsatz_jahr_kleiner_phasein_ende_jahr,-1)  or mj_einsatz_jahr_kleiner_phasein_ende_jahr=2) and
+                        (mja_nach_pe =nvl(mj_einsatz_jahr_groesser_gleich_phasein_ende_jahr,-1)  or mj_einsatz_jahr_groesser_gleich_phasein_ende_jahr=2) and
+                        ( mja_vor_ak  = nvl(  mj_einsatz_jahr_kleiner_gleich_ausser_kraft_jahr,-1) or  mj_einsatz_jahr_kleiner_gleich_ausser_kraft_jahr=2) and
+                        ( mja_nach_ak = nvl(  mj_einsatz_jahr_groesser_ausser_kraft_jahr,-1)  or  mj_einsatz_jahr_groesser_ausser_kraft_jahr=2)
+                    )
+        )
+
+       and 
+        ( case when nvl(cr.supplement,0) = 0 and nvl(vrb.is_supplement,0) = 0 then 1 when  nvl(cr.supplement,0) = 1  then 1  else 0 end = 1 or cr.supplement  =2  or cr.supplement  =2 ) and
+      nvl( vrb.vernetzung,0) = nvl(cr.vernetzungsart,0)
+      )
+  where       
+     nvl(amodelljahranfang,0) != 0 and nvl(amodelljahrende ,0) != 0 
+ and datum_mj_status in (2,3) and cr.nummer > 1007
+
+
+),/*cte_supplement as ( 
+Select 
+tv.vorschriftid,cb.landid,
+        cb.themaid,
+        tv.vorschrift_nummer,
+         in_kraft,
+         cb.neue_typen,
+         cb.alle_typen,
+         cb.auser_kraft,
+         cb.basis_hoeher,
+         null as phase_in,
+         null as phase_out,
+         1 as is_supplement,
+         cb.risiko,
+         cb.regel
+
+from     h_vorschrift                        tv
+JOIN h_vorschrift_ref_vorschrift         vrv ON ( vrv.nachfolger_vorschriftid = tv.vorschriftid
+                                                  AND beziehung_art = 30 )
+LEFT OUTER JOIN h_vorschrift_ref_einsatzdatum_typ   ed1 ON ( ed1.vorschriftid = tv.vorschriftid
+                                                                   AND ed1.einsatzdatum_typid = 1000 -- in kraft
+                                                                    )
+join cte_base cb on (vrv.VORGAENGER_VORSCHRIFTID = cb.vorschriftid)
+where  cb.regel > 10 and
+ nvl2(sop_ist_vor_datum_in_kraft ,case when asopdate < ed1.einsatzdatum  then 1  else 0 end,-1) = nvl(sop_ist_vor_datum_in_kraft,-1) and
+       nvl2(sop_gleich_oder_nach_datum_in_kraft ,case when ed1.einsatzdatum  >= in_kraft then 1  else 0 end,-1) = nvl(sop_gleich_oder_nach_datum_in_kraft,-1)
+),*/
+
+/* cte_amendments AS (
+    SELECT
+        t1.vorschriftid,
+        t1.vorschrift_nummer,
+        t1.themaid,
+        t1.landid,
+
+        t1.in_kraft,
+         t1.neue_typen,
+        t1.alle_typen,
+        t1.regel,
+        t1.risiko,
+        t1.equivalentid,
+        hv.LEAD_VKO_BENUTZERID
+    FROM cte_equivalent t1
+       left join h_vorschrift hv on (t1.vorschriftid = hv.vorschriftid)
+    union all
+    SELECT
+        t1.vorschriftid,
+        t1.vorschrift_nummer,
+        t1.themaid,
+       t1.landid,
+
+        t1.in_kraft,
+         t1.neue_typen,
+         t1.alle_typen,
+        t1.regel,
+        t1.risiko,
+        null,
+         hv.LEAD_VKO_BENUTZERID
+    FROM cte_supplement t1
+          left  join h_vorschrift hv on (t1.vorschriftid = hv.vorschriftid)
+
+),*/ cte_regeln_distinct AS (
+    SELECT
+        vorschriftid,
+        themaid,
+        landid,
+        regel regel,
+        risiko risiko,
+        in_kraft in_kraft,
+        neue_typen neue_typen,
+        alle_typen alle_typen,
+        equivalentid,
+        null LEAD_VKO_BENUTZERID
+    FROM
+        cte_base
+
+
+), cte_result AS (
+    SELECT
+        *
+    FROM
+        cte_regeln_distinct
+)
+SELECT
+    t_suche_ergebnis(vorschriftid, in_kraft, neue_typen, alle_typen, landid,
+                     themaid, regel, risiko,equivalentid,LEAD_VKO_BENUTZERID)
+BULK COLLECT
+INTO lresult
+FROM
+    cte_result;
+
+
+
+  --  end if;
+    RETURN lresult;
+END fsearchresultsfull;
+
+
+/*
+*/
+
+FUNCTION fgetcsvsql2 (
+        asucheid   IN   number,
+        aindex          IN   NUMBER,
+        acsvformat      IN   NUMBER,
+        adeltamode      IN   NUMBER,
+        atempsucheids in varchar2
+    ) RETURN CLOB IS
+        lresult           CLOB;
+        lsucheparameter   CLOB;
+        lgroupformat      CLOB;
+        l_ergebnisse      t_suche_ergebnis_liste;
+        lpreindex         NUMBER;
+    BEGIN
+            /* CsVFormate: 1 = Themengebiete Unique + Leere Felder für manuelle Eingabe
+                CsVFormate: 2 = Themengebiete Unique 
+                 CsVFormate: 3 = Regularien Unique
+            */
+
+        SELECT
+                      q'< with cte_search_milestone as (
+ Select x.*, t.benutzerid
+ from t_suche_json t, json_table (t.suchdaten, '$[*]' 
+            columns (
+            nested path '$[*]' COLUMNS( meilenstein number path '$.MEILENSTEIN',
+            themen varchar2(4000) path '$.THEMEN',
+            laender varchar2(4000) path '$.LAENDER',
+            DATUM_MEILENSTEIN varchar2  path '$.DATUM_MEILENSTEIN',
+            SUCHTYP number path '$.SUCHTYP',
+           DATUM_EOP varchar2   path '$.DATUM_EOP',
+           DATUM_SOP varchar2   path '$.DATUM_SOP',
+           MJ_ANFANG varchar2 path '$.MJ_ANFANG',
+           MJ_END  varchar2 path '$.MJ_ENDE'
+           )
+            )) x where t.sucheid = >' || asucheid ||'  and meilenstein = ' || aIndex||
+
+
+ '),'
+                     || q'< cte_search_Land as (
+ Select xmlagg(xmlelement(E,b_nummer||', ')).Extract('//text()').getClobVal() as b_nummer 
+  from t_land tl
+  where landid in (select column_value from table (
+         Select  apex_string.split_numbers(laender,':') from cte_search_milestone t
+             ))
+),
+
+cte_search_Thema as (
+ Select xmlagg(xmlelement(E,NUMMER||', ')).Extract('//text()').getClobVal() as thema_nummer
+  from t_thema tl
+  where themaid in (
+      select column_value from table(
+                Select  apex_string.split_numbers(themen,':') from cte_search_milestone
+                ))
+
+), cte_search_base as (
+   Select DATUM_SOP "Suche SOP-Datum",DATUM_MEILENSTEIN "Suche Meilenstein",
+     case when SUCHTYP = 0 then 'Neue Typen' else 'Alle Fahrzeuge' end as "Suchtyp", DATUM_EOP "Suche EOP", tst.benutzerid "Suche Benutzerid",
+   thema_nummer "Suche Themen", b_nummer "Suche Länder" ,MJ_ANFANG "MJ Anfang"   ,MJ_END "MJ Ende"      
+   from cte_search_milestone tst
+                      join cte_search_Thema on (1=1)
+                     join cte_search_Land on (1=1)      
+
+                ) >'
+       INTO lsucheparameter
+        FROM
+            dual;
+        lresult := lsucheparameter;
+
+
+--Grundabfrage Enthält aktuelle Abfrage die Vollständigen Daten und wenn Benötigt die Daten des Deltas
+        IF ( adeltamode = 1 ) THEN
+            lpreindex := aindex - 1;
+            debug('lpreindex', lpreindex);
+             debug('index', aindex);
+-- Daten der vorherigen Suche
+ lresult := lresult|| ',cte_base_regela as ( Select t.vorschriftid, t.MS_PARAMETERID, row_number() over ( partition by t.vorschriftid order by kritikalitaet desc) as xrow
+        from t_ms_suchergebniss t 
+        join t_ms_parameter pm on (t.MS_PARAMETERID =pm.MS_PARAMETERID)
+left join T_MS_PARAMETER_REF_AUSGABE tpr on (t.MS_PARAMETERID =tpr.MS_PARAMETERID)
+left join T_MS_AUSGABE_TEXT ta on(tpr.MS_AUSGABE_TEXTID= ta.MS_AUSGABE_TEXTID)
+  where AUSGABE_DER_VORSCHRIFT_BEI_REPORT_BAUREIHE =1 and sucheid = '||asucheid||' and meilenstein = '||lpreindex|| '  )  '    ;
+            lresult := lresult
+                       || ',ctea as(
+Select null in_kraft,null neue_typen, null alle_fahrzeuge, t.*  from t_ms_suchergebniss t 
+join cte_base_regela cbr on (t.vorschriftid = cbr.vorschriftid and t.MS_PARAMETERID =cbr.MS_PARAMETERID and cbr.xrow =1)
+left join t_ms_parameter tms on (t.regelnummer = tms.nummer) where AUSGABE_DER_VORSCHRIFT_BEI_REPORT_BAUREIHE =1 and sucheid = '||asucheid||' and meilenstein = '||lpreindex|| 
+')';
+            debug('atempsucheids suche export',atempsucheids);
+-- Daten der aktuellen Suche
+ lresult := lresult|| ',cte_base_regelb as ( Select t.vorschriftid, t.MS_PARAMETERID, row_number() over (partition by t.vorschriftid order by kritikalitaet desc) as xrow
+        from t_ms_suchergebniss t 
+        
+        join t_ms_parameter pm on (t.MS_PARAMETERID =pm.MS_PARAMETERID)
+left join T_MS_PARAMETER_REF_AUSGABE tpr on (t.MS_PARAMETERID =tpr.MS_PARAMETERID)
+left join T_MS_AUSGABE_TEXT ta on(tpr.MS_AUSGABE_TEXTID= ta.MS_AUSGABE_TEXTID)
+  where AUSGABE_DER_VORSCHRIFT_BEI_REPORT_BAUREIHE =1 and sucheid = '||asucheid||' and meilenstein = '||aindex||'  )  '    ;
+            lresult := lresult
+                       || ',cteb as(Select tvrt.EINSATZDATUM in_kraft,null neue_typen, null alle_fahrzeuge, t.*  from t_ms_suchergebniss t 
+                       join cte_base_regelb cbr on (t.vorschriftid = cbr.vorschriftid and t.MS_PARAMETERID =cbr.MS_PARAMETERID and cbr.xrow =1)
+                       left join T_VORSCHRIFT_REF_EINSATZDATUM_TYP tvrt on (t.vorschriftid = tvrt.vorschriftid and tvrt.EINSATZDATUM_TYPID = 1000)
+                       left join t_ms_parameter tms on (t.regelnummer = tms.nummer) where AUSGABE_DER_VORSCHRIFT_BEI_REPORT_BAUREIHE =1 and sucheid = '||asucheid||' and meilenstein = '||aindex|| 
+')';
+--Delta der Daten
+
+            lresult := lresult || ',cte1 as (Select nvl(nvl(a.alternative_vorschriftid,a.vorschriftid),nvl(b.alternative_vorschriftid,b.vorschriftid)) vorschriftid, nvl( b.in_kraft, a.in_kraft) in_kraft,nvl( b.neue_typen,  a.neue_typen )neue_typen, 
+AUSGABE_TEXT as regelnummer,nvl( b.alle_fahrzeuge,a.alle_fahrzeuge)alle_fahrzeuge,nvl(b.landid,a.landid)landid,nvl(b.themaid,a.themaid)themaid,
+case when a.vorschriftid is null then ''Neu'' when b.vorschriftid is null then ''Entfallen''when a.regelnummer != b.regelnummer then ''wegen Projektverschiebung'' else ''-'' end as Delta,
+nvl(a.risiko,b.risiko) risiko 
+from ctea a full outer join cteb b on(a.vorschriftid = b.vorschriftid and a.landid=b.landid and a.themaid=b.themaid) 
+left join t_ms_parameter tms on (nvl(b.regelnummer,a.regelnummer) = tms.nummer)
+left join T_MS_PARAMETER_REF_AUSGABE tpr on (tms.MS_PARAMETERID =tpr.MS_PARAMETERID)
+left join T_MS_AUSGABE_TEXT ta on (tpr.MS_AUSGABE_TEXTID= ta.MS_AUSGABE_TEXTID)
+where  a.vorschriftid is null or b.vorschriftid is null or a.regelnummer != b.regelnummer)'
+            ;
+-- Normale Abfrage der Suchdaten
+        ELSif ( acsvformat IN (
+            1,
+            2
+        )) then 
+        lresult := lresult|| ',cte_base_regel as ( Select t.vorschriftid, t.MS_PARAMETERID, row_number() over (partition by t.vorschriftid order by kritikalitaet desc) as xrow
+        from t_ms_suchergebniss t 
+        join t_ms_parameter pm on (t.MS_PARAMETERID =pm.MS_PARAMETERID)
+left join T_MS_PARAMETER_REF_AUSGABE tpr on (t.MS_PARAMETERID =tpr.MS_PARAMETERID)
+left join T_MS_AUSGABE_TEXT ta on(tpr.MS_AUSGABE_TEXTID= ta.MS_AUSGABE_TEXTID)
+  where AUSGABE_DER_VORSCHRIFT_BEI_REPORT_BAUREIHE =1 and sucheid = '||asucheid||' and meilenstein = '||aindex||'  )  '    ;
+            lresult := lresult
+                       || ',cte1 as(Select EINSATZDATUM in_kraft,null neue_typen, null alle_fahrzeuge, sucheid,    nvl(alternative_vorschriftid,t.vorschriftid)vorschriftid,    vorschriftnummer,    vorschrifttitel,    themaid,    themanummer,  
+                       themabezeichnung,    t.landbezeichnung,    landnummer, AUSGABE_TEXT as regelnummer,    status_vorschrift,    
+                       t.prognose_qualitaet,    t.sw_relevant,    t.risiko,    t.ms_parameterid,    t.zeitpunkt,    landid,    meilenstein,    alternative_vorschriftid,    ansprechpartnerid  
+                       from t_ms_suchergebniss t 
+                       join cte_base_regel cbr on (t.vorschriftid = cbr.vorschriftid and t.MS_PARAMETERID =cbr.MS_PARAMETERID and cbr.xrow =1)
+join t_ms_parameter pm on (t.MS_PARAMETERID =pm.MS_PARAMETERID)
+left join T_VORSCHRIFT_REF_EINSATZDATUM_TYP tvrt on (t.vorschriftid = tvrt.vorschriftid and tvrt.EINSATZDATUM_TYPID = 1000)
+left join T_MS_PARAMETER_REF_AUSGABE tpr on (t.MS_PARAMETERID =tpr.MS_PARAMETERID)
+left join T_MS_AUSGABE_TEXT ta on(tpr.MS_AUSGABE_TEXTID= ta.MS_AUSGABE_TEXTID)
+                       where AUSGABE_DER_VORSCHRIFT_BEI_REPORT_BAUREIHE =1 and sucheid = '||asucheid||' and meilenstein = '||aindex||  
+')';
+
+else
+ lresult := lresult|| ',cte_base_regel as ( Select t.vorschriftid, t.MS_PARAMETERID, row_number() over (partition by t.vorschriftid order by kritikalitaet desc) as xrow
+        from t_ms_suchergebniss t 
+        join t_ms_parameter pm on (t.MS_PARAMETERID =pm.MS_PARAMETERID)
+left join T_MS_PARAMETER_REF_AUSGABE tpr on (t.MS_PARAMETERID =tpr.MS_PARAMETERID)
+left join T_MS_AUSGABE_TEXT ta on(tpr.MS_AUSGABE_TEXTID= ta.MS_AUSGABE_TEXTID)
+  where AUSGABE_DER_VORSCHRIFT_BEI_REPORT_BAUREIHE =1 and sucheid = '||asucheid||' and meilenstein = '||aindex||'  )  '    ;
+ lresult := lresult
+                       || ',cte1 as(Select  EINSATZDATUM in_kraft,null neue_typen, null alle_fahrzeuge, sucheid,   t.vorschriftid,    vorschriftnummer,    vorschrifttitel,    themaid,    themanummer,  
+                       themabezeichnung,    t.landbezeichnung,    landnummer, AUSGABE_TEXT as regelnummer,    status_vorschrift,    
+                       t.prognose_qualitaet,    t.sw_relevant,    t.risiko,    t.ms_parameterid,    t.zeitpunkt,    landid,    meilenstein,    alternative_vorschriftid,    ansprechpartnerid  
+                       from t_ms_suchergebniss t 
+                         join cte_base_regel cbr on (t.vorschriftid = cbr.vorschriftid and t.MS_PARAMETERID =cbr.MS_PARAMETERID and cbr.xrow =1)
+ join t_ms_parameter pm on (t.MS_PARAMETERID =pm.MS_PARAMETERID)  
+ left join T_VORSCHRIFT_REF_EINSATZDATUM_TYP tvrt on (t.vorschriftid = tvrt.vorschriftid and tvrt.EINSATZDATUM_TYPID = 1000)
+left join T_MS_PARAMETER_REF_AUSGABE tpr on (t.MS_PARAMETERID =tpr.MS_PARAMETERID)
+left join T_MS_AUSGABE_TEXT ta on(tpr.MS_AUSGABE_TEXTID= ta.MS_AUSGABE_TEXTID)
+                       where  AUSGABE_DER_VORSCHRIFT_BEI_REPORT_BAUREIHE =1 and  sucheid = '||asucheid||' and meilenstein = '||aindex|| 
+')';
+        END IF;
+                            --Selektieren der Aktuellen Themen Informationen
+
+        lresult := lresult || ',cteThemen as ( Select themaid, NUMMER ,BEZEICHNUNG,lead_syva 
+                            from t_thema )'
+        ;
+                            -- Selektieren der Aktuellen Länder Infromationen
+        lresult := lresult || ', cteLand as (Select tl.landid, b_nummer,  laendergruppe
+                            from t_land tl
+                            left outer join t_Land_ref_laendergruppe tlg on (tl.landid = tlg.landid)
+                            left outer join t_laendergruppe tg on (tlg.laendergruppeid = tg.laendergruppeid))'
+        ;
+
+                            --Selektieren der aktuellen Vorschrifteninformationen
+        lresult := lresult || ', cteRegularie as (Select  vorschriftid,vorschrift_nummer ,case when PROGNOSE_QUALITAET = 10 then ''sicher'' else''abschätzbar'' end as Prognose, tvs.status,case when tv.rxswin = 10 then ''ja'' else ''nein'' end as rsxwin,
+                            VORNAME ||'' '' || NACHNAME as LEAD_VKO
+                            from t_vorschrift tv
+                           left outer join t_vorschrift_status tvs on (tv.vorschrift_statusid =tvs.vorschrift_statusid)
+                           left join t_benutzer tb on (tv.LEAD_VKO_BENUTZERID = tb.benutzerid))'
+        ;
+
+                         --Zusammenfassen der Informationen je nach Exportformat Immer zusammengefasst Länder
+        lresult := lresult || ', ';
+
+--Hinzufügen der Informationen aus den IDs
+        lresult := lresult || 'cte1_full as(Select distinct t1.*,   cL.b_nummer,  cL.laendergruppe,  ct.NUMMER ,ct.BEZEICHNUNG ,ct.lead_syva ,
+cr.vorschrift_nummer,cr.status,cr.Prognose,cr.rsxwin, 0 as Zusammenfassung, LEAD_VKO,tak.kurz as AK_kurz
+ from cte1 t1
+ left outer join cteLand cL on (t1.landid = cL.landid)
+ left outer join cteThemen ct on (t1.themaid = ct.themaid)
+ left outer join cteRegularie cR on (t1.vorschriftid = cr.vorschriftid)
+ left outer join t_vorschrift_ref_ET_B_AK trak on (t1.vorschriftid = trak.vorschriftid and trak.geloescht = 0)
+ left outer join T_ET_B_AK tak on (trak.ET_B_AKID = tak.ET_B_AKID)
+ ),'
+        ;
+
+  --Bedingte Zusammenfassung 
+        IF ( acsvformat IN (
+            1,
+            2
+        ) AND nvl(adeltamode, 0) = 0 )
+--Zusammenfassen der Vorschriften und berechnung des minimum Datums
+         THEN
+            lresult := lresult || 'cte_vorschriften_distinct as (Select  Themaid, vorschrift_nummer,status,Prognose,rsxwin,min( in_kraft) as in_kraft, min(neue_typen)neue_typen, min(alle_fahrzeuge)alle_fahrzeuge, max(regelnummer) as regelnummer, max(risiko) risiko
+from cte1_full
+group by Themaid,vorschrift_nummer,status,Prognose,rsxwin),'
+            ;
+            lresult := lresult || 'cte_vorschriften_agg as (Select themaid,xmlagg(xmlelement(E,case risiko when ''0'' then ''kein Risiko'' when ''1'' then ''mittleres Risiko'' else ''hohes Risiko'' end ||'', '')).Extract(''//text()'').getClobVal() as risiko, xmlagg(xmlelement(E,vorschrift_nummer ||'', '')).Extract(''//text()'').getClobVal() as vorschrift_nummer, 
+                                min(in_kraft) in_kraft,xmlagg(xmlelement(E, regelnummer ||'', '')).Extract(''//text()'').getClobVal() regelnummer,
+                                min(neue_typen) neue_typen,min(alle_fahrzeuge)alle_fahrzeuge,
+                                xmlagg(xmlelement(E, status||'', '')).Extract(''//text()'').getClobVal() as  status,xmlagg(xmlelement(E, Prognose||'', '')).Extract(''//text()'').getClobVal() as Prognose,xmlagg(xmlelement(E, rsxwin||'', '')).Extract(''//text()'').getClobVal() as rsxwin
+                                from cte_Vorschriften_distinct t1
+                                group by themaid),'
+            ;
+-- Zusammenfassung der Länder                                
+            lresult := lresult || 'cteLand_Distinct as (Select distinct themaid, b_nummer from cte1_full t1 ), cteLandGruppe_Distinct as (Select distinct themaid, laendergruppe
+                                from cte1_full t1 ),'
+            ;
+            lresult := lresult || 'cteLand_Bnummer as( Select themaid, xmlagg(xmlelement(E,b_nummer||'', '')).Extract(''//text()'').getClobVal() as b_nummer
+                                from cteLand_Distinct
+                                group by themaid
+                                ), cteLand_Gruppe as( Select themaid, xmlagg(xmlelement(E,laendergruppe||'', '')).Extract(''//text()'').getClobVal() as laendergruppe
+                                from cteLandGruppe_Distinct
+                                group by themaid),'
+            ;
+-- Distincte Themen 4526
+            lresult := lresult || 'cte_bereich_distinct as ( Select  themaid,xmlagg(xmlelement(E, vt.bereich||'','')).Extract(''//text()'').getClobVal() as bereich
+                                from v_thema_bereich vt where bereich is not null
+                                group by themaid),
+                                cteThemen_Distinct1 as(Select distinct t1.themaid,t1.NUMMER ,t1.BEZEICHNUNG,lead_syva
+                                from cte1_full t1
+
+                             ),cteThemen_Distinct as(Select  t1.themaid,t1.NUMMER ,t1.BEZEICHNUNG,lead_syva, bereich
+                                from cteThemen_Distinct1  t1
+                                left outer join cte_bereich_distinct vt on (t1.themaid = vt.themaid))'
+            ;
+
+                --Unterscheidung Format 1  und 2             
+                --''''''''||in_kraft||'''''''' as "In Kraft",''''''''||alle_fahrzeuge||'''''''' as "Alle Fahrzeuge",''''''''||neue_typen||'''''''' as "neue Typen", 
+            IF ( acsvformat = 1 ) THEN
+                lresult := lresult || ',cte_result as (
+                                                Select   b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie",   regelnummer  as "Regel", 
+                                                  ''''''''||nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name",  bereich as "Vertretender Bereich", 
+                                                  status as "Status der Vorschrift",
+                                                  rsxwin as "potentiell SW-Relevant",prognose as "Prognosequalität" ,null as "Eigenschaft geändert",
+                                                  null as "Neue Typprüfung ja/nein", null as "Relevante HW geändert", null as "Relevante SW geändert", null as "Lieferantenwechsel",
+                                                  null as "Standort Komponenten",null as "Typprüfzeichnung geändert", risiko as "Risiko"
+                                                    from cteThemen_Distinct t1
+                                                 left outer join  cte_vorschriften_agg  VG on (t1.themaid =vg.themaid   )
+                                                 left outer join  cteLand_Bnummer Lb on (t1.themaid = lb.themaid )
+                                                 left outer join cteLand_Gruppe Lg on (t1.themaid = lg.themaid )
+                                                 )'
+                ;
+                --''''''''||in_kraft||'''''''' as "In Kraft",''''''''||neue_typen||'''''''' as "neue Typen",
+                --              alle_fahrzeuge as "Alle Fahrzeuge",
+            ELSE
+                lresult := lresult || ',cte_mfv_distinct as (Select distinct themaid, tm.mfv_name
+                                            from cte1 t1
+                                           join t_mfv_ref_vorschrift tmrv on (t1.vorschriftid = tmrv.vorschriftid)
+                                           join t_mfv tm on (tm.mfvid = tmrv.mfvid)
+                             ),cte_MFV as ( Select themaid,xmlagg(xmlelement(E, mfv_name||'', '')).Extract(''//text()'').getClobVal() as mfv_name
+                                       from cte_mfv_distinct                                     
+                                       group by themaid),cte_result as (
+               Select  b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie",  regelnummer  as "Regel", 
+                              ''''''''||nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name",  bereich as "Vertretender Bereich", 
+                              status as "Status der Vorschrift",
+                              mfv_name as "MfV ID",  risiko as "Risiko"
+               from cteThemen_Distinct t1
+                            left outer join  cte_vorschriften_agg  VG on (t1.themaid =vg.themaid )
+                             left outer join  cteLand_Bnummer Lb on (t1.themaid = lb.themaid)
+                             left outer join cteLand_Gruppe Lg on  (t1.themaid = lg.themaid )
+                             left outer join cte_mfv mf on (t1.themaid = mf.themaid )
+                             )'
+                ;
+            END IF; -- Ende Nicht Delta Format 1 und 2
+
+        ELSIF ( acsvformat IN (
+            1,
+            2
+        ) AND nvl(adeltamode, 0) = 1 )
+--Zusammenfassen der Vorschriften und berechnung des minimum Datums
+         THEN
+            lresult := lresult || 'cte_vorschriften_distinct as (Select  Themaid,delta, vorschrift_nummer,status,Prognose,rsxwin,min( in_kraft) as in_kraft, min(neue_typen)neue_typen, min(alle_fahrzeuge)alle_fahrzeuge, regelnummer, max(risiko) risiko
+from cte1_full
+group by Themaid,vorschrift_nummer,status,Prognose,rsxwin,delta, regelnummer),'
+            ;
+            lresult := lresult || 'cte_vorschriften_agg as (Select themaid,xmlagg(xmlelement(E,delta||'', '')).Extract(''//text()'').getClobVal() as delta,xmlagg(xmlelement(E,case risiko when ''0'' then ''kein Risiko'' when ''1'' then ''mittleres Risiko'' else ''hohes Risiko'' end ||'', '')).Extract(''//text()'').getClobVal() as risiko, xmlagg(xmlelement(E,vorschrift_nummer ||'', '')).Extract(''//text()'').getClobVal() as vorschrift_nummer, 
+                                min(in_kraft) in_kraft,
+                                min(neue_typen) neue_typen,min(alle_fahrzeuge)alle_fahrzeuge,
+                                xmlagg(xmlelement(E, regelnummer  ||'', '')).Extract(''//text()'').getClobVal() as regelnummer,
+                                xmlagg(xmlelement(E, status||'', '')).Extract(''//text()'').getClobVal() as  status,xmlagg(xmlelement(E, Prognose||'', '')).Extract(''//text()'').getClobVal() as Prognose,xmlagg(xmlelement(E, rsxwin||'', '')).Extract(''//text()'').getClobVal() as rsxwin
+                                from cte_Vorschriften_distinct t1
+                                group by themaid ),'
+            ;
+-- Zusammenfassung der Länder                                
+            lresult := lresult || 'cteLand_Distinct as (Select distinct themaid, b_nummer from cte1_full t1 ), cteLandGruppe_Distinct as (Select distinct themaid, laendergruppe
+                                from cte1_full t1 ),'
+            ;
+            lresult := lresult || 'cteLand_Bnummer as( Select themaid, xmlagg(xmlelement(E,b_nummer||'', '')).Extract(''//text()'').getClobVal() as b_nummer
+                                from cteLand_Distinct
+                                group by themaid
+                                ), cteLand_Gruppe as( Select themaid, xmlagg(xmlelement(E,laendergruppe||'', '')).Extract(''//text()'').getClobVal() as laendergruppe
+                                from cteLandGruppe_Distinct
+                                group by themaid),'
+            ;
+-- Distincte Themen
+            lresult := lresult || 'cte_bereich_distinct as ( Select  themaid,xmlagg(xmlelement(E, vt.bereich||'','')).Extract(''//text()'').getClobVal() as bereich
+                                from v_thema_bereich vt where bereich is not null
+                                group by themaid),
+                                cteThemen_Distinct1 as(Select distinct t1.themaid,t1.NUMMER ,t1.BEZEICHNUNG,lead_syva
+                                from cte1_full t1
+
+                             ),cteThemen_Distinct as(Select  t1.themaid,t1.NUMMER ,t1.BEZEICHNUNG,lead_syva, bereich
+                                from cteThemen_Distinct1  t1
+                                left outer join cte_bereich_distinct vt on (t1.themaid = vt.themaid))'
+            ;
+--entfernt ''''''''||in_kraft||'''''''' as "In Kraft",''''''''||alle_fahrzeuge||'''''''' as "Alle Fahrzeuge",''''''''||neue_typen||'''''''' as "neue Typen",
+                --Unterscheidung Format 1  und 2             
+            IF ( acsvformat = 1 ) THEN
+                lresult := lresult || ',cte_result as (
+                                                Select   b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie",VG.regelnummer  as "Regel", 
+                                                  ''''''''||nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name",  bereich as "Vertretender Bereich",
+                                                  status as "Status der Vorschrift",
+                                                  rsxwin as "potentiell SW-Relevant",prognose as "Prognosequalität" , null as "Eigenschaft geändert",
+                                                  null as "Neue Typprüfung ja/nein", null as "Relevante HW geändert", null as "Relevante SW geändert", null as "Lieferantenwechsel",
+                                                  null as "Standort Komponenten",null as "Typprüfzeichnung geändert", risiko  as "Risiko",vg.delta as "Delta" 
+                                                  from cteThemen_Distinct t1
+                            left outer join  cte_vorschriften_agg  VG on (t1.themaid =vg.themaid  )
+                             left outer join  cteLand_Bnummer Lb on (t1.themaid = lb.themaid )
+                             left outer join cteLand_Gruppe Lg on  (t1.themaid = lg.themaid )
+                                                 )'
+                ; --''''''''||in_kraft||'''''''' as "In Kraft",''''''''||neue_typen||'''''''' as "neue Typen",                              alle_fahrzeuge as "Alle Fahrzeuge",
+            ELSE
+                lresult := lresult || ',cte_mfv_distinct as (Select distinct themaid, tm.mfv_name
+                                            from cte1_full t1
+                                           join t_mfv_ref_vorschrift tmrv on (t1.vorschriftid = tmrv.vorschriftid)
+                                           join t_mfv tm on (tm.mfvid = tmrv.mfvid)
+                             ),cte_MFV as ( Select themaid,xmlagg(xmlelement(E, mfv_name||'', '')).Extract(''//text()'').getClobVal() as mfv_name
+                                       from cte_mfv_distinct                                     
+                                       group by themaid),cte_result as (
+               Select  b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie",  vg.regelnummer   as "Regel", 
+                              ''''''''||nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name"",  bereich as "Vertretender Bereich",  
+                              status as "Status der Vorschrift",
+                              mfv_name as "MfV ID",  risiko as "Risiko",vg.delta as "Delta"
+               from cteThemen_Distinct t1
+                            left outer join  cte_vorschriften_agg  VG on (t1.themaid =vg.themaid )
+                             left outer join  cteLand_Bnummer Lb on (t1.themaid = lb.themaid )
+                             left outer join cteLand_Gruppe Lg on  (t1.themaid = lg.themaid )
+                             left outer join cte_mfv mf on (t1.themaid = mf.themaid )
+                             )'
+                ;
+            END IF; -- Ende  Delta Format 1 und 2  
+
+-- Format 3 Delta
+        elsif ( acsvformat = 4) then
+           lresult := lresult || 'cteLand_Distinct as (Select distinct t1.vorschriftid,t1.themaid,  b_nummer,regelnummer
+                                                    from cte1_full t1 
+
+                            ), cteLandGruppe_Distinct as (Select distinct t1.vorschriftid,t1.themaid, laendergruppe,regelnummer
+                                                    from cte1_full t1 
+                            ), cteLand_Bnummer as( Select vorschriftid,themaid, xmlagg(xmlelement(E,b_nummer||'', '')).Extract(''//text()'').getClobVal() as b_nummer,regelnummer
+                            from cteLand_Distinct
+                            group by vorschriftid,themaid,regelnummer
+                            ) , cteLand_Gruppe as( Select vorschriftid,themaid, xmlagg(xmlelement(E,laendergruppe||'', '')).Extract(''//text()'').getClobVal() as laendergruppe,regelnummer
+                            from cteLandGruppe_Distinct
+                            group by vorschriftid,themaid,regelnummer),'
+            ;
+            lresult := lresult || 'cteThemen_Distinct as(Select distinct  NUMMER ,BEZEICHNUNG,lead_syva, themaid
+                                    from cte1_full t1
+                                    ),
+                                    cteBereich as (Select distinct  vt.bereich, tv.themaid
+                                    from  v_thema_bereich vt
+                                    join cteThemen_Distinct tv on (vt.themaid = tv.themaid)),
+                                    cte_bereich2 as (Select themaid, xmlagg(xmlelement(E, vt.bereich||'', '')).Extract(''//text()'').getClobVal() bereich
+                                    from cteBereich vt
+                                    group by themaid),
+               cteThemen_Agg as (Select themaid, xmlagg(xmlelement(E,cte.NUMMER ||'', '')).Extract(''//text()'').getClobVal() as NUMMER,xmlagg(xmlelement(E,cte.BEZEICHNUNG ||'', '')).Extract(''//text()'').getClobVal() as BEZEICHNUNG, 
+                                    xmlagg(xmlelement(E, lead_syva||'', '')).Extract(''//text()'').getClobVal() as lead_syva
+
+
+                                from cteThemen_Distinct cte
+
+                                group by themaid
+               ),cte_MFV as ( Select tmrv.vorschriftid,xmlagg(xmlelement(E, tm.mfv_name||'', '')).Extract(''//text()'').getClobVal() as mfv_name
+               from t_mfv tm
+               join t_mfv_ref_vorschrift tmrv on (tm.mfvid = tmrv.mfvid)
+               where vorschriftid in (Select vorschriftid from cte1_full)
+               group by tmrv.vorschriftid),cte_alternative_vorschrift as ( Select distinct t1.vorschriftid, tv.Vorschrift_nummer
+               from cte1_full t1
+                join t_vorschrift tv on ( alternative_vorschriftid = tv.vorschriftid)
+               ), ctealternative_agg as (Select vorschriftid, xmlagg(xmlelement(E,  Vorschrift_nummer||'', '')).Extract(''//text()'').getClobVal() as Alternative_Vorschrift from cte_alternative_vorschrift group by vorschriftid ), cte_vorschrift as (Select  t1.vorschriftid,min( t1.in_kraft)in_kraft,min(neue_typen) neue_typen,min( t1.alle_fahrzeuge) alle_fahrzeuge,  t1.regelnummer,  t1.risiko,case when substr( t1.vorschrift_nummer,0,4) =''UN-R'' and instr( t1.vorschrift_nummer,''Supplement'') > 0 then ''R''||lpad(substr( t1.vorschrift_nummer,instr(t1.vorschrift_nummer,'' '')+1,instr(  t1.vorschrift_nummer,''/'')-instr( t1.vorschrift_nummer,'' '')-1) ,3,''0'')
+||''.''||lpad(substr(t1.vorschrift_nummer,instr( t1.vorschrift_nummer,''/'')+1,2),2,''0'') ||''.''||lpad(substr(t1.vorschrift_nummer,instr(  t1.vorschrift_nummer,''Supplement'')+11),2,''0'') when substr( t1.vorschrift_nummer,0,4) =''UN-R'' then ''R''||lpad(substr( t1.vorschrift_nummer,instr( t1.vorschrift_nummer,'' '')+1,instr( t1.vorschrift_nummer,''/'')-instr(t1.vorschrift_nummer,'' '')-1) ,3,''0'')
+||''.''||lpad(substr(t1.vorschrift_nummer,instr(  t1.vorschrift_nummer,''/'')+1,2),2,''0'')  else null end as stammdatenid,  t1.lead_VKo, themaid
+                                        from cte1_full t1
+
+                                        group by t1.vorschriftid,themaid,regelnummer, risiko,t1.vorschrift_nummer, t1.lead_VKo),
+                    cte_akdist as (Select distinct vorschriftid, AK_kurz from cte1_full),
+                    cteakagg as (Select xmlagg(xmlelement(E,  AK_kurz||'', '')).Extract(''//text()'').getClobVal() as AK_kurz, vorschriftid from cte_akdist group by vorschriftid),
+               cte_result as (
+               Select  t1.vorschriftid,b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie",  Alternative_Vorschrift "Alternative Vorschrift",    t1.regelnummer   as "Regel",
+                             ''''''''|| nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name", bereich  as "Vertretender Bereich",akk.AK_kurz,t1.lead_VKo as "Lead VKO",'||
+                           /*   ''''''''||in_kraft||'''''''' as "In Kraft",''''''''||neue_typen||'''''''' as "neue Typen",''''''''||alle_fahrzeuge||'''''''' as "Alle Fahrzeuge",*/'status as "Status der Vorschrift",
+                              mfv_name as "MfV ID" ,rsxwin as "potentiell SW-Relevant",prognose as "Prognosequalität" , case risiko when ''0'' then ''kein Risiko'' when ''1'' then ''mittleres Risiko'' else ''hohes Risiko''  end as "Risiko",stammdatenid as "Stammdaten-ID"
+               from cte_vorschrift t1
+               left outer join cteThemen_agg ct on (t1.themaid = ct.themaid )
+                             left outer join cteLand_Bnummer Lb on (t1.vorschriftid = lb.vorschriftid and t1.regelnummer = LB.regelnummer)
+                             left outer join cteLand_Gruppe Lg on (t1.vorschriftid = lg.vorschriftid  and t1.regelnummer = Lg.regelnummer)
+                             left outer join cteRegularie cr on (t1.vorschriftid = cr.vorschriftid)
+                             left outer join cte_MFV cm on (t1.vorschriftid = cm.vorschriftid)
+                             left outer join ctealternative_agg  tv on ( t1.vorschriftid = tv.vorschriftid  )
+                             left outer join cte_bereich2  vt on ( t1.themaid = vt.themaid )
+                             left outer join cteakagg akk on ( t1.vorschriftid = akk.vorschriftid)
+                             ) ';
+        ELSIF ( acsvformat = 3 and adeltamode = 1 ) THEN
+            lresult := lresult || 'cteLand_Distinct as (Select distinct t1.vorschriftid,  b_nummer,regelnummer
+                                                    from cte1_full t1 
+                            ), cteLandGruppe_Distinct as (Select distinct t1.vorschriftid, laendergruppe,t1.regelnummer
+                                                    from cte1_full t1 
+                            ), cteLand_Bnummer as( Select vorschriftid, xmlagg(xmlelement(E,b_nummer||'', '')).Extract(''//text()'').getClobVal() as b_nummer
+                            from cteLand_Distinct
+                            group by vorschriftid
+                            ), cteLand_Gruppe as( Select vorschriftid, xmlagg(xmlelement(E,laendergruppe||'', '')).Extract(''//text()'').getClobVal() as laendergruppe
+                            from cteLandGruppe_Distinct
+                            group by vorschriftid)
+                            ,cteThemen_Distinct as(Select distinct vorschriftid, NUMMER ,BEZEICHNUNG,lead_syva, themaid
+                                    from cte1_full t1
+                                    ),
+               cteThemen_Agg as (Select vorschriftid, xmlagg(xmlelement(E,NUMMER ||'', '')).Extract(''//text()'').getClobVal() as NUMMER,xmlagg(xmlelement(E,BEZEICHNUNG ||'', '')).Extract(''//text()'').getClobVal() as BEZEICHNUNG, 
+                                    xmlagg(xmlelement(E, lead_syva||'', '')).Extract(''//text()'').getClobVal() as lead_syva,
+                                     xmlagg(xmlelement(E, vt.bereich||'', '')).Extract(''//text()'').getClobVal() as bereich
+                                from cteThemen_Distinct cte
+                                left outer join v_thema_bereich vt on (cte.themaid = vt.themaid)
+                                group by vorschriftid
+               ),'
+            ;
+            lresult := lresult || 'cte_MFV as ( Select tmrv.vorschriftid,xmlagg(xmlelement(E, tm.mfv_name||'', '')).Extract(''//text()'').getClobVal() as mfv_name
+               from t_mfv tm
+               join t_mfv_ref_vorschrift tmrv on (tm.mfvid = tmrv.mfvid)
+               where vorschriftid in (Select vorschriftid from cte1_full)
+               group by tmrv.vorschriftid
+
+               ), cte_vorschrift as (Select  t1.vorschriftid,min(in_kraft)in_kraft,min(neue_typen) neue_typen,min(alle_fahrzeuge) alle_fahrzeuge, delta,regelnummer, risiko ,case when substr(vorschrift_nummer,0,4) =''UN-R'' and instr(vorschrift_nummer,''Supplement'') > 0 then ''R''||lpad(substr(vorschrift_nummer,instr(vorschrift_nummer,'' '')+1,instr( vorschrift_nummer,''/'')-instr(vorschrift_nummer,'' '')-1) ,3,''0'')
+||''.''||lpad(substr(vorschrift_nummer,instr( vorschrift_nummer,''/'')+1,2),2,''0'') ||''.''||lpad(substr(vorschrift_nummer,instr( vorschrift_nummer,''Supplement'')+11),2,''0'') when substr(vorschrift_nummer,0,4) =''UN-R'' then ''R''||lpad(substr(vorschrift_nummer,instr(vorschrift_nummer,'' '')+1,instr( vorschrift_nummer,''/'')-instr(vorschrift_nummer,'' '')-1) ,3,''0'')
+||''.''||lpad(substr(vorschrift_nummer,instr( vorschrift_nummer,''/'')+1,2),2,''0'')  else null end as stammdatenid
+                                        from cte1_full t1
+                                        group by vorschriftid,delta,regelnummer, risiko,vorschrift_nummer),
+
+               cte_result as (
+               Select  b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie",  t1.regelnummer   as "Regel", 
+                             ''''''''|| nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name",Bereich as "Vertretender Bereich"  '
+                             -- ''''''''||in_kraft||'''''''' as "In Kraft",''''''''||neue_typen||'''''''' as "neue Typen",''''''''||alle_fahrzeuge||'''''''' as "Alle Fahrzeuge"
+                              ||',status as "Status der Vorschrift",
+                              mfv_name as "MfV ID" ,rsxwin as "potentiell SW-Relevant",prognose as "Prognosequalität" ,Delta, case risiko when ''0'' then ''kein Risiko'' when ''1'' then ''mittleres Risiko'' else ''hohes Risiko'' end as "Risiko",stammdatenid as "Stammdaten-ID"
+               from cte_vorschrift t1
+               left outer join cteThemen_agg ct on (t1.vorschriftid = ct.vorschriftid)
+                             left outer join cteLand_Bnummer Lb on (t1.vorschriftid = lb.vorschriftid)
+                             left outer join cteLand_Gruppe Lg on (t1.vorschriftid = lg.vorschriftid)
+                             left outer join cteRegularie cr on (t1.vorschriftid = cr.vorschriftid)
+                             left outer join cte_MFV cm on (t1.vorschriftid = cm.vorschriftid)
+                             )'
+            ;
+
+-- Format 3 NICHT Delta                             ) ';
+        ELSIF ( acsvformat = 3 ) THEN
+            lresult := lresult || 'cteLand_Distinct as (Select distinct t1.vorschriftid,  b_nummer,regelnummer
+                                                    from cte1_full t1 
+
+                            ), cteLandGruppe_Distinct as (Select distinct t1.vorschriftid, laendergruppe,regelnummer
+                                                    from cte1_full t1 
+                            ), cteLand_Bnummer as( Select vorschriftid, xmlagg(xmlelement(E,b_nummer||'', '')).Extract(''//text()'').getClobVal() as b_nummer,regelnummer
+                            from cteLand_Distinct
+                            group by vorschriftid,regelnummer
+                            ) , cteLand_Gruppe as( Select vorschriftid, xmlagg(xmlelement(E,laendergruppe||'', '')).Extract(''//text()'').getClobVal() as laendergruppe,regelnummer
+                            from cteLandGruppe_Distinct
+                            group by vorschriftid,regelnummer),'
+            ;
+            lresult := lresult || 'cteThemen_Distinct as(Select distinct vorschriftid, NUMMER ,BEZEICHNUNG,lead_syva,regelnummer, themaid
+                                    from cte1_full t1
+                                    ),
+                                    cteBEreich as (Select distinct vt.bereich, tv.vorschriftid,regelnummer
+                                    from  v_thema_bereich vt
+                                    join cteThemen_Distinct tv on (vt.themaid = tv.themaid)),
+                                    cte_bereich2 as (Select vorschriftid,regelnummer, xmlagg(xmlelement(E, vt.bereich||'', '')).Extract(''//text()'').getClobVal() bereich
+                                    from cteBEreich vt
+                                    group by vorschriftid,regelnummer),
+               cteThemen_Agg as (Select cte.vorschriftid, xmlagg(xmlelement(E,cte.NUMMER ||'', '')).Extract(''//text()'').getClobVal() as NUMMER,xmlagg(xmlelement(E,cte.BEZEICHNUNG ||'', '')).Extract(''//text()'').getClobVal() as BEZEICHNUNG, 
+                                    xmlagg(xmlelement(E, lead_syva||'', '')).Extract(''//text()'').getClobVal() as lead_syva,cte.regelnummer
+
+
+                                from cteThemen_Distinct cte
+
+                                group by cte.vorschriftid,regelnummer
+               ),cte_MFV as ( Select tmrv.vorschriftid,xmlagg(xmlelement(E, tm.mfv_name||'', '')).Extract(''//text()'').getClobVal() as mfv_name
+               from t_mfv tm
+               join t_mfv_ref_vorschrift tmrv on (tm.mfvid = tmrv.mfvid)
+               where vorschriftid in (Select vorschriftid from cte1_full)
+               group by tmrv.vorschriftid),cte_alternative_vorschrift as ( Select distinct t1.vorschriftid, tv.Vorschrift_nummer
+               from cte1_full t1
+                join t_vorschrift tv on ( alternative_vorschriftid = tv.vorschriftid)
+               ), ctealternative_agg as (Select vorschriftid, xmlagg(xmlelement(E,  Vorschrift_nummer||'', '')).Extract(''//text()'').getClobVal() as Alternative_Vorschrift from cte_alternative_vorschrift group by vorschriftid ), cte_vorschrift as (Select  t1.vorschriftid,min( t1.in_kraft)in_kraft,min(neue_typen) neue_typen,min( t1.alle_fahrzeuge) alle_fahrzeuge,  t1.regelnummer,  t1.risiko,case when substr( t1.vorschrift_nummer,0,4) =''UN-R'' and instr( t1.vorschrift_nummer,''Supplement'') > 0 then ''R''||lpad(substr( t1.vorschrift_nummer,instr(t1.vorschrift_nummer,'' '')+1,instr(  t1.vorschrift_nummer,''/'')-instr( t1.vorschrift_nummer,'' '')-1) ,3,''0'')
+||''.''||lpad(substr(t1.vorschrift_nummer,instr( t1.vorschrift_nummer,''/'')+1,2),2,''0'') ||''.''||lpad(substr(t1.vorschrift_nummer,instr(  t1.vorschrift_nummer,''Supplement'')+11),2,''0'') when substr( t1.vorschrift_nummer,0,4) =''UN-R'' then ''R''||lpad(substr( t1.vorschrift_nummer,instr( t1.vorschrift_nummer,'' '')+1,instr( t1.vorschrift_nummer,''/'')-instr(t1.vorschrift_nummer,'' '')-1) ,3,''0'')
+||''.''||lpad(substr(t1.vorschrift_nummer,instr(  t1.vorschrift_nummer,''/'')+1,2),2,''0'')  else null end as stammdatenid,  t1.lead_VKo
+                                        from cte1_full t1
+
+                                        group by t1.vorschriftid,regelnummer, risiko,t1.vorschrift_nummer, t1.lead_VKo),
+                    cte_akdist as (Select distinct vorschriftid, AK_kurz from cte1_full),
+                    cteakagg as (Select xmlagg(xmlelement(E,  AK_kurz||'', '')).Extract(''//text()'').getClobVal() as AK_kurz, vorschriftid from cte_akdist group by vorschriftid),
+               cte_result as (
+               Select  t1.vorschriftid,b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie",  Alternative_Vorschrift "Alternative Vorschrift",    t1.regelnummer   as "Regel",
+                             ''''''''|| nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name", bereich  as "Vertretender Bereich",akk.AK_kurz,t1.lead_VKo as "Lead VKO",'||
+                           /*   ''''''''||in_kraft||'''''''' as "In Kraft",''''''''||neue_typen||'''''''' as "neue Typen",''''''''||alle_fahrzeuge||'''''''' as "Alle Fahrzeuge",*/'status as "Status der Vorschrift",
+                              mfv_name as "MfV ID" ,rsxwin as "potentiell SW-Relevant",prognose as "Prognosequalität" , case risiko when ''0'' then ''kein Risiko'' when ''1'' then ''mittleres Risiko'' else ''hohes Risiko''  end as "Risiko",stammdatenid as "Stammdaten-ID"
+               from cte_vorschrift t1
+               left outer join cteThemen_agg ct on (t1.vorschriftid = ct.vorschriftid  and t1.regelnummer = ct.regelnummer)
+                             left outer join cteLand_Bnummer Lb on (t1.vorschriftid = lb.vorschriftid and t1.regelnummer = LB.regelnummer)
+                             left outer join cteLand_Gruppe Lg on (t1.vorschriftid = lg.vorschriftid  and t1.regelnummer = Lg.regelnummer)
+                             left outer join cteRegularie cr on (t1.vorschriftid = cr.vorschriftid)
+                             left outer join cte_MFV cm on (t1.vorschriftid = cm.vorschriftid)
+                             left outer join ctealternative_agg  tv on ( t1.vorschriftid = tv.vorschriftid  )
+                             left outer join cte_bereich2  vt on ( t1.vorschriftid = vt.vorschriftid   and t1.regelnummer = vt.regelnummer)
+                             left outer join cteakagg akk on ( t1.vorschriftid = akk.vorschriftid)
+                             ) '
+            ;
+        ELSE
+            lresult := lresult || 'cteLand_Distinct as (Select distinct t1.vorschriftid,  b_nummer
+                                                    from cte1_full t1 
+
+                            ), cteLandGruppe_Distinct as (Select distinct t1.vorschriftid, laendergruppe
+                                                    from cte1_full t1 
+                            ), cteLand_Bnummer as( Select vorschriftid,  b_nummer
+                            from cteLand_Distinct
+
+                            ) , cteLand_Gruppe as( Select vorschriftid, laendergruppe
+                            from cteLandGruppe_Distinct
+                            ), ctealternative_agg as (Select vorschriftid, xmlagg(xmlelement(E,  Vorschrift_nummer||'', '')).Extract(''//text()'').getClobVal() as Alternative_Vorschrift from cte_alternative_vorschrift group by vorschriftid ), cte_vorschrift as (Select  t1.vorschriftid,min( t1.in_kraft)in_kraft,min(neue_typen) neue_typen,min( t1.alle_fahrzeuge) alle_fahrzeuge,  t1.regelnummer,  t1.risiko,case when substr( t1.vorschrift_nummer,0,4) =''UN-R'' and instr( t1.vorschrift_nummer,''Supplement'') > 0 then ''R''||lpad(substr( t1.vorschrift_nummer,instr(t1.vorschrift_nummer,'' '')+1,instr(  t1.vorschrift_nummer,''/'')-instr( t1.vorschrift_nummer,'' '')-1) ,3,''0'')
+||''.''||lpad(substr(t1.vorschrift_nummer,instr( t1.vorschrift_nummer,''/'')+1,2),2,''0'') ||''.''||lpad(substr(t1.vorschrift_nummer,instr(  t1.vorschrift_nummer,''Supplement'')+11),2,''0'') when substr( t1.vorschrift_nummer,0,4) =''UN-R'' then ''R''||lpad(substr( t1.vorschrift_nummer,instr( t1.vorschrift_nummer,'' '')+1,instr( t1.vorschrift_nummer,''/'')-instr(t1.vorschrift_nummer,'' '')-1) ,3,''0'')
+||''.''||lpad(substr(t1.vorschrift_nummer,instr(  t1.vorschrift_nummer,''/'')+1,2),2,''0'')  else null end as stammdatenid,  t1.lead_VKo
+                                        from cte1_full t1
+
+                                        group by t1.vorschriftid,regelnummer, risiko,t1.vorschrift_nummer, t1.lead_VKo), cte_akdist as (Select distinct vorschriftid, AK_kurz from cte1_full),
+                    cteakagg as (Select xmlagg(xmlelement(E,  AK_kurz||'', '')).Extract(''//text()'').getClobVal() as AK_kurz, vorschriftid from cte_akdist group by vorschriftid),'
+            ;
+            lresult := lresult || 'cteThemen_Distinct as(Select distinct vorschriftid, NUMMER ,BEZEICHNUNG,lead_syva
+                                    from cte1_full t1
+                                    ),
+              cte_MFV as ( Select tmrv.vorschriftid,xmlagg(xmlelement(E, tm.mfv_name||'', '')).Extract(''//text()'').getClobVal() as mfv_name
+               from t_mfv tm
+               join t_mfv_ref_vorschrift tmrv on (tm.mfvid = tmrv.mfvid)
+               where vorschriftid in (Select vorschriftid from cte1_full)
+               group by tmrv.vorschriftid), cte_vorschrift as (Select  vorschriftid,min(in_kraft)in_kraft,min(neue_typen) neue_typen,min(alle_fahrzeuge) alle_fahrzeuge, regelnummer, risiko, lead_VKo,  xmlagg(xmlelement(E, AK_kurz||'', '')).Extract(''//text()'').getClobVal() as AK_kurz
+                                        from cte1_full
+                                        group by vorschriftid,regelnummer, risiko, lead_VKo),
+               cte_result as (
+               Select distinct b_nummer as "Länder", laendergruppe as "Länder Clusterung", t1.vorschrift_nummer as "Regularie", Alternative_Vorschrift "Alternative Vorschrift", t1.regelnummer   as "Regel",
+                             ''''''''|| nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name",  bereich  as "Vertretender Bereich",t1.lead_VKo,AK_kurz,
+                              ''''''''||in_kraft||'''''''' as "In Kraft",''''''''||neue_typen||'''''''' as "neue Typen",''''''''||alle_fahrzeuge||'''''''' as "Alle Fahrzeuge",status as "Status der Vorschrift",
+                              mfv_name as "MfV ID" ,rsxwin as "potentiell SW-Relevant",prognose as "Prognosequalität" , case risiko when ''0'' then ''kein Risiko'' when ''1'' then ''mittleres Risiko'' else ''hohes Risiko'' end as "Risiko"
+               from cte_vorschrift t1
+               left outer join cteThemen_Distinct ct on (t1.vorschriftid = ct.vorschriftid)
+                             left outer join cteLand_Bnummer Lb on (t1.vorschriftid = lb.vorschriftid)
+                             left outer join cteLand_Gruppe Lg on (t1.vorschriftid = lg.vorschriftid)
+                             left outer join cteRegularie cr on (t1.vorschriftid = cr.vorschriftid)
+                             left outer join ctealternative_agg  tv on ( t1.vorschriftid = tv.vorschriftid  )
+                             left outer join cte_MFV cm on (t1.vorschriftid = cm.vorschriftid)
+                              left outer join cte_bereich2  vt on ( t1.vorschriftid = vt.vorschriftid   and t1.regelnummer = vt.regelnummer)
+                          --   left outer join cteakagg akk on ( t1.vorschriftid = akk.vorschriftid)
+                             ) '
+            ;
+        END IF;
+
+
+       --lresult := lresult|| lGroupFormat;
+
+        lresult := lresult || 'Select cr.* ,null as "Suchdaten", sb.*
+                from cte_result cr 
+                       cross join cte_search_base sb '
+        ;
+        RETURN lresult;
+    END fgetcsvsql2;
+  FUNCTION fgetcsvsql (
+        atempsucheids   IN   VARCHAR2,
+        aindex          IN   NUMBER,
+        acsvformat      IN   NUMBER,
+        adeltamode      IN   NUMBER
+    ) RETURN CLOB IS
+        lresult           CLOB;
+        lsucheparameter   CLOB;
+        lgroupformat      CLOB;
+        l_ergebnisse      t_suche_ergebnis_liste;
+        lpreindex         NUMBER;
+    BEGIN
+            /* CsVFormate: 1 = Themengebiete Unique + Leere Felder für manuelle Eingabe
+                CsVFormate: 2 = Themengebiete Unique 
+                 CsVFormate: 3 = Regularien Unique
+            */
+        SELECT
+            'with cte_search_Land as (
+ Select xmlagg(xmlelement(E,b_nummer||'', '')).Extract(''//text()'').getClobVal() as b_nummer 
+  from t_land tl
+  where landid in (
+      select column_value from table(
+                Select  apex_string.split_numbers(JSON_VALUE(SUCHDATEN,''$.LAENDER''),'':'')
+                       from t_suche_json_temp tst
+                       where SUCHE_TEMPID = pck_ri_suche.fSplitIndex('''
+            || atempsucheids
+               || ''','''
+                  || aindex
+                     || ''')
+                       ) 
+                )
+),
+cte_search_Thema as (
+ Select xmlagg(xmlelement(E,NUMMER||'', '')).Extract(''//text()'').getClobVal() as thema_nummer
+  from t_thema tl
+  where themaid in (
+      select column_value from table(
+                Select  apex_string.split_numbers(jSON_VALUE(SUCHDATEN,''$.THEMEN'' ),'':'')
+                       from t_suche_json_temp tst
+                       where SUCHE_TEMPID = pck_ri_suche.fSplitIndex('''
+                        || atempsucheids
+                           || ''','''
+                              || aindex
+                                 || ''')
+                       ) 
+                )
+), cte_search_base as (
+   Select ''''''''||JSON_VALUE(SUCHDATEN,''$.DATUM_SOP'')||'''''''' "Suche SOP-Datum",''''''''||JSON_VALUE(SUCHDATEN,''$.DATUM_MEILENSTEIN'')||'''''''' "Suche Meilenstein", case when JSON_VALUE(SUCHDATEN,''$.SUCHTYP'' ) = 0 then ''Neue Typen'' else ''Alle Fahrzeuge'' end as "Suchtyp", ''''''''||JSON_VALUE(SUCHDATEN,''$.DATUM_EOP'' )||'''''''' "Suche EOP", tst.benutzerid "Suche Benutzerid",
+    ''''''''||thema_nummer "Suche Themen", b_nummer "Suche Länder"
+                       from t_suche_json_temp tst
+                       join cte_search_Thema on (1=1)
+                       join cte_search_Land on (1=1)
+                       where SUCHE_TEMPID = pck_ri_suche.fSplitIndex('''
+                                    || atempsucheids
+                                       || ''','''
+                                          || aindex
+                                             || ''')
+
+                )'
+        INTO lsucheparameter
+        FROM
+            dual;
+
+        lresult := lsucheparameter;
+
+--Grundabfrage Enthält aktuelle Abfrage die Vollständigen Daten und wenn Benötigt die Daten des Deltas
+/* Alter code zum Vergleich noch drinnen
+if (aDeltaMode =1) then 
+        lpreindex := aindex -1;
+        debug('lpreindex',lpreindex);
+         lresult := lresult||',ctea as(Select vorschriftid, in_kraft, neue_typen,alle_fahrzeuge,landid,themaid, regelnummer, risiko from table ( Select pck_ri_suche.fSearchResultsFull(jSON_VALUE(SUCHDATEN,''$.THEMEN'' ), JSON_VALUE(SUCHDATEN,''$.LAENDER''),JSON_VALUE(SUCHDATEN,''$.DATUM_SOP''),
+                                       JSON_VALUE(SUCHDATEN,''$.DATUM_MEILENSTEIN''),  JSON_VALUE(SUCHDATEN,''$.SUCHTYP'' ), JSON_VALUE(SUCHDATEN,''$.DATUM_EOP'' ),
+                                       JSON_VALUE(SUCHDATEN,''$.CKD_FBU_MODE'' ),JSON_VALUE(SUCHDATEN,''$.LOW_RISK'' ),JSON_VALUE(SUCHDATEN,''$.HIGH_RISK'' )) 
+                                      from t_suche_JSON_temp tst
+                where SUCHE_TEMPID = pck_ri_suche.fSplitIndex('''||aTempSucheIDs||''','''||lpreindex||''')))';
+              lresult := lresult||',cteb as(Select vorschriftid, in_kraft, neue_typen,alle_fahrzeuge,landid,themaid, regelnummer, risiko from table ( Select pck_ri_suche.fSearchResultsFull(jSON_VALUE(SUCHDATEN,''$.THEMEN'' ), JSON_VALUE(SUCHDATEN,''$.LAENDER''),JSON_VALUE(SUCHDATEN,''$.DATUM_SOP''),
+                                       JSON_VALUE(SUCHDATEN,''$.DATUM_MEILENSTEIN''),  JSON_VALUE(SUCHDATEN,''$.SUCHTYP'' ), JSON_VALUE(SUCHDATEN,''$.DATUM_EOP'' ),
+                                       JSON_VALUE(SUCHDATEN,''$.CKD_FBU_MODE'' ),JSON_VALUE(SUCHDATEN,''$.LOW_RISK'' ),JSON_VALUE(SUCHDATEN,''$.HIGH_RISK'' )) 
+                                      from t_suche_JSON_temp tst
+                where SUCHE_TEMPID = pck_ri_suche.fSplitIndex('''||aTempSucheIDs||''','''||aIndex||''')))';
+                lresult := lresult||',cte1 as (Select nvl(a.vorschriftid,b.vorschriftid) vorschriftid, nvl( a.in_kraft, b.in_kraft) in_kraft,nvl( a.neue_typen,  b.neue_typen )neue_typen, nvl(a.regelnummer, b.regelnummer) regelnummer,
+               nvl( a.alle_fahrzeuge,b.alle_fahrzeuge)alle_fahrzeuge,nvl(a.landid,b.landid)landid,nvl(a.themaid,b.themaid)themaid, case when a.vorschriftid is null then ''Neu'' when b.vorschriftid is null then ''Entfallen''when a.regelnummer != b.regelnummer then ''wegen Projektverschiebung'' else ''-'' end as Delta, nvl(a.risiko,b.risiko) risiko from ctea a full outer join cteb b on(a.vorschriftid = b.vorschriftid) where a.vorschriftid is null or b.vorschriftid is null or a.regelnummer != b.regelnummer)';
+else    lresult := lresult||',cte1 as(Select vorschriftid, in_kraft, neue_typen,alle_fahrzeuge,landid,themaid, regelnummer as regelnummer, risiko from table ( Select pck_ri_suche.fSearchResultsFull(jSON_VALUE(SUCHDATEN,''$.THEMEN'' ), JSON_VALUE(SUCHDATEN,''$.LAENDER''),JSON_VALUE(SUCHDATEN,''$.DATUM_SOP''),
+                                       JSON_VALUE(SUCHDATEN,''$.DATUM_MEILENSTEIN''),  JSON_VALUE(SUCHDATEN,''$.SUCHTYP'' ), JSON_VALUE(SUCHDATEN,''$.DATUM_EOP'' ),
+                                       JSON_VALUE(SUCHDATEN,''$.CKD_FBU_MODE'' ),JSON_VALUE(SUCHDATEN,''$.LOW_RISK'' ),JSON_VALUE(SUCHDATEN,''$.HIGH_RISK'' )) 
+                                      from t_suche_JSON_temp tst
+                where SUCHE_TEMPID = pck_ri_suche.fSplitIndex('''||aTempSucheIDs||''','''||aIndex||''')))';
+end if;
+                            --Selektieren der Aktuellen Themen Informationen
+       lresult := lresult||  ',cteThemen as ( Select themaid, NUMMER ,BEZEICHNUNG,lead_syva 
+                            from t_thema )';
+                            -- Selektieren der Aktuellen Länder Infromationen
+        lresult := lresult|| ', cteLand as (Select tl.landid, b_nummer,  laendergruppe
+                            from t_land tl
+                            left outer join t_Land_ref_laendergruppe tlg on (tl.landid = tlg.landid)
+                            left outer join t_laendergruppe tg on (tlg.laendergruppeid = tg.laendergruppeid))';
+
+                            --Selektieren der aktuellen Vorschrifteninformationen
+    lresult := lresult|| ', cteRegularie as (Select  vorschriftid,vorschrift_nummer ,case when PROGNOSE_QUALITAET = 10 then ''sicher'' else''abschätzbar'' end as Prognose, tvs.status,case when tv.rxswin = 10 then ''ja'' else ''nein'' end as rsxwin
+                            from t_vorschrift tv
+                           left outer join t_vorschrift_status tvs on (tv.vorschrift_statusid =tvs.vorschrift_statusid))';
+
+                         --Zusammenfassen der Informationen je nach Exportformat Immer zusammengefasst Länder
+       lresult := lresult||', ';
+  --Bedingte Zusammenfassung 
+if ( aCSVFormat in (1,2) and nvl(adeltamode,0) =1 )then
+            lresult := lresult|| 'cte_Vorschriften_distinct as (Select distinct vorschriftid, themaid, in_kraft, neue_typen, alle_fahrzeuge, Delta, regelnummer, risiko from cte1
+                                        ), cte_vorschriften_agg as (Select themaid,delta,risiko, xmlagg(xmlelement(E,vorschrift_nummer ||'', '')).Extract(''//text()'').getClobVal() as vorschrift_nummer, xmlagg(xmlelement(E,in_kraft ||'', '')).Extract(''//text()'').getClobVal() as in_kraft,
+                                xmlagg(xmlelement(E,neue_typen ||'', '')).Extract(''//text()'').getClobVal() as neue_typen,xmlagg(xmlelement(E, alle_fahrzeuge ||'', '')).Extract(''//text()'').getClobVal() as  alle_fahrzeuge,
+                                xmlagg(xmlelement(E, status||'', '')).Extract(''//text()'').getClobVal() as  status,xmlagg(xmlelement(E, Prognose||'', '')).Extract(''//text()'').getClobVal() as Prognose,xmlagg(xmlelement(E, rsxwin||'', '')).Extract(''//text()'').getClobVal() as rsxwin
+                                from cte_Vorschriften_distinct t1
+                                join cteregularie cr on (t1.vorschriftid = cr.vorschriftid)
+                                group by themaid, delta, risiko),cteLand_Distinct as (Select distinct t1.themaid, b_nummer from cte1 t1 join cteLand cl on (t1.landid = cl.landid)), cteLandGruppe_Distinct as (Select distinct t1.themaid, laendergruppe
+                                from cte1 t1 
+                                join cteLand cl on (t1.landid = cl.landid)
+                                ), cteLand_Bnummer as( Select themaid, xmlagg(xmlelement(E,b_nummer||'', '')).Extract(''//text()'').getClobVal() as b_nummer
+                                from cteLand_Distinct
+                                group by themaid
+                                ), cteLand_Gruppe as( Select themaid, xmlagg(xmlelement(E,laendergruppe||'', '')).Extract(''//text()'').getClobVal() as laendergruppe
+                                from cteLandGruppe_Distinct
+                                group by themaid),cteThemen_Distinct as(Select distinct t1.themaid, NUMMER ,BEZEICHNUNG,lead_syva,  t1.delta, regelnummer
+                                from cte1 t1
+                                join cteThemen ct on (t1.themaid = ct.themaid)) ';  
+
+                                --Format  1 Delta Modus
+                if ( aCSVFormat = 1 and adeltamode = 1)then lresult := lresult||
+                                ',cte_result as (Select  b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie", 
+                                ''''''''||nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name", lead_syva as "Lead SYVA  KEFA", 
+                                status as "Status der Vorschrift",rsxwin as "potentiell SW-Relevant",prognose as "Prognosequalität" ,''''''''||in_kraft||'''''''' as "In Kraft",''''''''||alle_fahrzeuge||'''''''' as "Alle Fahrzeuge",''''''''||neue_typen||'''''''' as "neue Typen", null as "Eigenschaft geändert",
+                                null as "Neue Typprüfung ja/nein", null as "Relevante HW geändert", null as "Relevante SW geändert", null as "Lieferantenwechsel",
+                                null as "Standort Komponenten",null as "Typprüfzeichnung geändert", t1.Delta, regelnummer
+                                from cteThemen_Distinct t1
+                                left outer join  cte_vorschriften_agg  VG on (t1.themaid =vg.themaid and t1.delta = vg.delta)
+                                left outer join  cteLand_Bnummer Lb on (t1.themaid = lb.themaid)
+                                left outer join cteLand_Gruppe Lg on (t1.themaid = lg.themaid)
+                                )'; 
+                                end if;
+
+elsif (aCSVFormat in (1,2) and nvl(adeltamode,0) = 0) then 
+                lresult := lresult||'cte_Vorschriften_distinct as (Select distinct vorschriftid,risiko, themaid, in_kraft, neue_typen, alle_fahrzeuge, regelnummer from cte1
+                                        ), cte_vorschriften_agg as (Select themaid,risiko, xmlagg(xmlelement(E,vorschrift_nummer ||'', '')).Extract(''//text()'').getClobVal() as vorschrift_nummer, xmlagg(xmlelement(E,in_kraft ||'', '')).Extract(''//text()'').getClobVal() as in_kraft,
+                                xmlagg(xmlelement(E,neue_typen ||'', '')).Extract(''//text()'').getClobVal() as neue_typen,xmlagg(xmlelement(E, alle_fahrzeuge ||'', '')).Extract(''//text()'').getClobVal() as  alle_fahrzeuge,
+                                xmlagg(xmlelement(E, status||'', '')).Extract(''//text()'').getClobVal() as  status,xmlagg(xmlelement(E, Prognose||'', '')).Extract(''//text()'').getClobVal() as Prognose,xmlagg(xmlelement(E, rsxwin||'', '')).Extract(''//text()'').getClobVal() as rsxwin,regelnummer
+                                from cte_Vorschriften_distinct t1
+                                join cteregularie cr on (t1.vorschriftid = cr.vorschriftid)
+                                group by themaid, regelnummer, risiko),cteLand_Distinct as (Select distinct t1.themaid,  b_nummer
+                                                                                    from cte1 t1 
+                                                                                    join cteLand cl on (t1.landid = cl.landid)
+                                                            ), cteLandGruppe_Distinct as (Select distinct t1.themaid, laendergruppe
+                                                                                    from cte1 t1 
+                                                                                    join cteLand cl on (t1.landid = cl.landid )
+                                                            ), cteLand_Bnummer as( Select themaid, xmlagg(xmlelement(E,b_nummer||'', '')).Extract(''//text()'').getClobVal() as b_nummer
+                                                            from cteLand_Distinct
+                                                            group by themaid
+                                                            ), cteLand_Gruppe as( Select themaid, xmlagg(xmlelement(E,laendergruppe||'', '')).Extract(''//text()'').getClobVal() as laendergruppe
+                                                            from cteLandGruppe_Distinct group by themaid),cteThemen_Distinct as(Select distinct t1.themaid, NUMMER ,BEZEICHNUNG,lead_syva, t1.regelnummer
+                                from cte1 t1
+                                join cteThemen ct on (t1.themaid = ct.themaid )
+                                    ) ';
+
+
+
+                       --Unterscheidung Format 1  und 2             
+                    if (aCSVFormat = 1 ) then 
+                    lresult := lresult|| ',cte_result as (
+                                                Select   b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie",  case  t1.regelnummer when 0 then ''Optional'' when 1 then ''Verpflichtend neue Typen'' else ''Verpflichtend alle Fahrzeuge'' end as "Regel", 
+                                                  ''''''''||nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name", lead_syva as "Lead SYVA  KEFA",  
+                                                  status as "Status der Vorschrift",
+                                                  rsxwin as "potentiell SW-Relevant",prognose as "Prognosequalität" ,''''''''||in_kraft||'''''''' as "In Kraft",''''''''||alle_fahrzeuge||'''''''' as "Alle Fahrzeuge",''''''''||neue_typen||'''''''' as "neue Typen", null as "Eigenschaft geändert",
+                                                  null as "Neue Typprüfung ja/nein", null as "Relevante HW geändert", null as "Relevante SW geändert", null as "Lieferantenwechsel",
+                                                  null as "Standort Komponenten",null as "Typprüfzeichnung geändert", risiko as "Risiko"
+                                                    from cteThemen_Distinct t1
+                                                 left outer join  cte_vorschriften_agg  VG on (t1.themaid =vg.themaid and vg.regelnummer=t1.regelnummer  )
+                                                 left outer join  cteLand_Bnummer Lb on (t1.themaid = lb.themaid )
+                                                 left outer join cteLand_Gruppe Lg on (t1.themaid = lg.themaid )
+                                                 )' ;
+
+            else lresult := lresult||
+                    ',cte_mfv_distinct as (Select distinct themaid, tm.mfv_name,regelnummer
+                                           from cte1 t1
+                                           join t_mfv_ref_vorschrift tmrv on (t1.vorschriftid = tmrv.vorschriftid)
+                                           join t_mfv tm on (tm.mfvid = tmrv.mfvid)
+                             ),cte_MFV as ( Select themaid,xmlagg(xmlelement(E, mfv_name||'', '')).Extract(''//text()'').getClobVal() as mfv_name
+                                       from cte_mfv_distinct                                     
+                                       group by themaid),cte_result as (
+               Select  b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie", case  t1.regelnummer when 0 then ''Optional'' when 1 then ''Verpflichtend neue Typen'' else ''Verpflichtend alle Fahrzeuge'' end  as "Regel", 
+                              ''''''''||nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name", lead_syva as "Lead SYVA/KEFA",  
+                              ''''''''||in_kraft||'''''''' as "In Kraft",''''''''||neue_typen||'''''''' as "neue Typen",
+                              alle_fahrzeuge as "Alle Fahrzeuge",status as "Status der Vorschrift",
+                              mfv_name as "MfV ID", risiko as "Risiko"
+               from cteThemen_Distinct t1
+                            left outer join  cte_vorschriften_agg  VG on (t1.themaid =vg.themaid and vg.regelnummer=t1.regelnummer )
+                             left outer join  cteLand_Bnummer Lb on (t1.themaid = lb.themaid)
+                             left outer join cteLand_Gruppe Lg on  (t1.themaid = lg.themaid )
+                             left outer join cte_mfv mf on (t1.themaid = mf.themaid )
+                             )'; 
+
+        end if;
+elsif (adeltamode =1 ) then lresult := lresult||'cteLand_Distinct as (Select distinct t1.vorschriftid,  b_nummer,t1.regelnummer
+                                                    from cte1 t1 
+                                                    join cteLand cl on (t1.landid = cl.landid)
+                            ), cteLandGruppe_Distinct as (Select distinct t1.vorschriftid, laendergruppe,t1.regelnummer
+                                                    from cte1 t1 
+                                                    join cteLand cl on (t1.landid = cl.landid)
+                            ), cteLand_Bnummer as( Select vorschriftid, xmlagg(xmlelement(E,b_nummer||'', '')).Extract(''//text()'').getClobVal() as b_nummer
+                            from cteLand_Distinct
+                            group by vorschriftid
+                            ), cteLand_Gruppe as( Select vorschriftid, xmlagg(xmlelement(E,laendergruppe||'', '')).Extract(''//text()'').getClobVal() as laendergruppe
+                            from cteLandGruppe_Distinct
+                            group by vorschriftid)
+                            ,cteThemen_Distinct as(Select distinct vorschriftid, NUMMER ,BEZEICHNUNG,lead_syva
+                                    from cte1 t1
+                                    join cteThemen ct on (t1.themaid = ct.themaid)
+                                    ),
+               cteThemen_Agg as (Select vorschriftid, xmlagg(xmlelement(E,NUMMER ||'', '')).Extract(''//text()'').getClobVal() as NUMMER,xmlagg(xmlelement(E,BEZEICHNUNG ||'', '')).Extract(''//text()'').getClobVal() as BEZEICHNUNG, 
+                                    xmlagg(xmlelement(E, lead_syva||'', '')).Extract(''//text()'').getClobVal() as lead_syva
+
+                                from cteThemen_Distinct
+                                group by vorschriftid
+               ),cte_MFV as ( Select tmrv.vorschriftid,xmlagg(xmlelement(E, tm.mfv_name||'', '')).Extract(''//text()'').getClobVal() as mfv_name
+               from t_mfv tm
+               join t_mfv_ref_vorschrift tmrv on (tm.mfvid = tmrv.mfvid)
+               where vorschriftid in (Select vorschriftid from cte1)
+               group by tmrv.vorschriftid
+
+               ), cte_vorschrift as (Select distinct vorschriftid,  in_kraft, neue_typen, alle_fahrzeuge, delta,regelnummer, risiko
+                                        from cte1),
+
+               cte_result as (
+               Select  b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie", case  t1.regelnummer when 0 then ''Optional'' when 1 then ''Verpflichtend neue Typen'' else ''Verpflichtend alle Fahrzeuge''end  as "Regel", 
+                             ''''''''|| nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name", lead_syva as "Lead SYVA/KEFA", 
+                              ''''''''||in_kraft||'''''''' as "In Kraft",''''''''||neue_typen||'''''''' as "neue Typen",''''''''||alle_fahrzeuge||'''''''' as "Alle Fahrzeuge",status as "Status der Vorschrift",
+                              mfv_name as "MfV ID" ,rsxwin as "potentiell SW-Relevant",prognose as "Prognosequalität" ,Delta, Risiko
+               from cte_vorschrift t1
+               left outer join cteThemen_agg ct on (t1.vorschriftid = ct.vorschriftid)
+                             left outer join cteLand_Bnummer Lb on (t1.vorschriftid = lb.vorschriftid)
+                             left outer join cteLand_Gruppe Lg on (t1.vorschriftid = lg.vorschriftid)
+                             left outer join cteRegularie cr on (t1.vorschriftid = cr.vorschriftid)
+                             left outer join cte_MFV cm on (t1.vorschriftid = cm.vorschriftid)
+                             ) ';
+            else  lresult := lresult||'cteLand_Distinct as (Select distinct t1.vorschriftid,  b_nummer
+                                                    from cte1 t1 
+                                                    join cteLand cl on (t1.landid = cl.landid)
+                            ), cteLandGruppe_Distinct as (Select distinct t1.vorschriftid, laendergruppe
+                                                    from cte1 t1 
+                                                    join cteLand cl on (t1.landid = cl.landid)
+                            ), cteLand_Bnummer as( Select vorschriftid, xmlagg(xmlelement(E,b_nummer||'', '')).Extract(''//text()'').getClobVal() as b_nummer
+                            from cteLand_Distinct
+                            group by vorschriftid
+                            )                            , cteLand_Gruppe as( Select vorschriftid, xmlagg(xmlelement(E,laendergruppe||'', '')).Extract(''//text()'').getClobVal() as laendergruppe
+                            from cteLandGruppe_Distinct
+                            group by vorschriftid)
+                            ,cteThemen_Distinct as(Select distinct vorschriftid, NUMMER ,BEZEICHNUNG,lead_syva
+                                    from cte1 t1
+                                    join cteThemen ct on (t1.themaid = ct.themaid)
+                                    ),
+               cteThemen_Agg as (Select vorschriftid, xmlagg(xmlelement(E,NUMMER ||'', '')).Extract(''//text()'').getClobVal() as NUMMER,xmlagg(xmlelement(E,BEZEICHNUNG ||'', '')).Extract(''//text()'').getClobVal() as BEZEICHNUNG, 
+                                    xmlagg(xmlelement(E, lead_syva||'', '')).Extract(''//text()'').getClobVal() as lead_syva
+
+                                from cteThemen_Distinct
+                                group by vorschriftid
+               ),cte_MFV as ( Select tmrv.vorschriftid,xmlagg(xmlelement(E, tm.mfv_name||'', '')).Extract(''//text()'').getClobVal() as mfv_name
+               from t_mfv tm
+               join t_mfv_ref_vorschrift tmrv on (tm.mfvid = tmrv.mfvid)
+               where vorschriftid in (Select vorschriftid from cte1)
+               group by tmrv.vorschriftid), cte_vorschrift as (Select distinct vorschriftid,  in_kraft, neue_typen, alle_fahrzeuge,regelnummer,risiko
+               from cte1),
+               cte_result as (
+               Select  b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie",  case  t1.regelnummer when 0 then ''Optional'' when 1 then ''Verpflichtend neue Typen'' else ''Verpflichtend alle Fahrzeuge'' end  as "Regel",
+                             ''''''''|| nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name", lead_syva as "Lead SYVA/KEFA", 
+                              ''''''''||in_kraft||'''''''' as "In Kraft",''''''''||neue_typen||'''''''' as "neue Typen",''''''''||alle_fahrzeuge||'''''''' as "Alle Fahrzeuge",status as "Status der Vorschrift",
+                              mfv_name as "MfV ID" ,rsxwin as "potentiell SW-Relevant",prognose as "Prognosequalität" , risiko
+               from cte_vorschrift t1
+               left outer join cteThemen_agg ct on (t1.vorschriftid = ct.vorschriftid)
+                             left outer join cteLand_Bnummer Lb on (t1.vorschriftid = lb.vorschriftid)
+                             left outer join cteLand_Gruppe Lg on (t1.vorschriftid = lg.vorschriftid)
+                             left outer join cteRegularie cr on (t1.vorschriftid = cr.vorschriftid)
+                             left outer join cte_MFV cm on (t1.vorschriftid = cm.vorschriftid)
+                             ) ';
+            end if ;*/
+--Grundabfrage Enthält aktuelle Abfrage die Vollständigen Daten und wenn Benötigt die Daten des Deltas
+        IF ( adeltamode = 1 ) THEN
+            lpreindex := aindex - 1;
+            debug('lpreindex', lpreindex);
+             debug('index', aindex);
+-- Daten der vorherigen Suche
+            lresult := lresult
+                       || ',ctea as(Select vorschriftid, in_kraft, neue_typen,alle_fahrzeuge,landid,themaid, regelnummer, risiko from table ( Select pck_ri_suche.fSearchResultsFull(jSON_VALUE(SUCHDATEN,''$.THEMEN'' ), JSON_VALUE(SUCHDATEN,''$.LAENDER''),JSON_VALUE(SUCHDATEN,''$.DATUM_SOP''),
+                                       JSON_VALUE(SUCHDATEN,''$.DATUM_MEILENSTEIN''),  JSON_VALUE(SUCHDATEN,''$.SUCHTYP'' ), JSON_VALUE(SUCHDATEN,''$.DATUM_EOP'' ),
+                                       JSON_VALUE(SUCHDATEN,''$.CKD_FBU_MODE'' ),JSON_VALUE(SUCHDATEN,''$.LOW_RISK'' ),JSON_VALUE(SUCHDATEN,''$.HIGH_RISK'' )) 
+                                      from t_suche_JSON_temp tst
+                where SUCHE_TEMPID = pck_ri_suche.fSplitIndex('''
+                       || atempsucheids
+                       || ''','''
+                       || lpreindex
+                       || ''')))';
+            debug('atempsucheids suche export',atempsucheids);
+-- Daten der aktuellen Suche
+
+            lresult := lresult
+                       || ',cteb as(Select vorschriftid, in_kraft, neue_typen,alle_fahrzeuge,landid,themaid, regelnummer, risiko from table ( Select pck_ri_suche.fSearchResultsFull(jSON_VALUE(SUCHDATEN,''$.THEMEN'' ), JSON_VALUE(SUCHDATEN,''$.LAENDER''),JSON_VALUE(SUCHDATEN,''$.DATUM_SOP''),
+                                       JSON_VALUE(SUCHDATEN,''$.DATUM_MEILENSTEIN''),  JSON_VALUE(SUCHDATEN,''$.SUCHTYP'' ), JSON_VALUE(SUCHDATEN,''$.DATUM_EOP'' ),
+                                       JSON_VALUE(SUCHDATEN,''$.CKD_FBU_MODE'' ),JSON_VALUE(SUCHDATEN,''$.LOW_RISK'' ),JSON_VALUE(SUCHDATEN,''$.HIGH_RISK'' )) 
+                                      from t_suche_JSON_temp tst
+                where SUCHE_TEMPID = pck_ri_suche.fSplitIndex('''
+                       || atempsucheids
+                       || ''','''
+                       || aindex
+                       || ''')))';
+--Delta der Daten
+
+            lresult := lresult || ',cte1 as (Select nvl(a.vorschriftid,b.vorschriftid) vorschriftid, nvl( b.in_kraft, a.in_kraft) in_kraft,nvl( b.neue_typen,  a.neue_typen )neue_typen, 
+nvl(b.regelnummer,a.regelnummer) regelnummer,nvl( b.alle_fahrzeuge,a.alle_fahrzeuge)alle_fahrzeuge,nvl(b.landid,a.landid)landid,nvl(b.themaid,a.themaid)themaid,
+case when a.vorschriftid is null then ''Neu'' when b.vorschriftid is null then ''Entfallen''when a.regelnummer != b.regelnummer then ''wegen Projektverschiebung'' else ''-'' end as Delta,
+nvl(a.risiko,b.risiko) risiko 
+from ctea a full outer join cteb b on(a.vorschriftid = b.vorschriftid and a.landid=b.landid and a.themaid=b.themaid) 
+where a.vorschriftid is null or b.vorschriftid is null or a.regelnummer != b.regelnummer)'
+            ;
+-- Normale Abfrage der Suchdaten
+        ELSE
+            lresult := lresult
+                       || ',cte1 as(Select vorschriftid, in_kraft, neue_typen,alle_fahrzeuge,landid,themaid, regelnummer as regelnummer, risiko from table ( Select pck_ri_suche.fSearchResultsFull(jSON_VALUE(SUCHDATEN,''$.THEMEN'' ), JSON_VALUE(SUCHDATEN,''$.LAENDER''),JSON_VALUE(SUCHDATEN,''$.DATUM_SOP''),
+                                       JSON_VALUE(SUCHDATEN,''$.DATUM_MEILENSTEIN''),  JSON_VALUE(SUCHDATEN,''$.SUCHTYP'' ), JSON_VALUE(SUCHDATEN,''$.DATUM_EOP'' ),
+                                       JSON_VALUE(SUCHDATEN,''$.CKD_FBU_MODE'' ),JSON_VALUE(SUCHDATEN,''$.LOW_RISK'' ),JSON_VALUE(SUCHDATEN,''$.HIGH_RISK'' )) 
+                                      from t_suche_JSON_temp tst
+                where SUCHE_TEMPID = pck_ri_suche.fSplitIndex('''
+                       || atempsucheids
+                       || ''','''
+                       || aindex
+                       || ''')))';
+        END IF;
+                            --Selektieren der Aktuellen Themen Informationen
+
+        lresult := lresult || ',cteThemen as ( Select themaid, NUMMER ,BEZEICHNUNG,lead_syva 
+                            from t_thema )'
+        ;
+                            -- Selektieren der Aktuellen Länder Infromationen
+        lresult := lresult || ', cteLand as (Select tl.landid, b_nummer,  laendergruppe
+                            from t_land tl
+                            left outer join t_Land_ref_laendergruppe tlg on (tl.landid = tlg.landid)
+                            left outer join t_laendergruppe tg on (tlg.laendergruppeid = tg.laendergruppeid))'
+        ;
+
+                            --Selektieren der aktuellen Vorschrifteninformationen
+        lresult := lresult || ', cteRegularie as (Select  vorschriftid,vorschrift_nummer ,case when PROGNOSE_QUALITAET = 10 then ''sicher'' else''abschätzbar'' end as Prognose, tvs.status,case when tv.rxswin = 10 then ''ja'' else ''nein'' end as rsxwin
+                            from t_vorschrift tv
+                           left outer join t_vorschrift_status tvs on (tv.vorschrift_statusid =tvs.vorschrift_statusid))'
+        ;
+
+                         --Zusammenfassen der Informationen je nach Exportformat Immer zusammengefasst Länder
+        lresult := lresult || ', ';
+
+--Hinzufügen der Informationen aus den IDs
+        lresult := lresult || 'cte1_full as(Select distinct t1.*,   cL.b_nummer,  cL.laendergruppe,  ct.NUMMER ,ct.BEZEICHNUNG ,ct.lead_syva ,
+cr.vorschrift_nummer,cr.status,cr.Prognose,cr.rsxwin, 0 as Zusammenfassung
+ from cte1 t1
+ left outer join cteLand cL on (t1.landid = cL.landid)
+ left outer join cteThemen ct on (t1.themaid = ct.themaid)
+ left outer join cteRegularie cR on (t1.vorschriftid = cr.vorschriftid)
+ ),'
+        ;
+
+  --Bedingte Zusammenfassung 
+        IF ( acsvformat IN (
+            1,
+            2
+        ) AND nvl(adeltamode, 0) = 0 )
+--Zusammenfassen der Vorschriften und berechnung des minimum Datums
+         THEN
+            lresult := lresult || 'cte_vorschriften_distinct as (Select  Themaid, vorschrift_nummer,status,Prognose,rsxwin,min( in_kraft) as in_kraft, min(neue_typen)neue_typen, min(alle_fahrzeuge)alle_fahrzeuge, max(regelnummer) as regelnummer, max(risiko) risiko
+from cte1_full
+group by Themaid,vorschrift_nummer,status,Prognose,rsxwin),'
+            ;
+            lresult := lresult || 'cte_vorschriften_agg as (Select themaid,xmlagg(xmlelement(E,case risiko when 0 then ''kein Risiko'' when 1 then ''mittleres Risiko'' else ''hohes Risiko'' end ||'', '')).Extract(''//text()'').getClobVal() as risiko, xmlagg(xmlelement(E,vorschrift_nummer ||'', '')).Extract(''//text()'').getClobVal() as vorschrift_nummer, 
+                                min(in_kraft) in_kraft,xmlagg(xmlelement(E, case regelnummer when 0 then ''Optional'' when 1 then ''Verpflichtend neue Typen'' else ''Verpflichtend alle Fahrzeuge'' end ||'', '')).Extract(''//text()'').getClobVal() regelnummer,
+                                min(neue_typen) neue_typen,min(alle_fahrzeuge)alle_fahrzeuge,
+                                xmlagg(xmlelement(E, status||'', '')).Extract(''//text()'').getClobVal() as  status,xmlagg(xmlelement(E, Prognose||'', '')).Extract(''//text()'').getClobVal() as Prognose,xmlagg(xmlelement(E, rsxwin||'', '')).Extract(''//text()'').getClobVal() as rsxwin
+                                from cte_Vorschriften_distinct t1
+                                group by themaid),'
+            ;
+-- Zusammenfassung der Länder                                
+            lresult := lresult || 'cteLand_Distinct as (Select distinct themaid, b_nummer from cte1_full t1 ), cteLandGruppe_Distinct as (Select distinct themaid, laendergruppe
+                                from cte1_full t1 ),'
+            ;
+            lresult := lresult || 'cteLand_Bnummer as( Select themaid, xmlagg(xmlelement(E,b_nummer||'', '')).Extract(''//text()'').getClobVal() as b_nummer
+                                from cteLand_Distinct
+                                group by themaid
+                                ), cteLand_Gruppe as( Select themaid, xmlagg(xmlelement(E,laendergruppe||'', '')).Extract(''//text()'').getClobVal() as laendergruppe
+                                from cteLandGruppe_Distinct
+                                group by themaid),'
+            ;
+-- Distincte Themen
+            lresult := lresult || 'cteThemen_Distinct as(Select distinct themaid, NUMMER ,BEZEICHNUNG,lead_syva
+                                from cte1_full t1)'
+            ;
+
+                --Unterscheidung Format 1  und 2             
+                --''''''''||in_kraft||'''''''' as "In Kraft",''''''''||alle_fahrzeuge||'''''''' as "Alle Fahrzeuge",''''''''||neue_typen||'''''''' as "neue Typen", 
+            IF ( acsvformat = 1 ) THEN
+                lresult := lresult || ',cte_result as (
+                                                Select   b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie",   regelnummer  as "Regel", 
+                                                  ''''''''||nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name", lead_syva as "Lead SYVA  KEFA",  
+                                                  status as "Status der Vorschrift",
+                                                  rsxwin as "potentiell SW-Relevant",prognose as "Prognosequalität" ,null as "Eigenschaft geändert",
+                                                  null as "Neue Typprüfung ja/nein", null as "Relevante HW geändert", null as "Relevante SW geändert", null as "Lieferantenwechsel",
+                                                  null as "Standort Komponenten",null as "Typprüfzeichnung geändert", risiko as "Risiko"
+                                                    from cteThemen_Distinct t1
+                                                 left outer join  cte_vorschriften_agg  VG on (t1.themaid =vg.themaid   )
+                                                 left outer join  cteLand_Bnummer Lb on (t1.themaid = lb.themaid )
+                                                 left outer join cteLand_Gruppe Lg on (t1.themaid = lg.themaid )
+                                                 )'
+                ;
+                --''''''''||in_kraft||'''''''' as "In Kraft",''''''''||neue_typen||'''''''' as "neue Typen",
+                --              alle_fahrzeuge as "Alle Fahrzeuge",
+            ELSE
+                lresult := lresult || ',cte_mfv_distinct as (Select distinct themaid, tm.mfv_name
+                                            from cte1 t1
+                                           join t_mfv_ref_vorschrift tmrv on (t1.vorschriftid = tmrv.vorschriftid)
+                                           join t_mfv tm on (tm.mfvid = tmrv.mfvid)
+                             ),cte_MFV as ( Select themaid,xmlagg(xmlelement(E, mfv_name||'', '')).Extract(''//text()'').getClobVal() as mfv_name
+                                       from cte_mfv_distinct                                     
+                                       group by themaid),cte_result as (
+               Select  b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie",  regelnummer  as "Regel", 
+                              ''''''''||nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name", lead_syva as "Lead SYVA/KEFA",  
+                              status as "Status der Vorschrift",
+                              mfv_name as "MfV ID",  risiko as "Risiko"
+               from cteThemen_Distinct t1
+                            left outer join  cte_vorschriften_agg  VG on (t1.themaid =vg.themaid )
+                             left outer join  cteLand_Bnummer Lb on (t1.themaid = lb.themaid)
+                             left outer join cteLand_Gruppe Lg on  (t1.themaid = lg.themaid )
+                             left outer join cte_mfv mf on (t1.themaid = mf.themaid )
+                             )'
+                ;
+            END IF; -- Ende Nicht Delta Format 1 und 2
+
+        ELSIF ( acsvformat IN (
+            1,
+            2
+        ) AND nvl(adeltamode, 0) = 1 )
+--Zusammenfassen der Vorschriften und berechnung des minimum Datums
+         THEN
+            lresult := lresult || 'cte_vorschriften_distinct as (Select  Themaid,delta, vorschrift_nummer,status,Prognose,rsxwin,min( in_kraft) as in_kraft, min(neue_typen)neue_typen, min(alle_fahrzeuge)alle_fahrzeuge, regelnummer, max(risiko) risiko
+from cte1_full
+group by Themaid,vorschrift_nummer,status,Prognose,rsxwin,delta, regelnummer),'
+            ;
+            lresult := lresult || 'cte_vorschriften_agg as (Select themaid,xmlagg(xmlelement(E,delta||'', '')).Extract(''//text()'').getClobVal() as delta,xmlagg(xmlelement(E,case risiko when 0 then ''kein Risiko'' when 1 then ''mittleres Risiko'' else ''hohes Risiko'' end ||'', '')).Extract(''//text()'').getClobVal() as risiko, xmlagg(xmlelement(E,vorschrift_nummer ||'', '')).Extract(''//text()'').getClobVal() as vorschrift_nummer, 
+                                min(in_kraft) in_kraft,
+                                min(neue_typen) neue_typen,min(alle_fahrzeuge)alle_fahrzeuge,
+                                xmlagg(xmlelement(E, case regelnummer when 0 then ''Optional'' when 1 then ''Verpflichtend neue Typen'' else ''Verpflichtend alle Fahrzeuge'' end ||'', '')).Extract(''//text()'').getClobVal() as regelnummer,
+                                xmlagg(xmlelement(E, status||'', '')).Extract(''//text()'').getClobVal() as  status,xmlagg(xmlelement(E, Prognose||'', '')).Extract(''//text()'').getClobVal() as Prognose,xmlagg(xmlelement(E, rsxwin||'', '')).Extract(''//text()'').getClobVal() as rsxwin
+                                from cte_Vorschriften_distinct t1
+                                group by themaid ),'
+            ;
+-- Zusammenfassung der Länder                                
+            lresult := lresult || 'cteLand_Distinct as (Select distinct themaid, b_nummer from cte1_full t1 ), cteLandGruppe_Distinct as (Select distinct themaid, laendergruppe
+                                from cte1_full t1 ),'
+            ;
+            lresult := lresult || 'cteLand_Bnummer as( Select themaid, xmlagg(xmlelement(E,b_nummer||'', '')).Extract(''//text()'').getClobVal() as b_nummer
+                                from cteLand_Distinct
+                                group by themaid
+                                ), cteLand_Gruppe as( Select themaid, xmlagg(xmlelement(E,laendergruppe||'', '')).Extract(''//text()'').getClobVal() as laendergruppe
+                                from cteLandGruppe_Distinct
+                                group by themaid),'
+            ;
+-- Distincte Themen
+            lresult := lresult || 'cteThemen_Distinct as(Select distinct themaid, NUMMER ,BEZEICHNUNG,lead_syva
+                                from cte1_full t1)'
+            ;
+--entfernt ''''''''||in_kraft||'''''''' as "In Kraft",''''''''||alle_fahrzeuge||'''''''' as "Alle Fahrzeuge",''''''''||neue_typen||'''''''' as "neue Typen",
+                --Unterscheidung Format 1  und 2             
+            IF ( acsvformat = 1 ) THEN
+                lresult := lresult || ',cte_result as (
+                                                Select   b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie",VG.regelnummer  as "Regel", 
+                                                  ''''''''||nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name", lead_syva as "Lead SYVA  KEFA",  
+                                                  status as "Status der Vorschrift",
+                                                  rsxwin as "potentiell SW-Relevant",prognose as "Prognosequalität" , null as "Eigenschaft geändert",
+                                                  null as "Neue Typprüfung ja/nein", null as "Relevante HW geändert", null as "Relevante SW geändert", null as "Lieferantenwechsel",
+                                                  null as "Standort Komponenten",null as "Typprüfzeichnung geändert", risiko  as "Risiko",vg.delta as "Delta" 
+                                                  from cteThemen_Distinct t1
+                            left outer join  cte_vorschriften_agg  VG on (t1.themaid =vg.themaid  )
+                             left outer join  cteLand_Bnummer Lb on (t1.themaid = lb.themaid )
+                             left outer join cteLand_Gruppe Lg on  (t1.themaid = lg.themaid )
+                                                 )'
+                ; --''''''''||in_kraft||'''''''' as "In Kraft",''''''''||neue_typen||'''''''' as "neue Typen",                              alle_fahrzeuge as "Alle Fahrzeuge",
+            ELSE
+                lresult := lresult || ',cte_mfv_distinct as (Select distinct themaid, tm.mfv_name
+                                            from cte1_full t1
+                                           join t_mfv_ref_vorschrift tmrv on (t1.vorschriftid = tmrv.vorschriftid)
+                                           join t_mfv tm on (tm.mfvid = tmrv.mfvid)
+                             ),cte_MFV as ( Select themaid,xmlagg(xmlelement(E, mfv_name||'', '')).Extract(''//text()'').getClobVal() as mfv_name
+                                       from cte_mfv_distinct                                     
+                                       group by themaid),cte_result as (
+               Select  b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie",  vg.regelnummer   as "Regel", 
+                              ''''''''||nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name", lead_syva as "Lead SYVA/KEFA",  
+                              status as "Status der Vorschrift",
+                              mfv_name as "MfV ID",  risiko as "Risiko",vg.delta as "Delta"
+               from cteThemen_Distinct t1
+                            left outer join  cte_vorschriften_agg  VG on (t1.themaid =vg.themaid )
+                             left outer join  cteLand_Bnummer Lb on (t1.themaid = lb.themaid )
+                             left outer join cteLand_Gruppe Lg on  (t1.themaid = lg.themaid )
+                             left outer join cte_mfv mf on (t1.themaid = mf.themaid )
+                             )'
+                ;
+            END IF; -- Ende  Delta Format 1 und 2  
+
+-- Format 3 Delta
+
+        ELSIF ( adeltamode = 1 ) THEN
+            lresult := lresult || 'cteLand_Distinct as (Select distinct t1.vorschriftid,  b_nummer,regelnummer
+                                                    from cte1_full t1 
+                            ), cteLandGruppe_Distinct as (Select distinct t1.vorschriftid, laendergruppe,t1.regelnummer
+                                                    from cte1_full t1 
+                            ), cteLand_Bnummer as( Select vorschriftid, xmlagg(xmlelement(E,b_nummer||'', '')).Extract(''//text()'').getClobVal() as b_nummer
+                            from cteLand_Distinct
+                            group by vorschriftid
+                            ), cteLand_Gruppe as( Select vorschriftid, xmlagg(xmlelement(E,laendergruppe||'', '')).Extract(''//text()'').getClobVal() as laendergruppe
+                            from cteLandGruppe_Distinct
+                            group by vorschriftid)
+                            ,cteThemen_Distinct as(Select distinct vorschriftid, NUMMER ,BEZEICHNUNG,lead_syva
+                                    from cte1_full t1
+                                    ),
+               cteThemen_Agg as (Select vorschriftid, xmlagg(xmlelement(E,NUMMER ||'', '')).Extract(''//text()'').getClobVal() as NUMMER,xmlagg(xmlelement(E,BEZEICHNUNG ||'', '')).Extract(''//text()'').getClobVal() as BEZEICHNUNG, 
+                                    xmlagg(xmlelement(E, lead_syva||'', '')).Extract(''//text()'').getClobVal() as lead_syva
+
+                                from cteThemen_Distinct
+                                group by vorschriftid
+               ),'
+            ;
+            lresult := lresult || 'cte_MFV as ( Select tmrv.vorschriftid,xmlagg(xmlelement(E, tm.mfv_name||'', '')).Extract(''//text()'').getClobVal() as mfv_name
+               from t_mfv tm
+               join t_mfv_ref_vorschrift tmrv on (tm.mfvid = tmrv.mfvid)
+               where vorschriftid in (Select vorschriftid from cte1_full)
+               group by tmrv.vorschriftid
+
+               ), cte_vorschrift as (Select  vorschriftid,min(in_kraft)in_kraft,min(neue_typen) neue_typen,min(alle_fahrzeuge) alle_fahrzeuge, delta,regelnummer, risiko ,case when substr(vorschrift_nummer,0,4) =''UN-R'' and instr(vorschrift_nummer,''Supplement'') > 0 then ''R''||lpad(substr(vorschrift_nummer,instr(vorschrift_nummer,'' '')+1,instr( vorschrift_nummer,''/'')-instr(vorschrift_nummer,'' '')-1) ,3,''0'')
+||''.''||lpad(substr(vorschrift_nummer,instr( vorschrift_nummer,''/'')+1,2),2,''0'') ||''.''||lpad(substr(vorschrift_nummer,instr( vorschrift_nummer,''Supplement'')+11),2,''0'') when substr(vorschrift_nummer,0,4) =''UN-R'' then ''R''||lpad(substr(vorschrift_nummer,instr(vorschrift_nummer,'' '')+1,instr( vorschrift_nummer,''/'')-instr(vorschrift_nummer,'' '')-1) ,3,''0'')
+||''.''||lpad(substr(vorschrift_nummer,instr( vorschrift_nummer,''/'')+1,2),2,''0'')  else null end as stammdatenid
+                                        from cte1_full
+                                        group by vorschriftid,delta,regelnummer, risiko,vorschrift_nummer),
+
+               cte_result as (
+               Select  b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie", case  t1.regelnummer when 0 then ''Optional'' when 1 then ''Verpflichtend neue Typen'' else ''Verpflichtend alle Fahrzeuge''end  as "Regel", 
+                             ''''''''|| nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name", lead_syva as "Lead SYVA/KEFA", 
+                              ''''''''||in_kraft||'''''''' as "In Kraft",''''''''||neue_typen||'''''''' as "neue Typen",''''''''||alle_fahrzeuge||'''''''' as "Alle Fahrzeuge",status as "Status der Vorschrift",
+                              mfv_name as "MfV ID" ,rsxwin as "potentiell SW-Relevant",prognose as "Prognosequalität" ,Delta, case risiko when 0 then ''kein Risiko'' when 1 then ''mittleres Risiko'' else ''hohes Risiko'' end as "Risiko",stammdatenid as "Stammdaten-ID"
+               from cte_vorschrift t1
+               left outer join cteThemen_agg ct on (t1.vorschriftid = ct.vorschriftid)
+                             left outer join cteLand_Bnummer Lb on (t1.vorschriftid = lb.vorschriftid)
+                             left outer join cteLand_Gruppe Lg on (t1.vorschriftid = lg.vorschriftid)
+                             left outer join cteRegularie cr on (t1.vorschriftid = cr.vorschriftid)
+                             left outer join cte_MFV cm on (t1.vorschriftid = cm.vorschriftid)
+                             )'
+            ;
+
+-- Format 3 NICHT Delta                             ) ';
+        ELSIF ( acsvformat = 3 ) THEN
+            lresult := lresult || 'cteLand_Distinct as (Select distinct t1.vorschriftid,  b_nummer,regelnummer
+                                                    from cte1_full t1 
+
+                            ), cteLandGruppe_Distinct as (Select distinct t1.vorschriftid, laendergruppe,regelnummer
+                                                    from cte1_full t1 
+                            ), cteLand_Bnummer as( Select vorschriftid, xmlagg(xmlelement(E,b_nummer||'', '')).Extract(''//text()'').getClobVal() as b_nummer,regelnummer
+                            from cteLand_Distinct
+                            group by vorschriftid,regelnummer
+                            ) , cteLand_Gruppe as( Select vorschriftid, xmlagg(xmlelement(E,laendergruppe||'', '')).Extract(''//text()'').getClobVal() as laendergruppe,regelnummer
+                            from cteLandGruppe_Distinct
+                            group by vorschriftid,regelnummer),'
+            ;
+            lresult := lresult || 'cteThemen_Distinct as(Select distinct vorschriftid, NUMMER ,BEZEICHNUNG,lead_syva,regelnummer
+                                    from cte1_full t1
+                                    ),
+               cteThemen_Agg as (Select vorschriftid, xmlagg(xmlelement(E,NUMMER ||'', '')).Extract(''//text()'').getClobVal() as NUMMER,xmlagg(xmlelement(E,BEZEICHNUNG ||'', '')).Extract(''//text()'').getClobVal() as BEZEICHNUNG, 
+                                    xmlagg(xmlelement(E, lead_syva||'', '')).Extract(''//text()'').getClobVal() as lead_syva,regelnummer
+
+                                from cteThemen_Distinct
+                                group by vorschriftid,regelnummer
+               ),cte_MFV as ( Select tmrv.vorschriftid,xmlagg(xmlelement(E, tm.mfv_name||'', '')).Extract(''//text()'').getClobVal() as mfv_name
+               from t_mfv tm
+               join t_mfv_ref_vorschrift tmrv on (tm.mfvid = tmrv.mfvid)
+               where vorschriftid in (Select vorschriftid from cte1_full)
+               group by tmrv.vorschriftid), cte_vorschrift as (Select  vorschriftid,min(in_kraft)in_kraft,min(neue_typen) neue_typen,min(alle_fahrzeuge) alle_fahrzeuge, regelnummer, risiko,case when substr(vorschrift_nummer,0,4) =''UN-R'' and instr(vorschrift_nummer,''Supplement'') > 0 then ''R''||lpad(substr(vorschrift_nummer,instr(vorschrift_nummer,'' '')+1,instr( vorschrift_nummer,''/'')-instr(vorschrift_nummer,'' '')-1) ,3,''0'')
+||''.''||lpad(substr(vorschrift_nummer,instr( vorschrift_nummer,''/'')+1,2),2,''0'') ||''.''||lpad(substr(vorschrift_nummer,instr( vorschrift_nummer,''Supplement'')+11),2,''0'') when substr(vorschrift_nummer,0,4) =''UN-R'' then ''R''||lpad(substr(vorschrift_nummer,instr(vorschrift_nummer,'' '')+1,instr( vorschrift_nummer,''/'')-instr(vorschrift_nummer,'' '')-1) ,3,''0'')
+||''.''||lpad(substr(vorschrift_nummer,instr( vorschrift_nummer,''/'')+1,2),2,''0'')  else null end as stammdatenid
+                                        from cte1_full
+                                        group by vorschriftid,regelnummer, risiko,vorschrift_nummer),
+               cte_result as (
+               Select  b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie",  case  t1.regelnummer when 0 then ''Optional'' when 1 then ''Verpflichtend neue Typen'' else ''Verpflichtend alle Fahrzeuge'' end  as "Regel",
+                             ''''''''|| nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name", lead_syva as "Lead SYVA/KEFA", 
+                              ''''''''||in_kraft||'''''''' as "In Kraft",''''''''||neue_typen||'''''''' as "neue Typen",''''''''||alle_fahrzeuge||'''''''' as "Alle Fahrzeuge",status as "Status der Vorschrift",
+                              mfv_name as "MfV ID" ,rsxwin as "potentiell SW-Relevant",prognose as "Prognosequalität" , case risiko when 0 then ''kein Risiko'' when 1 then ''mittleres Risiko'' else ''hohes Risiko''  end as "Risiko",stammdatenid as "Stammdaten-ID"
+               from cte_vorschrift t1
+               left outer join cteThemen_agg ct on (t1.vorschriftid = ct.vorschriftid  and t1.regelnummer = ct.regelnummer)
+                             left outer join cteLand_Bnummer Lb on (t1.vorschriftid = lb.vorschriftid and t1.regelnummer = LB.regelnummer)
+                             left outer join cteLand_Gruppe Lg on (t1.vorschriftid = lg.vorschriftid  and t1.regelnummer = Lg.regelnummer)
+                             left outer join cteRegularie cr on (t1.vorschriftid = cr.vorschriftid)
+                             left outer join cte_MFV cm on (t1.vorschriftid = cm.vorschriftid)
+                             ) '
+            ;
+        ELSE
+            lresult := lresult || 'cteLand_Distinct as (Select distinct t1.vorschriftid,  b_nummer
+                                                    from cte1_full t1 
+
+                            ), cteLandGruppe_Distinct as (Select distinct t1.vorschriftid, laendergruppe
+                                                    from cte1_full t1 
+                            ), cteLand_Bnummer as( Select vorschriftid,  b_nummer
+                            from cteLand_Distinct
+
+                            ) , cteLand_Gruppe as( Select vorschriftid, laendergruppe
+                            from cteLandGruppe_Distinct
+                            ),'
+            ;
+            lresult := lresult || 'cteThemen_Distinct as(Select distinct vorschriftid, NUMMER ,BEZEICHNUNG,lead_syva
+                                    from cte1_full t1
+                                    ),
+              cte_MFV as ( Select tmrv.vorschriftid,xmlagg(xmlelement(E, tm.mfv_name||'', '')).Extract(''//text()'').getClobVal() as mfv_name
+               from t_mfv tm
+               join t_mfv_ref_vorschrift tmrv on (tm.mfvid = tmrv.mfvid)
+               where vorschriftid in (Select vorschriftid from cte1_full)
+               group by tmrv.vorschriftid), cte_vorschrift as (Select  vorschriftid,min(in_kraft)in_kraft,min(neue_typen) neue_typen,min(alle_fahrzeuge) alle_fahrzeuge, regelnummer, risiko
+                                        from cte1_full
+                                        group by vorschriftid,regelnummer, risiko),
+               cte_result as (
+               Select  b_nummer as "Länder", laendergruppe as "Länder Clusterung", vorschrift_nummer as "Regularie",  case  t1.regelnummer when 0 then ''Optional'' when 1 then ''Verpflichtend neue Typen'' else ''Verpflichtend alle Fahrzeuge'' end  as "Regel",
+                             ''''''''|| nummer||'''''''' as "Themengebiete Nummer" , bezeichnung as "Themengebiet Name", lead_syva as "Lead SYVA/KEFA", 
+                              ''''''''||in_kraft||'''''''' as "In Kraft",''''''''||neue_typen||'''''''' as "neue Typen",''''''''||alle_fahrzeuge||'''''''' as "Alle Fahrzeuge",status as "Status der Vorschrift",
+                              mfv_name as "MfV ID" ,rsxwin as "potentiell SW-Relevant",prognose as "Prognosequalität" , case risiko when 0 then ''kein Risiko'' when 1 then ''mittleres Risiko'' else ''hohes Risiko'' end as "Risiko"
+               from cte_vorschrift t1
+               left outer join cteThemen_Distinct ct on (t1.vorschriftid = ct.vorschriftid)
+                             left outer join cteLand_Bnummer Lb on (t1.vorschriftid = lb.vorschriftid)
+                             left outer join cteLand_Gruppe Lg on (t1.vorschriftid = lg.vorschriftid)
+                             left outer join cteRegularie cr on (t1.vorschriftid = cr.vorschriftid)
+                             left outer join cte_MFV cm on (t1.vorschriftid = cm.vorschriftid)
+                             ) '
+            ;
+        END IF;
+
+
+       --lresult := lresult|| lGroupFormat;
+
+        lresult := lresult || 'Select cr.* ,null as "Suchdaten", sb.*
+                from cte_result cr 
+                       cross join cte_search_base sb '
+        ;
+        RETURN lresult;
+    END fgetcsvsql;
+
+    FUNCTION fgetcsvsqlfull (
+        atempsucheids   IN   VARCHAR2,
+        aindex          IN   NUMBER,
+        acsvformat      IN   NUMBER,
+        adeltamode      IN   NUMBER
+    ) RETURN CLOB IS
+        lresult           CLOB;
+        lsucheparameter   CLOB;
+        lgroupformat      CLOB;
+        l_ergebnisse      t_suche_ergebnis_liste;
+        lpreindex         NUMBER;
+    BEGIN
+            /* CsVFormate: 1 = Themengebiete Unique + Leere Felder für manuelle Eingabe ohne mfvs
+                CsVFormate: 2 = Themengebiete Unique + mfvs
+                 CsVFormate: 3 = Regularien Unique + mfvs
+            */
+        SELECT
+            'with cte_search_Land as (
+ Select xmlagg(xmlelement(E,b_nummer||'', '')).Extract(''//text()'').getClobVal() as b_nummer 
+  from t_land tl
+  where landid in (
+      select column_value from table(
+                Select  apex_string.split_numbers(JSON_VALUE(SUCHDATEN,''$.LAENDER''),'':'')
+                       from t_suche_json_temp tst
+                       where SUCHE_TEMPID = pck_ri_suche.fSplitIndex('''
+            || atempsucheids
+               || ''','''
+                  || aindex
+                     || ''')
+                       ) 
+                )
+),
+cte_search_Thema as (
+ Select xmlagg(xmlelement(E,NUMMER||'', '')).Extract(''//text()'').getClobVal() as thema_nummer
+  from t_thema tl
+  where themaid in (
+      select column_value from table(
+                Select  apex_string.split_numbers(jSON_VALUE(SUCHDATEN,''$.THEMEN'' ),'':'')
+                       from t_suche_json_temp tst
+                       where SUCHE_TEMPID = pck_ri_suche.fSplitIndex('''
+                        || atempsucheids
+                           || ''','''
+                              || aindex
+                                 || ''')
+                       ) 
+                )
+), cte_search_base as (
+   Select ''''''''||JSON_VALUE(SUCHDATEN,''$.DATUM_SOP'')||'''''''' "Suche SOP-Datum",''''''''||JSON_VALUE(SUCHDATEN,''$.DATUM_MEILENSTEIN'')||'''''''' "Suche Meilenstein", case when JSON_VALUE(SUCHDATEN,''$.SUCHTYP'' ) = 0 then ''Neue Typen'' else ''Alle Fahrzeuge'' end as "Suchtyp", ''''''''||JSON_VALUE(SUCHDATEN,''$.DATUM_EOP'' )||'''''''' "Suche EOP", tst.benutzerid "Suche Benutzerid",
+    ''''''''||thema_nummer "Suche Themen", b_nummer "Suche Länder"
+                       from t_suche_json_temp tst
+                       join cte_search_Thema on (1=1)
+                       join cte_search_Land on (1=1)
+                       where SUCHE_TEMPID = pck_ri_suche.fSplitIndex('''
+                                    || atempsucheids
+                                       || ''','''
+                                          || aindex
+                                             || ''')
+
+                )'
+        INTO lsucheparameter
+        FROM
+            dual;
+
+        lresult := lsucheparameter;
+
+--Grundabfrage Enthält aktuelle Abfrage die Vollständigen Daten und wenn Benötigt die Daten des Deltas
+        IF ( adeltamode = 1 ) THEN
+            lpreindex := aindex - 1;
+            debug('lpreindex', lpreindex);
+            lresult := lresult
+                       || ',ctea as(Select vorschriftid, in_kraft, neue_typen,alle_fahrzeuge,landid,themaid, regelnummer, risiko from table ( Select pck_ri_suche.fSearchResultsFull(jSON_VALUE(SUCHDATEN,''$.THEMEN'' ), JSON_VALUE(SUCHDATEN,''$.LAENDER''),JSON_VALUE(SUCHDATEN,''$.DATUM_SOP''),
+                                       JSON_VALUE(SUCHDATEN,''$.DATUM_MEILENSTEIN''),  JSON_VALUE(SUCHDATEN,''$.SUCHTYP'' ), JSON_VALUE(SUCHDATEN,''$.DATUM_EOP'' ),
+                                       JSON_VALUE(SUCHDATEN,''$.CKD_FBU_MODE'' ),JSON_VALUE(SUCHDATEN,''$.LOW_RISK'' ),JSON_VALUE(SUCHDATEN,''$.HIGH_RISK'' )) 
+                                      from t_suche_JSON_temp tst
+                where SUCHE_TEMPID = pck_ri_suche.fSplitIndex('''
+                       || atempsucheids
+                       || ''','''
+                       || lpreindex
+                       || ''')))';
+
+            lresult := lresult
+                       || ',cteb as(Select vorschriftid, in_kraft, neue_typen,alle_fahrzeuge,landid,themaid, regelnummer, risiko from table ( Select pck_ri_suche.fSearchResultsFull(jSON_VALUE(SUCHDATEN,''$.THEMEN'' ), JSON_VALUE(SUCHDATEN,''$.LAENDER''),JSON_VALUE(SUCHDATEN,''$.DATUM_SOP''),
+                                       JSON_VALUE(SUCHDATEN,''$.DATUM_MEILENSTEIN''),  JSON_VALUE(SUCHDATEN,''$.SUCHTYP'' ), JSON_VALUE(SUCHDATEN,''$.DATUM_EOP'' ),
+                                       JSON_VALUE(SUCHDATEN,''$.CKD_FBU_MODE'' ),JSON_VALUE(SUCHDATEN,''$.LOW_RISK'' ),JSON_VALUE(SUCHDATEN,''$.HIGH_RISK'' )) 
+                                      from t_suche_JSON_temp tst
+                where SUCHE_TEMPID = pck_ri_suche.fSplitIndex('''
+                       || atempsucheids
+                       || ''','''
+                       || aindex
+                       || ''')))';
+
+            lresult := lresult || ',cte1 as (Select nvl(a.vorschriftid,b.vorschriftid) vorschriftid, nvl( a.in_kraft, b.in_kraft) in_kraft,nvl( a.neue_typen,  b.neue_typen )neue_typen, nvl(a.regelnummer, b.regelnummer) regelnummer,
+               nvl( a.alle_fahrzeuge,b.alle_fahrzeuge)alle_fahrzeuge,nvl(a.landid,b.landid)landid,nvl(a.themaid,b.themaid)themaid, case when a.vorschriftid is null then ''Neu'' when b.vorschriftid is null then ''Entfallen''when a.regelnummer != b.regelnummer then ''wegen Projektverschiebung'' else ''-'' end as Delta, nvl(a.risiko,b.risiko) risiko 
+               from ctea a 
+               full outer join cteb b on(a.vorschriftid = b.vorschriftid and a.landid = b.landid) where a.vorschriftid is null or b.vorschriftid is null)'
+            ;
+        ELSE
+            lresult := lresult
+                       || ',cte1 as(Select vorschriftid, in_kraft, neue_typen,alle_fahrzeuge,landid,themaid, regelnummer as regelnummer, risiko from table ( Select pck_ri_suche.fSearchResultsFull(jSON_VALUE(SUCHDATEN,''$.THEMEN'' ), JSON_VALUE(SUCHDATEN,''$.LAENDER''),JSON_VALUE(SUCHDATEN,''$.DATUM_SOP''),
+                                       JSON_VALUE(SUCHDATEN,''$.DATUM_MEILENSTEIN''),  JSON_VALUE(SUCHDATEN,''$.SUCHTYP'' ), JSON_VALUE(SUCHDATEN,''$.DATUM_EOP'' ),
+                                       JSON_VALUE(SUCHDATEN,''$.CKD_FBU_MODE'' ),JSON_VALUE(SUCHDATEN,''$.LOW_RISK'' ),JSON_VALUE(SUCHDATEN,''$.HIGH_RISK'' )) 
+                                      from t_suche_JSON_temp tst
+                where SUCHE_TEMPID = pck_ri_suche.fSplitIndex('''
+                       || atempsucheids
+                       || ''','''
+                       || aindex
+                       || ''')))';
+        END IF;
+                            --Selektieren der Aktuellen Themen Informationen
+
+        lresult := lresult || ',cteThemen as ( Select themaid, NUMMER ,BEZEICHNUNG,lead_syva 
+                            from t_thema )'
+        ;
+                            -- Selektieren der Aktuellen Länder Infromationen
+        lresult := lresult || ', cteLand as (Select tl.landid, b_nummer,  laendergruppe
+                            from t_land tl
+                            left outer join t_Land_ref_laendergruppe tlg on (tl.landid = tlg.landid)
+                            left outer join t_laendergruppe tg on (tlg.laendergruppeid = tg.laendergruppeid))'
+        ;
+        lresult := lresult || 'cte_MFV as ( Select tmrv.vorschriftid,xmlagg(xmlelement(E, tm.mfv_name||'', '')).Extract(''//text()'').getClobVal() as mfv_name
+               from t_mfv tm
+               join t_mfv_ref_vorschrift tmrv on (tm.mfvid = tmrv.mfvid)
+               where vorschriftid in (Select vorschriftid from cte1)'
+        ;
+
+
+
+                            --Selektieren der aktuellen Vorschrifteninformationen
+        lresult := lresult || ', cteRegularie as (Select  tv.vorschriftid,tv.vorschrift_nummer ,case when PROGNOSE_QUALITAET = 10 then ''sicher'' else''abschätzbar'' end as Prognose,
+    tvs.status,case when tv.rxswin = 10 then ''ja'' else ''nein'' end as rsxwin
+    mfv_name
+                            from t_vorschrift tv
+                            left outer join cte_MFV mfv on (tv.vorschriftid = mfv.vorschriftid)
+                           left outer join t_vorschrift_status tvs on (tv.vorschrift_statusid =tvs.vorschrift_statusid))'
+        ;
+
+                         --Zusammenfassen der Informationen je nach Exportformat Immer zusammengefasst Länder
+        lresult := lresult || ', ';
+
+
+
+
+  --Bedingte Zusammenfassung 
+        lresult := lresult || 'Select cr.* ,null as "Suchdaten", sb.*
+                from cte_result cr 
+                       cross join cte_search_base sb '
+        ;
+        RETURN lresult;
+    END fgetcsvsqlfull;
+
+    /* 
+      Rückgabe der Bezeichnung für das Startdatum (Datum SOP/ME) für das
+      erste Land der übergebenen Länderliste
+
+      aListLand: durch ':' getrennte Liste von Laendern
+      */
+
+    FUNCTION fgetbezeichnungstartdatumtyp (
+        alistland IN VARCHAR2
+    ) RETURN VARCHAR2 IS
+        lstartdatumtyp   NUMBER;
+        lresult          VARCHAR2(256);
+    BEGIN
+        SELECT
+            l.startdatum_typ
+        INTO lstartdatumtyp
+        FROM
+            t_land l
+        WHERE
+            l.landid IN (
+                SELECT
+                    column_value
+                FROM
+                    TABLE ( apex_string.split_numbers(alistland, ':') )
+            )
+        OFFSET 0 ROWS FETCH NEXT 1 ROWS ONLY;
+
+        IF lstartdatumtyp = 10 THEN
+            lresult := 'Datum SOP';
+        ELSIF lstartdatumtyp = 20 THEN
+            lresult := 'Datum ME';
+        ELSE
+            lresult := 'Datum SOP/ME';
+        END IF;
+
+        RETURN lresult;
+    EXCEPTION
+        WHEN too_many_rows THEN
+            RETURN 'Datum SOP/ME';
+        WHEN no_data_found THEN
+            RETURN 'Datum SOP/ME';
+    END fgetbezeichnungstartdatumtyp;
+
+    /*
+    */
+  function fmergeSuche (aSuchid1 number, apos1 number, aSuchid2 number, apos2 number,aBezeichnung in varchar2, aBeschreibung in varchar2,aBenutzerId in number default pck_ri.fGetUserId) return number as
+    lSucheTempid1s varchar2(4000);
+     lSucheTempid1s2 varchar2(4000);
+     lreturn number;
+    begin
+    lSucheTempid1s  := fLoadSuche(aSuchid1 );
+     debug('lSucheTempid1s',lSucheTempid1s);
+    lSucheTempid1s2  := fLoadSuche(aSuchid2 );
+     debug('lSucheTempid1s2',lSucheTempid1s2);
+
+
+    lreturn := fSaveSuche (aBezeichnung , aBeschreibung, 
+             pck_ri_suche.fSplitIndex(lSucheTempid1s, apos1)||':'|| pck_ri_suche.fSplitIndex(lSucheTempid1s2, apos2), aBenutzerId);
+
+             return lreturn;
+    end fmergeSuche ;
+
+
+     /* new merge
+    */
+  FUNCTION fmergeMSSuche (aSuchid1 in number, aMeilen1 in number, aSuchid2 in number, aMeilen2 in number,
+                       aBezeichnung in varchar2, aBeschreibung in varchar2, aBenutzerId in number default pck_ri.fGetUserId)
+  RETURN NUMBER IS
+     ldaten_1 clob;
+     ldaten_2 clob;
+     l_arr clob :='[';
+     lreturn number;
+  BEGIN
+    --lSucheTempid1s  := fLoadSuche(aSuchid1 );
+    -- debug('lSucheTempid1s',lSucheTempid1s);
+    --lSucheTempid1s2  := fLoadSuche(aSuchid2 );
+    -- debug('lSucheTempid1s2',lSucheTempid1s2);
+    ldaten_1 := fgetMeilensteinDaten( aSuchid1,  aMeilen1, 1, sysdate);
+    ldaten_2 := fgetMeilensteinDaten( aSuchid2,  aMeilen2, 2, sysdate);
+
+    dbms_lob.append(l_arr, ldaten_1);
+      if(ldaten_2 is not null) then
+         dbms_lob.append(l_arr,',');
+         dbms_lob.append(l_arr, ldaten_2);
+       end if;
+      dbms_lob.append(l_arr,']');
+     --
+    insert into T_SUCHE_JSON ( bezeichnung, beschreibung, benutzerid,     zeitpunkt, suchdaten, manuelle_speicherung, ERGEBNIS_STATUS)
+                    values( aBezeichnung, aBeschreibung,  aBenutzerId,  sysdate,  l_arr,     10,               0)
+    returning sucheid into lreturn;
+      --debug('newSucheid', lreturn);
+     return lreturn;
+  END fmergeMSSuche ;
+
+ /**
+ *
+ */
+ procedure pDeleteOldSearchesJobRunner as
+ BEGIN
+     pck_ri_suche.ploescheAlteSuchen ( aolder_as_days =>42);
+   EXCEPTION
+      when no_data_found then
+         null;
+     when others then
+         debug('fehler in pDeleteOldSearchesJobRunner');
+   return;
+ END pDeleteOldSearchesJobRunner;  
+  /*
+  *
+  */
+ procedure pSucheJobRunner as
+     l_sucheid number :=0;
+     --l_bezeichnung varchar2(100);
+ BEGIN
+   --loop   
+     SELECT sucheid  into l_sucheid --, l_bezeichnung
+       from t_suche_json where  ERGEBNIS_STATUS = 1 
+     order by Zeitpunkt desc fetch first row only;
+  --
+  debug('Suche: ','Anfang: '||l_sucheid);
+     --pck_ri_suche.pSucheAusfuehren(l_sucheid);
+     pck_ri_suche.psearchandsaveresults(l_sucheid);
+   --end loop;
+debug('Suche: ','Ende '|| l_sucheid);
+   EXCEPTION
+      when no_data_found then
+         null;
+     when others then
+         debug('fehler in pSucheJobRunner');
+   return;
+ END pSucheJobRunner;
+
+ /**  test procedure (for TEST ONLY)
+ */
+procedure pSucheAusfuehren(aSucheid in number) 
+    as 
+    begin
+    --Status der SUche auf in Ausführung setzen
+      update t_suche_json set ERGEBNIS_STATUS = -1
+      where sucheid = aSucheid;
+      commit;
+
+  /* Mockup-Daten für den Test*/ 
+  dbms_session.sleep(30);   
+   INSERT INTO t_ms_suchergebniss (
+    sucheid,
+    vorschriftid,
+    vorschriftnummer,
+    vorschrifttitel,
+    themaid,
+    themanummer,
+    themabezeichnung,
+    regelnummer,
+    meilenstein
+)
+    SELECT
+        asucheid,
+        3786,
+        'testanzeigedummydaten',
+        'testanzeigedummydaten',
+        4255,
+        'Markt Premisse',
+        'Testthema',
+        631,
+        1
+    FROM
+        dual;
+
+-- Status der SUche auf beendet Setzen
+      update t_suche_json set ERGEBNIS_STATUS = 10
+      where sucheid = aSucheid;
+      commit;
+end;
+
+END pck_ri_suche;
+
+```
+
+
+## PCK RI VALIDATION
+
+### SPECIFICATION
+
+
+```sql
+create or replace PACKAGE PCK_RI_VALIDATION AS 
+
+    procedure pVal(aVorschriftID in number, aValList in apex_t_number, aErrorList out apex_t_number, aErrorText out varchar2); 
+    function fValByStatus(aVorschriftID in number, aTargetStatus in number) return number;    
+    function fVal(aVorschriftID in number,aValList in apex_t_number default apex_string.split_numbers('1:2:3:4:5:6:7:8:9',':')) return varchar2; 
+    function fValListByStatus(aTargetStatus in number) return apex_t_number;    
+    
+END PCK_RI_VALIDATION;
+
+```
+
+### BODY
+
+```sql
+create or replace PACKAGE BODY PCK_RI_VALIDATION AS
+
+    function fVal(aVorschriftID in number,aValList in apex_t_number default apex_string.split_numbers('1:2:3:4:5:6:7:8:9',':')) return varchar2 is
+        lErrorList apex_t_number;
+        lErrorText varchar2(2000);
+    begin
+        pVal(aVorschriftID,aValList,lErrorList,lErrorText);
+        return apex_string.join(lErrorList,', ');
+        
+    end fVal;
+    
+    function fValListByStatus(aTargetStatus in number) return apex_t_number is
+    
+        lValList apex_t_number;    
+    
+    begin
+    
+        --debug('target status',aTargetStatus);
+    
+        lValList := case aTargetStatus
+            when 10 then apex_t_number(1,3,4,5,6,9)
+            when 20 then apex_t_number(1,2,3,4,5,6,7,8,9)
+            when 30 then apex_t_number()
+            when 1 then apex_t_number()
+        end;
+        
+        return lValList;
+    
+    end fValListByStatus;
+    
+    function fValByStatus(aVorschriftID in number, aTargetStatus in number) return number is
+        lValList apex_t_number;
+        lErrorList apex_t_number;
+        lErrorText varchar2(2000);        
+    begin
+    
+        debug('target status',aTargetStatus);
+    
+        lValList := fValListByStatus(aTargetStatus);
+        
+        pVal(aVorschriftId,lValList,lErrorList,lErrorText);
+        
+        if (lErrorList.count = 0) then
+            return 1;
+        else
+            return 0;
+        end if;
+    
+    end;
+    
+    
+
+    procedure pVal(aVorschriftID in number, aValList in apex_t_number, aErrorList out apex_t_number, aErrorText out varchar2) AS
+    
+            lArrRegex apex_t_varchar2;
+            lRegexMatched number := 0;
+    
+        BEGIN
+        
+            debug('vallist',apex_string.join(aValList,':'));
+            
+            aErrorList := apex_t_number();
+            
+            for x in (
+                with cte_supplements as (
+                    select vrv.vorgaenger_vorschriftid as parentid, vrv.nachfolger_vorschriftid as supplementid
+                    from t_vorschrift_ref_vorschrift vrv
+                    where vrv.beziehung_art = 30
+                ), cte1 as (
+                    select v.vorschriftid, count(vrl.vorschrift_ref_landid) as anz_laender, count(vrt.vorschrift_ref_themaid) as anz_themen, count(vkl.vorschrift_ref_fahrzeugklasseid) anz_fzgkl
+                    from t_vorschrift v
+                    left outer join t_vorschrift_ref_land vrl on (vrl.vorschriftid = v.vorschriftid and vrl.geloescht = 0)
+                    left outer join t_vorschrift_ref_thema vrt on (vrt.vorschriftid = v.vorschriftid and vrt.geloescht = 0)
+                    left outer join cte_supplements cs on (v.vorschrift_typid = 20 and v.vorschriftid = cs.supplementid)
+                    left outer join t_vorschrift_ref_fahrzeugklasse vkl on (nvl(cs.parentid,v.vorschriftid) = vkl.vorschriftid)
+                    where v.vorschriftid = aVorschriftID
+                    group by v.vorschriftid
+                ), cte2 as (
+                    select v.vorschriftid, count(case when einsatzdatum is not null then 1 else 0 end) as anz_datumsangaben
+                    from t_vorschrift v
+                    left outer join t_vorschrift_ref_einsatzdatum_typ vret on (v.vorschriftid = vret.vorschriftid)
+                    where einsatzdatum_typid != 1000 and v.vorschriftid = aVorschriftID
+                    group by v.vorschriftid
+                )
+                select v.link_zur_vorschrift_dms, v.link_zur_vorschrift_getex, v.websitelink, v.lead_vko_benutzerid, v.vorschrift_typid, par.*,
+                    cte1.anz_laender, cte1.anz_themen, v.normid, vret.einsatzdatum inkraftsetzungsdatum, v.vorschrift_statusid, n.regex,
+                    v.without_norm_validation, v.vorschrift_nummer, cte2.anz_datumsangaben, v.prognose_qualitaetid,
+                    v.vorschrift_bezeichnung, cte1.anz_fzgkl
+                from t_vorschrift v
+                join cte1 on (v.vorschriftid = cte1.vorschriftid)
+                left outer join cte2 on (v.vorschriftid = cte2.vorschriftid)
+                left outer join t_vorschrift_ref_einsatzdatum_typ vret on (v.vorschriftid = vret.vorschriftid and vret.einsatzdatum_typid = 1000)
+                left outer join t_norm n on (v.normid = n.normid)
+                outer apply (
+                    select vi.vorschrift_nummer as parent_nummer, vi.lead_vko_benutzerid parent_lead_vko, vi.vorschriftid as parentid
+                    from t_vorschrift_ref_vorschrift vrv
+                    join t_vorschrift vi on (vrv.vorgaenger_vorschriftid = vi.vorschriftid)
+                    where vrv.nachfolger_vorschriftid = v.vorschriftid
+                    fetch first 1 row only
+                ) par
+                where v.vorschriftid = aVorschriftID
+            ) loop
+                
+                if (1 member of aValList) then
+                    if not(x.link_zur_vorschrift_dms is not null or x.link_zur_vorschrift_getex is not null or x.websitelink is not null) then
+                        apex_string.push(aErrorList,1);
+                        aErrorText := aErrorText || chr(10) || 'Sie müssen einen Link zum Dokument angeben, befüllen Sie mindestens eins der Felder DMS, Website, GETEX nach Prioliste.';
+                    end if;
+                end if;            
+                
+                if (2 member of aValList) then
+                    if not(x.lead_vko_benutzerid is not null or (x.vorschrift_typid = 20 and x.parent_lead_vko is not null)) then
+                        apex_string.push(aErrorList,2);
+                        aErrorText := aErrorText || chr(10) || 'Der Vorschrift muss ein Lead-VKO zugeordnet werden.'; 
+                    end if;
+                end if;
+                
+                if (3 member of aValList) then
+                    if not(x.anz_themen > 0 or x.vorschrift_typid = 20) then
+                        apex_string.push(aErrorList,3);
+                        aErrorText := aErrorText || chr(10) || 'Mindestens ein Thema muss zugewiesen werden.';
+                    end if;
+                end if;
+                
+                if (4 member of aValList) then
+                    if not(x.anz_laender > 0 or x.normid in (1000,1044) or x.vorschrift_typid = 20) then
+                        apex_string.push(aErrorList,4);
+                        aErrorText := aErrorText || chr(10) || 'Mindestens ein Land muss zugewiesen werden.';
+                    end if;
+                end if;
+                
+                if (5 member of aValList) then
+                    if (x.vorschrift_statusid = 40 and (x.inkraftsetzungsdatum is null or x.inkraftsetzungsdatum > sysdate)) then
+                        apex_string.push(aErrorList,5);
+                        aErrorText := aErrorText || chr(10) || 'Wenn die Vorschrift in Kraft ist, so muss das Inkraftsetzungsdatum in der Vergangenheit liegen!';
+                    end if;
+                end if;
+                
+                if (6 member of aValList and nvl(x.without_norm_validation,0) = 0) then
+                    lArrRegex := apex_string.split(x.regex, apex_application.cr || '?' || apex_application.lf);
+                    for i in 1 .. lArrRegex.count loop
+                        if regexp_like(x.vorschrift_nummer, lArrRegex(i)) then
+                            lRegexMatched := 1;
+                        end if;
+                    end loop;
+                    if (lRegexMatched = 0) then 
+                        apex_string.push(aErrorList,6);
+                        aErrorText := aErrorText || chr(10) || 'Die Vorschriftennummer entspricht nicht der ausgewählten Norm!';
+                    end if;
+                end if;
+                
+                if (7 member of aValList) then
+                    if (x.vorschrift_statusid = 20  -- Status Draft
+                        and x.anz_datumsangaben > 0 -- Mindestens ein Einsatzdatum
+                        and x.prognose_qualitaetid = 0 -- Prognosequalität = offen
+                    ) then
+                        apex_string.push(aErrorList,7);
+                        aErrorText := aErrorText || chr(10) || 'Wenn die Vorschrift den Status "Draft" hat und mindestens ein Einsatztermin vorhanden ist, so darf die Prognosequalität nicht "offen" sein.';
+                    end if;
+                end if;
+                
+                if (8 member of aValList) then
+                    if (x.vorschrift_statusid = 20 -- Draft
+                        and x.prognose_qualitaetid in (10,20) -- Prognosequalität sicher/abschätzbar
+                        and x.anz_datumsangaben = 0 -- Keine Einsatzdaten
+                    ) then
+                        apex_string.push(aErrorList,8);
+                        aErrorText := aErrorText || chr(10) || 'Wenn die Vorschrift den Status "Draft" hat und die Prognosequalität sicher/abschätzbar ist, so muss mindestens ein Einsatztermin vorhanden sein.';
+                    end if;
+                end if;
+                
+                if (9 member of aValList) then
+                    if (x.vorschrift_bezeichnung is null or (x.anz_fzgkl = 0 and x.vorschrift_typid != 20)
+                        /*(x.anz_fzgkl = 0 and x.vorschrift_typid != 30)*/ 
+                        or (x.vorschrift_typid = 20 and x.parentid is null)) 
+                    then
+                        apex_string.push(aErrorList,9);
+                        aErrorText := aErrorText || chr(10) || 'Es müssen alle Pflichtangaben (Titel Englisch, Fahrzeugklasse, Zuordnung zur Hauptvorschrift bei Supplements) vorhanden sein.';
+                    end if;
+                end if;
+                
+                                    
+                aErrorText := substr(aErrorText,2); -- um den ersten Zeilenumbruch zu entfernen
+            
+            end loop;
+    
+    
+        END pVal;
+
+END PCK_RI_VALIDATION;
+```
+
+
+
+
+
+## PCK RI VORSCHRIFT ORACLE TEXT PKG
+
+### SPECIFICATION
+
+```sql
+
+create or replace package pck_ri_vorschrift_oracle_text_pkg authid current_user is 
+ 
+    function text_is_available return boolean; 
+ 
+    procedure create_text_preferences; 
+ 
+    procedure drop_text_preferences; 
+ 
+    procedure create_text_index; 
+ 
+    procedure drop_text_index; 
+ 
+    procedure init_oracle_text; 
+ 
+    function convert_text_query( p_enduser_query in varchar2 ) return varchar2; 
+ 
+end pck_ri_vorschrift_oracle_text_pkg;
+
+
+```
+
+
+
+### BODY
+
+```sql
+create or replace package body pck_ri_vorschrift_oracle_text_pkg is 
+    procedure execute_sql( 
+        p_sql         in varchar2,  
+        p_throw_error in boolean default true 
+    ) is 
+    begin 
+        execute immediate p_sql; 
+    exception 
+        when others then  
+            if p_throw_error then raise; end if; 
+    end execute_sql; 
+    function text_is_available return boolean  
+    is 
+        l_dummy number; 
+    begin 
+        select 1 into l_dummy  
+          from sys.all_objects 
+         where owner       = 'CTXSYS'  
+           and object_name = 'CTX_DDL'  
+           and rownum      = 1; 
+        return true; 
+    exception  
+        when NO_DATA_FOUND then return false; 
+    end text_is_available; 
+    procedure init_oracle_text is 
+    begin 
+        if text_is_available then 
+            create_text_preferences; 
+            create_text_index; 
+        end if; 
+    end init_oracle_text; 
+    procedure drop_text_index is  
+    begin 
+        execute_sql( q'#drop index RI_VORSCHRIFT_TEXT_FTX force#' ); 
+    end drop_text_index; 
+    procedure drop_text_preferences is 
+    begin 
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_LX_PREF'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_DS_PREF'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_section_group( 'RI_VORSCHRIFT_SG_PREF'); end;#', false );  
+    end drop_text_preferences; 
+    procedure create_text_preferences is 
+    begin 
+        -- Datastore Preference: Index the VORSCHRIFT_NUMMER and the VORSCHRIFT_BEZEICHNUNG_DEUTSCH columns 
+        execute_sql(q'#  
+        begin 
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF', 
+                object_name      => 'MULTI_COLUMN_DATASTORE' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF', 
+                attribute_name   => 'COLUMNS', 
+                attribute_value  => 'VORSCHRIFT_NUMMER,VORSCHRIFT_BEZEICHNUNG_DEUTSCH' 
+            ); 
+         
+            ctx_ddl.create_section_group( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF', 
+                group_type       => 'XML_SECTION_GROUP' 
+            ); 
+         
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF', 
+                section_name     => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
+                tag              => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
+                visible          => true 
+            ); 
+         
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF', 
+                section_name     => 'VORSCHRIFT_NUMMER', 
+                tag              => 'VORSCHRIFT_NUMMER', 
+                visible          => true 
+            ); 
+         
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
+                object_name      => 'BASIC_LEXER' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
+                attribute_name   => 'MIXED_CASE', 
+                attribute_value  => 'NO' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
+                attribute_name   => 'BASE_LETTER', 
+                attribute_value  => 'YES' 
+            ); 
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
+                attribute_name   => 'BASE_LETTER_TYPE', 
+                attribute_value  => 'GENERIC' 
+            ); 
+        end;#' 
+        );  
+    end create_text_preferences; 
+    procedure create_text_index is 
+    begin 
+        execute immediate  
+q'#create index ri_vorschrift_text_ftx on T_VORSCHRIFT_SYNTHETIC (VORSCHRIFT_NUMMER) 
+   indextype is ctxsys.context parameters ( 'section group  RI_VORSCHRIFT_SG_PREF 
+                                             datastore      RI_VORSCHRIFT_DS_PREF 
+                                             lexer          RI_VORSCHRIFT_LX_PREF 
+                                             stoplist       ctxsys.empty_stoplist 
+                                             memory         10M 
+                                             sync           (on commit)')#'; 
+    end create_text_index; 
+    function convert_text_query( p_enduser_query in varchar2 ) return varchar2  
+    is  
+        l_tokens       apex_application_global.vc_arr2; 
+        l_set_boolean  boolean := false; 
+        c_xml constant varchar2(32767) := '<query><textquery><progression>' || 
+                                            '<seq>#NORMAL_AND#</seq>' || 
+                                            '<seq>#FUZZY_AND#</seq>' || 
+                                            '<seq>#FUZZY_OR#</seq>' || 
+                                          '</progression></textquery></query>'; 
+        l_textquery    varchar2(32767) := ''; 
+  
+        function generate_query( p_feature in varchar2, p_combine in varchar2) return varchar2 is 
+            l_query        varchar2(32767); 
+            l_clean_token  varchar2(100); 
+        begin 
+            for i in 1..l_tokens.count loop 
+                l_clean_token := lower( regexp_replace( l_tokens( i ), '[<>{}/()*%&!$?.:,;\+#]', '' ) ); 
+                if ltrim( rtrim( l_clean_token ) ) is not null then 
+                    if p_feature = 'FUZZY' then 
+                        l_query := l_query || 'FUZZY({' || l_clean_token || '}, 50, 500) '; 
+                    elsif p_feature = 'WILDCARD_RIGHT' then  
+                        l_query := l_query || l_clean_token || '% '; 
+                    else  
+                        l_query := l_query || '{' || l_clean_token || '} '; 
+                    end if; 
+                    if p_combine = 'OR' then  
+                        l_query := l_query || ' or '; 
+                    else  
+                        l_query := l_query || ' and '; 
+                    end if; 
+                end if; 
+            end loop; 
+            if p_combine = 'AND' then 
+                l_query := substr( l_query, 1, length( l_query ) - 5 ); 
+            else 
+                l_query := substr( l_query, 1, length( l_query ) - 4 ); 
+            end if; 
+            return ltrim( rtrim( l_query ));  
+        end generate_query; 
+    begin 
+        if substr( p_enduser_query, 1, 8 ) = 'ORATEXT:' then 
+            return substr( p_enduser_query, 9 ); 
+        else  
+            l_textquery := c_xml; 
+            l_tokens := apex_util.string_to_table( p_enduser_query, ' ' ); 
+     
+            l_textquery := replace( l_textquery, '#NORMAL_AND#', generate_query( 'NORMAL', 'AND' ) ); 
+            l_textquery := replace( l_textquery, '#FUZZY_AND#', generate_query( 'FUZZY', 'AND' ) ); 
+     
+            return l_textquery; 
+        end if; 
+    end convert_text_query; 
+end pck_ri_vorschrift_oracle_text_pkg;
+
+
+```
+
+
+
+
+
+## SUCHE_TEMP_PCK
+
+### SPECIFICATION
+
+
+```sql
+
+create or replace PACKAGE SUCHE_TEMP_PCK AS 
+
+  /* TODO enter package declarations (types, exceptions, methods etc) here */ 
+
+END SUCHE_TEMP_PCK;
+
+```
+
+
+### BODY
+
+```sql
+
+create or replace 
+
+```
+
+
+
+## XLSX_BUILDER_PKG
+
+
+### SPECIFICATION
+
+```sql
+create or replace PACKAGE xlsx_builder_pkg
+   AUTHID CURRENT_USER
+IS
+   /**********************************************
+   **
+   ** Author: Anton Scheffer
+   ** Date: 19-02-2011
+   ** Website: http://technology.amis.nl/blog
+   ** See also: http://technology.amis.nl/blog/?p=10995
+   **
+   ** Changelog:
+   **   Date: 21-02-2011
+   **     Added Aligment, horizontal, vertical, wrapText
+   **   Date: 06-03-2011
+   **     Added Comments, MergeCells, fixed bug for dependency on NLS-settings
+   **   Date: 16-03-2011
+   **     Added bold and italic fonts
+   **   Date: 22-03-2011
+   **     Fixed issue with timezone's set to a region(name) instead of a offset
+   **   Date: 08-04-2011
+   **     Fixed issue with XML-escaping from text
+   **   Date: 27-05-2011
+   **     Added MIT-license
+   **   Date: 11-08-2011
+   **     Fixed NLS-issue with column width
+   **   Date: 29-09-2011
+   **     Added font color
+   **   Date: 16-10-2011
+   **     fixed bug in add_string
+   **   Date: 26-04-2012
+   **     Fixed set_autofilter (only one autofilter per sheet, added _xlnm._FilterDatabase)
+   **     Added list_validation = drop-down
+   **   Date: 27-08-2013
+   **     Added freeze_pane
+   **   Date: 01-03-2014 (MK)
+   **     Changed new_sheet to function returning sheet id
+   **   Date: 22-03-2014 (MK)
+   **     Added function to convert Oracle Number Format to Excel Format
+   **   Date: 07-04-2014 (MK)
+   **     Removed references to UTL_FILE
+   **     query2sheet is now function returning BLOB
+   **     changed date handling to be based on 01-01-1900
+   **   Date: 08-04-2014 (MK)
+   **     internal function for date to excel serial conversion added
+   **   Date: 01-12-2014 (AMEI)
+   **     Some Naming-conventions (and renaming of elements accordingly), new FUNCTION get_sheet_id
+   **     Triggered by: @SEE AMEI, 20141129 Bugfix:
+   **     For concatenation operations (in particular where record fields are involved) added a lot of TO_CHAR (...)
+   **     to make sure correct explicit conversion (mayby not all caught where necessary)
+   **     To make this easier to recognize, inducted some naming conventions and renamed some elements.
+   **   Date: 26-04-2017 (MP)
+   **     Added new function "query2sheet2" which is faster.
+   **     For dates used following logic:
+   **       - if trunc([column])=[column], then outputed cell value is formatted to format YYYYMMDD;
+   **       - otherwise, outputted cell value is formatted to format YYYYMMDDTHH24MISS;
+   ******************************************************************************
+   ******************************************************************************
+   Copyright (C) 2011, 2012 by Anton Scheffer
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+
+   ******************************************************************************
+   ******************************************************************************
+   * @headcom
+   */
+
+   /**
+   * Record with data about column alignment.
+   * @param vertical   Vertical alignment.
+   * @param horizontal Horizontal alignment.
+   * @param wrapText   Switch to allow or disallow word wrap.
+   */
+   TYPE t_alignment_rec IS RECORD
+   (
+      vc_vertical     VARCHAR2 (11),
+      vc_horizontal   VARCHAR2 (16),
+      bo_wraptext     BOOLEAN
+   );
+
+   /**
+   * Clears the whole workbook to start fresh.
+   */
+   PROCEDURE clear_workbook;
+
+   /**
+   * Create a new sheet in the workbook.
+   * @param p_sheetname Name Excel should display for the new worksheet.
+   * @return ID of newly created worksheet.
+   */
+   FUNCTION new_sheet (p_sheetname VARCHAR2 := NULL)
+      RETURN PLS_INTEGER;
+
+   /**
+   * Converts an Oracle date format to the corresponding Excel date format.
+   * @param p_format The Oracle date format to convert.
+   * @return Corresponding Excel date format.
+   */
+   FUNCTION orafmt2excel (p_format VARCHAR2 := NULL)
+      RETURN VARCHAR2;
+
+   /**
+   * Converts an Oracle number format to the corresponding Excel number format.
+   * @param The Oracle number format to convert.
+   * @return Corresponding Excel number format.
+   */
+   FUNCTION oranumfmt2excel (p_format VARCHAR2)
+      RETURN VARCHAR2;
+
+   /**
+   * Get ID for given number format.
+   * @param p_format Wanted number formatting using Excle number format.
+   *                 Use OraNumFmt2Excel to convert from Oracle to Excel.
+   * @return ID for given number format.
+   */
+   FUNCTION get_numfmt (p_format VARCHAR2 := NULL)
+      RETURN PLS_INTEGER;
+
+   /**
+   * Get ID for given font settings.
+   * @param p_name
+   * @param p_family
+   * @param p_fontsize
+   * @param p_theme
+   * @param p_underline
+   * @param p_italic
+   * @param p_bold
+   * @param p_rgb
+   * @return ID for given font definition
+   */
+   FUNCTION get_font (p_name         VARCHAR2,
+                      p_family       PLS_INTEGER := 2,
+                      p_fontsize     NUMBER := 8,
+                      p_theme        PLS_INTEGER := 1,
+                      p_underline    BOOLEAN := FALSE,
+                      p_italic       BOOLEAN := FALSE,
+                      p_bold         BOOLEAN := FALSE,
+                      p_rgb          VARCHAR2 := NULL                        -- this is a hex ALPHA Red Green Blue value, but RGB works also
+                                                     )
+      RETURN PLS_INTEGER;
+
+   /**
+   * Get ID for given cell fill
+   * @param p_patternType Pattern for the fill.
+   * @param p_fgRGB       Color using an ARGB or RGB hex value
+   * @return ID for given cell fill.
+   */
+   FUNCTION get_fill (p_patterntype VARCHAR2, p_fgrgb VARCHAR2 := NULL)
+      RETURN PLS_INTEGER;
+
+   /**
+   * Get ID for given border definition.
+   * Possible values for all parameters:
+   * none, thin, medium, dashed, dotted, thick, double, hair, mediumDashed,
+   * dashDot, mediumDashDot, dashDotDot, mediumDashDotDot, slantDashDot
+   * @param p_top    Style for top border
+   * @param p_bottom Style for bottom border
+   * @param p_left   Style for left border
+   * @param p_right  Style for right border
+   * @return ID for given border definition
+   */
+   FUNCTION get_border (p_top       VARCHAR2 := 'thin',
+                        p_bottom    VARCHAR2 := 'thin',
+                        p_left      VARCHAR2 := 'thin',
+                        p_right     VARCHAR2 := 'thin')
+      RETURN PLS_INTEGER;
+
+   /**
+   * Function to get a record holding alignment data.
+   * @param p_vertical   Vertical alignment.
+   *                     (bottom, center, distributed, justify, top)
+   * @param p_horizontal Horizontal alignment.
+   *                     (center, centerContinuous, distributed, fill, general, justify, left, right)
+   * @param p_wraptext   Switch to allow or disallow text wrapping.
+   * @return Record with alignment data.
+   */
+   FUNCTION get_alignment (p_vertical VARCHAR2 := NULL, p_horizontal VARCHAR2 := NULL, p_wraptext BOOLEAN := NULL)
+      RETURN t_alignment_rec;
+
+   /**
+   * Puts a number value into a cell of the spreadsheet.
+   * @param p_col       Column number where the cell is located
+   * @param p_row       Row number where the cell is located
+   * @param p_value     The value to put into the cell
+   * @param p_numFmtId  ID of number format
+   * @param p_fontId    ID of font defintion
+   * @param p_fillId    ID of fill definition
+   * @param p_borderId  ID of border definition
+   * @param p_alignment The wanted alignment
+   * @param p_sheet     Worksheet the cell is located, if omitted last worksheet is used
+   */
+   PROCEDURE cell (p_col          PLS_INTEGER,
+                   p_row          PLS_INTEGER,
+                   p_value        NUMBER,
+                   p_numfmtid     PLS_INTEGER := NULL,
+                   p_fontid       PLS_INTEGER := NULL,
+                   p_fillid       PLS_INTEGER := NULL,
+                   p_borderid     PLS_INTEGER := NULL,
+                   p_alignment    t_alignment_rec := NULL,
+                   p_sheet        PLS_INTEGER := NULL);
+
+   /**
+   * Puts a character value into a cell of the spreadsheet.
+   * @param p_col       Column number where the cell is located
+   * @param p_row       Row number where the cell is located
+   * @param p_value     The value to put into the cell
+   * @param p_numFmtId  ID of formatting definition
+   * @param p_fontId    ID of font defintion
+   * @param p_fillId    ID of fill definition
+   * @param p_borderId  ID of border definition
+   * @param p_alignment The wanted alignment
+   * @param p_sheet     Worksheet the cell is located, if omitted last worksheet is used
+   */
+   PROCEDURE cell (p_col          PLS_INTEGER,
+                   p_row          PLS_INTEGER,
+                   p_value        VARCHAR2,
+                   p_numfmtid     PLS_INTEGER := NULL,
+                   p_fontid       PLS_INTEGER := NULL,
+                   p_fillid       PLS_INTEGER := NULL,
+                   p_borderid     PLS_INTEGER := NULL,
+                   p_alignment    t_alignment_rec := NULL,
+                   p_sheet        PLS_INTEGER := NULL);
+
+   /**
+   * Puts a date value into a cell of the spreadsheet.
+   * @param p_col       Column number where the cell is located
+   * @param p_row       Row number where the cell is located
+   * @param p_value     The value to put into the cell
+   * @param p_numFmtId  ID of format definition
+   * @param p_fontId    ID of font defintion
+   * @param p_fillId    ID of fill definition
+   * @param p_borderId  ID of border definition
+   * @param p_alignment The wanted alignment
+   * @param p_sheet     Worksheet the cell is located, if omitted last worksheet is used
+   */
+   PROCEDURE cell (p_col          PLS_INTEGER,
+                   p_row          PLS_INTEGER,
+                   p_value        DATE,
+                   p_numfmtid     PLS_INTEGER := NULL,
+                   p_fontid       PLS_INTEGER := NULL,
+                   p_fillid       PLS_INTEGER := NULL,
+                   p_borderid     PLS_INTEGER := NULL,
+                   p_alignment    t_alignment_rec := NULL,
+                   p_sheet        PLS_INTEGER := NULL);
+
+   PROCEDURE hyperlink (p_col      PLS_INTEGER,
+                        p_row      PLS_INTEGER,
+                        p_url      VARCHAR2,
+                        p_value    VARCHAR2 := NULL,
+                        p_sheet    PLS_INTEGER := NULL);
+
+   PROCEDURE comment (p_col       PLS_INTEGER,
+                      p_row       PLS_INTEGER,
+                      p_text      VARCHAR2,
+                      p_author    VARCHAR2 := NULL,
+                      p_width     PLS_INTEGER := 150                                                                               -- pixels
+                                                    ,
+                      p_height    PLS_INTEGER := 100                                                                               -- pixels
+                                                    ,
+                      p_sheet     PLS_INTEGER := NULL);
+
+   PROCEDURE mergecells (p_tl_col    PLS_INTEGER                                                                                 -- top left
+                                                ,
+                         p_tl_row    PLS_INTEGER,
+                         p_br_col    PLS_INTEGER                                                                             -- bottom right
+                                                ,
+                         p_br_row    PLS_INTEGER,
+                         p_sheet     PLS_INTEGER := NULL);
+
+   PROCEDURE list_validation (p_sqref_col      PLS_INTEGER,
+                              p_sqref_row      PLS_INTEGER,
+                              p_tl_col         PLS_INTEGER                                                                       -- top left
+                                                          ,
+                              p_tl_row         PLS_INTEGER,
+                              p_br_col         PLS_INTEGER                                                                   -- bottom right
+                                                          ,
+                              p_br_row         PLS_INTEGER,
+                              p_style          VARCHAR2 := 'stop'                                              -- stop, warning, information
+                                                                 ,
+                              p_title          VARCHAR2 := NULL,
+                              p_prompt         VARCHAR2 := NULL,
+                              p_show_error     BOOLEAN := FALSE,
+                              p_error_title    VARCHAR2 := NULL,
+                              p_error_txt      VARCHAR2 := NULL,
+                              p_sheet          PLS_INTEGER := NULL);
+
+   PROCEDURE list_validation (p_sqref_col       PLS_INTEGER,
+                              p_sqref_row       PLS_INTEGER,
+                              p_defined_name    VARCHAR2,
+                              p_style           VARCHAR2 := 'stop'                                             -- stop, warning, information
+                                                                  ,
+                              p_title           VARCHAR2 := NULL,
+                              p_prompt          VARCHAR2 := NULL,
+                              p_show_error      BOOLEAN := FALSE,
+                              p_error_title     VARCHAR2 := NULL,
+                              p_error_txt       VARCHAR2 := NULL,
+                              p_sheet           PLS_INTEGER := NULL);
+
+   PROCEDURE defined_name (p_tl_col        PLS_INTEGER                                                                           -- top left
+                                                      ,
+                           p_tl_row        PLS_INTEGER,
+                           p_br_col        PLS_INTEGER                                                                       -- bottom right
+                                                      ,
+                           p_br_row        PLS_INTEGER,
+                           p_name          VARCHAR2,
+                           p_sheet         PLS_INTEGER := NULL,
+                           p_localsheet    PLS_INTEGER := NULL);
+
+   PROCEDURE set_column_width (p_col PLS_INTEGER, p_width NUMBER, p_sheet PLS_INTEGER := NULL);
+
+   PROCEDURE set_column (p_col          PLS_INTEGER,
+                         p_numfmtid     PLS_INTEGER := NULL,
+                         p_fontid       PLS_INTEGER := NULL,
+                         p_fillid       PLS_INTEGER := NULL,
+                         p_borderid     PLS_INTEGER := NULL,
+                         p_alignment    t_alignment_rec := NULL,
+                         p_sheet        PLS_INTEGER := NULL);
+
+   PROCEDURE set_row (p_row          PLS_INTEGER,
+                      p_numfmtid     PLS_INTEGER := NULL,
+                      p_fontid       PLS_INTEGER := NULL,
+                      p_fillid       PLS_INTEGER := NULL,
+                      p_borderid     PLS_INTEGER := NULL,
+                      p_alignment    t_alignment_rec := NULL,
+                      p_sheet        PLS_INTEGER := NULL);
+
+   PROCEDURE freeze_rows (p_nr_rows PLS_INTEGER := 1, p_sheet PLS_INTEGER := NULL);
+
+   PROCEDURE freeze_cols (p_nr_cols PLS_INTEGER := 1, p_sheet PLS_INTEGER := NULL);
+
+   PROCEDURE freeze_pane (p_col PLS_INTEGER, p_row PLS_INTEGER, p_sheet PLS_INTEGER := NULL);
+
+   PROCEDURE set_autofilter (p_column_start    PLS_INTEGER := NULL,
+                             p_column_end      PLS_INTEGER := NULL,
+                             p_row_start       PLS_INTEGER := NULL,
+                             p_row_end         PLS_INTEGER := NULL,
+                             p_sheet           PLS_INTEGER := NULL);
+
+   FUNCTION finish
+      RETURN BLOB;
+
+   FUNCTION query2sheet (p_sql VARCHAR2, p_column_headers BOOLEAN := TRUE, p_sheet PLS_INTEGER := NULL)
+      RETURN BLOB;
+
+   FUNCTION finish2 (p_clob                 IN OUT NOCOPY CLOB,
+                     p_columns              PLS_INTEGER,
+                     p_rows                 PLS_INTEGER,
+                     p_XLSX_date_format     VARCHAR2,
+                     p_XLSX_datetime_format VARCHAR2)
+      RETURN BLOB;
+
+   FUNCTION query2sheet2(p_sql                  VARCHAR2,
+                         p_XLSX_date_format     VARCHAR2 := 'dd/mm/yyyy',
+                         p_XLSX_datetime_format VARCHAR2 := 'dd/mm/yyyy hh24:mi:ss')
+      RETURN BLOB;
+END;
+```
+
+### BODY
+
+
+```sql
+create or replace PACKAGE BODY xlsx_builder_pkg
+IS
+   /* Some Naming-conventions
+   Prefixes for Datatypes in defined Records-Type-Elements
+   vc   VARCHAR2
+   nv   NVARCHAR2
+   ch   CHAR
+   nc   NCHAR
+   nn   NUMBER
+   pi   PLS_INTEGER
+   bi   BINARY_INTEGER
+   dt   DATE
+   bo   BOOLEAN
+   bf   BFILE
+   bl   BLOB
+   cl   CLOB
+   nl   NCLOB
+   lo   LONG
+   tl   TIMESTAMP (fractional_seconds_precision) WITH LOCAL TIME ZONE
+   ts   TIMESTAMP (fractional_seconds_precision)
+   tz   TIMESTAMP (fractional_seconds_precision) WITH TIME ZONE
+   iv   INTERVAL
+        Sample: vc_name VARCHAR2 (10)
+   Types-Prefixes
+   t_... TYPE
+   Types-Suffixes
+   ..._rec record
+   ..._tab PL/SQL-Table
+   */
+ 
+   /* Types */
+   TYPE t_xf_fmt_rec IS RECORD
+   (
+      pi_numfmtid     PLS_INTEGER,
+      pi_fontid       PLS_INTEGER,
+      pi_fillid       PLS_INTEGER,
+      pi_borderid     PLS_INTEGER,
+      alignment_rec   t_alignment_rec
+   );
+ 
+   TYPE t_col_fmts_tab IS TABLE OF t_xf_fmt_rec
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_row_fmts_tab IS TABLE OF t_xf_fmt_rec
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_widths_tab IS TABLE OF NUMBER
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_cell_rec IS RECORD
+   (
+      nn_value_id    NUMBER,
+      vc_style_def   VARCHAR2 (50)
+   );
+ 
+   TYPE t_cells_tab IS TABLE OF t_cell_rec
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_rows_tab IS TABLE OF t_cells_tab
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_autofilter_rec IS RECORD
+   (
+      pi_column_start   PLS_INTEGER,
+      pi_column_end     PLS_INTEGER,
+      pi_row_start      PLS_INTEGER,
+      pi_row_end        PLS_INTEGER
+   );
+ 
+   TYPE t_autofilters_tab IS TABLE OF t_autofilter_rec
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_hyperlink_rec IS RECORD
+   (
+      vc_cell   VARCHAR2 (10),
+      vc_url    VARCHAR2 (1000)
+   );
+ 
+   TYPE t_hyperlinks_tab IS TABLE OF t_hyperlink_rec
+      INDEX BY PLS_INTEGER;
+ 
+   SUBTYPE st_author IS VARCHAR2 (32767 CHAR);
+ 
+   TYPE t_authors_tab IS TABLE OF PLS_INTEGER
+      INDEX BY st_author;
+ 
+   gv_authors_tab                         t_authors_tab;
+ 
+   TYPE t_comment_rec IS RECORD
+   (
+      vc_text        VARCHAR2 (32767 CHAR),
+      vc_author      st_author,
+      pi_row_nr      PLS_INTEGER,
+      pi_column_nr   PLS_INTEGER,
+      pi_width       PLS_INTEGER,
+      pi_height      PLS_INTEGER
+   );
+ 
+   TYPE t_comments_tab IS TABLE OF t_comment_rec
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_mergecells_tab IS TABLE OF VARCHAR2 (21)
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_validation_rec IS RECORD
+   (
+      vc_validation_type    VARCHAR2 (10),
+      vc_errorstyle         VARCHAR2 (32),
+      bo_showinputmessage   BOOLEAN,
+      vc_prompt             VARCHAR2 (32767 CHAR),
+      vc_title              VARCHAR2 (32767 CHAR),
+      vc_error_title        VARCHAR2 (32767 CHAR),
+      vc_error_txt          VARCHAR2 (32767 CHAR),
+      bo_showerrormessage   BOOLEAN,
+      vc_formula1           VARCHAR2 (32767 CHAR),
+      vc_formula2           VARCHAR2 (32767 CHAR),
+      bo_allowblank         BOOLEAN,
+      vc_sqref              VARCHAR2 (32767 CHAR)
+   );
+ 
+   TYPE t_validations_tab IS TABLE OF t_validation_rec
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_sheet_rec IS RECORD
+   (
+      sheet_rows_tab    t_rows_tab,
+      widths_tab_tab    t_widths_tab,
+      vc_sheet_name     VARCHAR2 (100),
+      pi_freeze_rows    PLS_INTEGER,
+      pi_freeze_cols    PLS_INTEGER,
+      autofilters_tab   t_autofilters_tab,
+      hyperlinks_tab    t_hyperlinks_tab,
+      col_fmts_tab      t_col_fmts_tab,
+      row_fmts_tab      t_row_fmts_tab,
+      comments_tab      t_comments_tab,
+      mergecells_tab    t_mergecells_tab,
+      validations_tab   t_validations_tab
+   );
+ 
+   TYPE t_sheets_tab IS TABLE OF t_sheet_rec
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_numfmt_rec IS RECORD
+   (
+      pi_numfmtid     PLS_INTEGER,
+      vc_formatcode   VARCHAR2 (100)
+   );
+ 
+   TYPE t_numfmts_tab IS TABLE OF t_numfmt_rec
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_fill_rec IS RECORD
+   (
+      vc_patterntype   VARCHAR2 (30),
+      vc_fgrgb         VARCHAR2 (8)
+   );
+ 
+   TYPE t_fills_tab IS TABLE OF t_fill_rec
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_cellxfs_tab IS TABLE OF t_xf_fmt_rec
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_font_rec IS RECORD
+   (
+      vc_font_name   VARCHAR2 (100),
+      pi_family      PLS_INTEGER,
+      nn_fontsize    NUMBER,
+      pi_theme       PLS_INTEGER,
+      vc_rgb         VARCHAR2 (8),
+      bo_underline   BOOLEAN,
+      bo_italic      BOOLEAN,
+      bo_bold        BOOLEAN
+   );
+ 
+   TYPE t_fonts_tab IS TABLE OF t_font_rec
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_border_rec IS RECORD
+   (
+      vc_top_border      VARCHAR2 (17),
+      vc_bottom_border   VARCHAR2 (17),
+      vc_left_border     VARCHAR2 (17),
+      vc_right_border    VARCHAR2 (17)
+   );
+ 
+   TYPE t_borders_tab IS TABLE OF t_border_rec
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_numfmtindexes_tab IS TABLE OF PLS_INTEGER
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_strings_tab IS TABLE OF PLS_INTEGER
+      INDEX BY VARCHAR2 (32767 CHAR);
+ 
+   TYPE t_str_ind_tab IS TABLE OF VARCHAR2 (32767 CHAR)
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_defined_name_rec IS RECORD
+   (
+      vc_defined_name   VARCHAR2 (32767 CHAR),
+      vc_defined_ref    VARCHAR2 (32767 CHAR),
+      pi_sheet          PLS_INTEGER
+   );
+ 
+   TYPE t_defined_names_tab IS TABLE OF t_defined_name_rec
+      INDEX BY PLS_INTEGER;
+ 
+   TYPE t_book_rec IS RECORD
+   (
+      sheets_tab          t_sheets_tab,
+      strings_tab         t_strings_tab,
+      str_ind_tab         t_str_ind_tab,
+      pi_str_cnt          PLS_INTEGER:= 0,
+      fonts_tab           t_fonts_tab,
+      fills_tab           t_fills_tab,
+      borders_tab         t_borders_tab,
+      numfmts_tab         t_numfmts_tab,
+      cellxfs_tab         t_cellxfs_tab,
+      numfmtindexes_tab   t_numfmtindexes_tab,
+      defined_names_tab   t_defined_names_tab
+   );
+ 
+   /* Globals */
+   -- the only global variable (objekt) without prefix and suffix
+   workbook                               t_book_rec;
+ 
+   --
+   FUNCTION get_workbook
+      RETURN t_book_rec
+   AS
+   BEGIN
+      RETURN workbook;
+   END get_workbook;
+ 
+   /* Private API */
+   /**
+   * Procedure concatenates a VARCHAR2 to an CLOB.
+   * It uses another VARCHAR2 as a buffer until it reaches 32767 characters.
+   * Then it flushes the current buffer to the CLOB and resets the buffer using
+   * the actual VARCHAR2 to add.
+   * Your final call needs to be done setting p_eof to TRUE in order to
+   * flush everything to the CLOB.
+   *
+   * @param p_clob        The CLOB you want to append to.
+   * @param p_vc_buffer   The intermediate VARCHAR2 buffer. (must be VARCHAR2(32767))
+   * @param p_vc_addition The VARCHAR2 value you want to append.
+   * @param p_eof         Indicates if complete buffer should be flushed to CLOB.
+   */
+   PROCEDURE clob_vc_concat( p_clob IN OUT NOCOPY CLOB
+                           , p_vc_buffer IN OUT NOCOPY VARCHAR2
+                           , p_vc_addition IN VARCHAR2
+                           , p_eof IN BOOLEAN DEFAULT FALSE
+                           )
+   AS
+   BEGIN
+     -- Standard Flow
+     IF NVL(LENGTHB(p_vc_buffer), 0) + NVL(LENGTHB(p_vc_addition), 0) < 32767 THEN
+       p_vc_buffer := p_vc_buffer || p_vc_addition;
+     ELSE
+       IF p_clob IS NULL THEN
+         dbms_lob.createtemporary(p_clob, TRUE);
+       END IF;
+       dbms_lob.writeappend(p_clob, LENGTH(p_vc_buffer), p_vc_buffer);
+       p_vc_buffer := p_vc_addition;
+     END IF;
+ 
+     -- Full Flush requested
+     IF p_eof THEN
+       IF p_clob IS NULL THEN
+         p_clob := p_vc_buffer;
+       ELSE
+         dbms_lob.writeappend(p_clob, LENGTH(p_vc_buffer), p_vc_buffer);
+       END IF;
+     p_vc_buffer := NULL;
+     END IF;
+   END clob_vc_concat;
+ 
+   FUNCTION get_sheet_id (p_sheet IN PLS_INTEGER)
+      RETURN PLS_INTEGER
+   AS
+   BEGIN
+      RETURN NVL (p_sheet, workbook.sheets_tab.COUNT);
+   END get_sheet_id;
+ 
+ 
+   FUNCTION alfan_col (p_col PLS_INTEGER)
+      RETURN VARCHAR2
+   AS
+   BEGIN
+      RETURN CASE
+                WHEN p_col > 702
+                THEN
+                      CHR (64 + TRUNC ( (p_col - 27) / 676))
+                   || CHR (65 + MOD (TRUNC ( (p_col - 1) / 26) - 1, 26))
+                   || CHR (65 + MOD (p_col - 1, 26))
+                WHEN p_col > 26
+                THEN
+                   CHR (64 + TRUNC ( (p_col - 1) / 26)) || CHR (65 + MOD (p_col - 1, 26))
+                ELSE
+                   CHR (64 + p_col)
+             END;
+   END alfan_col;
+ 
+   FUNCTION col_alfan (p_col VARCHAR2)
+      RETURN PLS_INTEGER
+   AS
+   BEGIN
+      RETURN   ASCII (SUBSTR (p_col, -1))
+             - 64
+             + NVL ( (ASCII (SUBSTR (p_col, -2, 1)) - 64) * 26, 0)
+             + NVL ( (ASCII (SUBSTR (p_col, -3, 1)) - 64) * 676, 0);
+   END col_alfan;
+ 
+   -- EMORKLE (2014/02/24): Moved to top, allowing usage in new_sheet
+   FUNCTION add_string (p_string VARCHAR2)
+      RETURN PLS_INTEGER
+   AS
+      t_cnt   PLS_INTEGER;
+   BEGIN
+      -- MKLEIN (2014/02/24): Fix to handle NULL values
+      IF p_string IS NULL AND workbook.strings_tab.COUNT > 0
+      THEN
+         RETURN 0;
+      END IF;
+ 
+      -- END Fix
+      IF workbook.strings_tab.EXISTS (p_string)
+      THEN
+         t_cnt := workbook.strings_tab (p_string);
+      ELSE
+         t_cnt := workbook.strings_tab.COUNT;
+         workbook.str_ind_tab (t_cnt) := p_string;
+         workbook.strings_tab (NVL (p_string, '')) := t_cnt;
+      END IF;
+ 
+      workbook.pi_str_cnt := workbook.pi_str_cnt + 1;
+      RETURN t_cnt;
+   END add_string;
+ 
+   PROCEDURE clear_workbook
+   IS
+      t_row_ind   PLS_INTEGER;
+   BEGIN
+      FOR s IN 1 .. workbook.sheets_tab.COUNT
+      LOOP
+         t_row_ind := workbook.sheets_tab (s).sheet_rows_tab.FIRST;
+ 
+         WHILE t_row_ind IS NOT NULL
+         LOOP
+            workbook.sheets_tab (s).sheet_rows_tab (t_row_ind).delete;
+            t_row_ind := workbook.sheets_tab (s).sheet_rows_tab.NEXT (t_row_ind);
+         END LOOP;
+ 
+         workbook.sheets_tab (s).sheet_rows_tab.delete;
+         workbook.sheets_tab (s).widths_tab_tab.delete;
+         workbook.sheets_tab (s).autofilters_tab.delete;
+         workbook.sheets_tab (s).hyperlinks_tab.delete;
+         workbook.sheets_tab (s).col_fmts_tab.delete;
+         workbook.sheets_tab (s).row_fmts_tab.delete;
+         workbook.sheets_tab (s).comments_tab.delete;
+         workbook.sheets_tab (s).mergecells_tab.delete;
+         workbook.sheets_tab (s).validations_tab.delete;
+      END LOOP;
+ 
+      workbook.strings_tab.delete;
+      workbook.str_ind_tab.delete;
+      workbook.fonts_tab.delete;
+      workbook.fills_tab.delete;
+      workbook.borders_tab.delete;
+      workbook.numfmts_tab.delete;
+      workbook.cellxfs_tab.delete;
+      workbook.defined_names_tab.delete;
+      workbook := NULL;
+   END;
+ 
+   --
+   FUNCTION new_sheet (p_sheetname VARCHAR2 := NULL)
+      RETURN PLS_INTEGER
+   AS
+      t_nr    PLS_INTEGER := workbook.sheets_tab.COUNT + 1;
+      t_ind   PLS_INTEGER;
+   BEGIN
+      workbook.sheets_tab (t_nr).vc_sheet_name :=
+         NVL (DBMS_XMLGEN.CONVERT (TRANSLATE (p_sheetname, 'a/\[]*:?', 'a')), 'Sheet' || TO_CHAR (t_nr));
+ 
+      IF workbook.strings_tab.COUNT = 0
+      THEN
+         workbook.pi_str_cnt := 0;
+         -- MKLEIN (2014/02/24): Insert NULL into strings on known position
+         t_ind := add_string (NULL);
+      END IF;
+ 
+      IF workbook.fonts_tab.COUNT = 0
+      THEN
+         t_ind := get_font ('Arial');
+      END IF;
+ 
+      IF workbook.fills_tab.COUNT = 0
+      THEN
+         t_ind := get_fill ('none');
+         t_ind := get_fill ('gray125');
+      END IF;
+ 
+      IF workbook.borders_tab.COUNT = 0
+      THEN
+         t_ind :=
+            get_border ('',
+                        '',
+                        '',
+                        '');
+      END IF;
+ 
+      RETURN t_nr;
+   END new_sheet;
+ 
+   PROCEDURE set_col_width (p_sheet PLS_INTEGER, p_col PLS_INTEGER, p_format VARCHAR2)
+   AS
+      t_width    NUMBER;
+      t_nr_chr   PLS_INTEGER;
+   BEGIN
+      IF p_format IS NULL
+      THEN
+         RETURN;
+      END IF;
+ 
+      IF INSTR (p_format, ';') > 0
+      THEN
+         t_nr_chr := LENGTH (TRANSLATE (SUBSTR (p_format, 1, INSTR (p_format, ';') - 1), 'a\"', 'a'));
+      ELSE
+         t_nr_chr := LENGTH (TRANSLATE (p_format, 'a\"', 'a'));
+      END IF;
+ 
+      t_width := TRUNC ( (t_nr_chr * 7 + 5) / 7 * 256) / 256;                                             -- assume default 11 point Calibri
+ 
+      IF workbook.sheets_tab (p_sheet).widths_tab_tab.EXISTS (p_col)
+      THEN
+         workbook.sheets_tab (p_sheet).widths_tab_tab (p_col) := GREATEST (workbook.sheets_tab (p_sheet).widths_tab_tab (p_col), t_width);
+      ELSE
+         workbook.sheets_tab (p_sheet).widths_tab_tab (p_col) := GREATEST (t_width, 8.43);
+      END IF;
+   END set_col_width;
+ 
+ 
+   FUNCTION orafmt2excel (p_format VARCHAR2 := NULL)
+      RETURN VARCHAR2
+   AS
+      t_format   VARCHAR2 (1000) := LOWER (SUBSTR (p_format, 1, 1000));
+   BEGIN
+      t_format := REPLACE (REPLACE (REPLACE (t_format, 'HH', 'hh'), 'hh24', 'hh'), 'hh12', 'hh');
+      t_format := REPLACE (REPLACE (t_format, 'MI', 'mi'), 'mi', 'mm');
+      t_format := REPLACE (REPLACE (REPLACE (t_format, 'AM', '~~'), 'PM', '~~'), '~~', 'AM/PM');
+      t_format := REPLACE (REPLACE (REPLACE (t_format, 'am', '~~'), 'pm', '~~'), '~~', 'AM/PM');
+      t_format := REPLACE (REPLACE (t_format, 'day', 'DAY'), 'DAY', 'dddd');
+      t_format := REPLACE (REPLACE (t_format, 'dy', 'DY'), 'DAY', 'ddd');
+      t_format := REPLACE (REPLACE (t_format, 'rr', 'RR'), 'RR', 'YY');
+      t_format := REPLACE (REPLACE (t_format, 'month', 'MONTH'), 'MONTH', 'mmmm');
+      t_format := REPLACE (REPLACE (t_format, 'mon', 'MON'), 'MON', 'mmm');
+      RETURN t_format;
+   END orafmt2excel;
+ 
+   FUNCTION oradatetoexcel (p_value IN DATE)
+      RETURN NUMBER
+   AS
+      l_date_diff   NUMBER := 0;
+   BEGIN
+      IF TRUNC (p_value) >= TO_DATE ('01-01-1900', 'MM-DD-YYYY')
+      THEN
+         l_date_diff := 2;
+      END IF;
+ 
+      RETURN ( ( p_value - TO_DATE ('01-01-1900', 'MM-DD-YYYY') ) + l_date_diff );
+   END oradatetoexcel;
+ 
+   FUNCTION oranumfmt2excel (p_format VARCHAR2)
+      RETURN VARCHAR2
+   AS
+      l_mso_fmt   VARCHAR2 (255);
+   BEGIN
+      IF INSTR (p_format, 'D') > 0
+      THEN
+         l_mso_fmt := '.' || REPLACE (SUBSTR (p_format, INSTR (p_format, 'D') + 1), '9', '0');
+      END IF;
+ 
+      IF INSTR (p_format, 'G') > 0
+      THEN
+         l_mso_fmt := '#,##0' || l_mso_fmt;
+      ELSE
+         l_mso_fmt := '0' || l_mso_fmt;
+      END IF;
+ 
+      RETURN l_mso_fmt;
+   END oranumfmt2excel;
+ 
+   FUNCTION get_numfmt (p_format VARCHAR2 := NULL)
+      RETURN PLS_INTEGER
+   AS
+      t_cnt        PLS_INTEGER;
+      t_numfmtid   PLS_INTEGER;
+   BEGIN
+      IF p_format IS NULL
+      THEN
+         RETURN 0;
+      END IF;
+ 
+      t_cnt := workbook.numfmts_tab.COUNT;
+ 
+      FOR i IN 1 .. t_cnt
+      LOOP
+         IF workbook.numfmts_tab (i).vc_formatcode = p_format
+         THEN
+            t_numfmtid := workbook.numfmts_tab (i).pi_numfmtid;
+            EXIT;
+         END IF;
+      END LOOP;
+ 
+      IF t_numfmtid IS NULL
+      THEN
+         t_numfmtid := CASE WHEN t_cnt = 0 THEN 164 ELSE workbook.numfmts_tab (t_cnt).pi_numfmtid + 1 END;
+         t_cnt := t_cnt + 1;
+         workbook.numfmts_tab (t_cnt).pi_numfmtid := t_numfmtid;
+         workbook.numfmts_tab (t_cnt).vc_formatcode := p_format;
+         workbook.numfmtindexes_tab (t_numfmtid) := t_cnt;
+      END IF;
+ 
+      RETURN t_numfmtid;
+   END get_numfmt;
+ 
+ 
+   FUNCTION get_font (p_name         VARCHAR2,
+                      p_family       PLS_INTEGER := 2,
+                      p_fontsize     NUMBER := 8,
+                      p_theme        PLS_INTEGER := 1,
+                      p_underline    BOOLEAN := FALSE,
+                      p_italic       BOOLEAN := FALSE,
+                      p_bold         BOOLEAN := FALSE,
+                      p_rgb          VARCHAR2 := NULL                                            -- this is a hex ALPHA Red Green Blue value
+                                                     )
+      RETURN PLS_INTEGER
+   AS
+      t_ind   PLS_INTEGER;
+   BEGIN
+      IF workbook.fonts_tab.COUNT > 0
+      THEN
+         FOR f IN 0 .. workbook.fonts_tab.COUNT - 1
+         LOOP
+            IF (    workbook.fonts_tab (f).vc_font_name = p_name
+                AND workbook.fonts_tab (f).pi_family = p_family
+                AND workbook.fonts_tab (f).nn_fontsize = p_fontsize
+                AND workbook.fonts_tab (f).pi_theme = p_theme
+                AND workbook.fonts_tab (f).bo_underline = p_underline
+                AND workbook.fonts_tab (f).bo_italic = p_italic
+                AND workbook.fonts_tab (f).bo_bold = p_bold
+                AND (workbook.fonts_tab (f).vc_rgb = p_rgb OR (workbook.fonts_tab (f).vc_rgb IS NULL AND p_rgb IS NULL)))
+            THEN
+               RETURN f;
+            END IF;
+         END LOOP;
+      END IF;
+ 
+      t_ind := workbook.fonts_tab.COUNT;
+      workbook.fonts_tab (t_ind).vc_font_name := p_name;
+      workbook.fonts_tab (t_ind).pi_family := p_family;
+      workbook.fonts_tab (t_ind).nn_fontsize := p_fontsize;
+      workbook.fonts_tab (t_ind).pi_theme := p_theme;
+      workbook.fonts_tab (t_ind).bo_underline := p_underline;
+      workbook.fonts_tab (t_ind).bo_italic := p_italic;
+      workbook.fonts_tab (t_ind).bo_bold := p_bold;
+      workbook.fonts_tab (t_ind).vc_rgb := p_rgb;
+      RETURN t_ind;
+   END get_font;
+ 
+   FUNCTION get_fill (p_patterntype VARCHAR2, p_fgrgb VARCHAR2 := NULL)
+      RETURN PLS_INTEGER
+   AS
+      t_ind   PLS_INTEGER;
+   BEGIN
+      IF workbook.fills_tab.COUNT > 0
+      THEN
+         FOR f IN 0 .. workbook.fills_tab.COUNT - 1
+         LOOP
+            IF (    workbook.fills_tab (f).vc_patterntype = p_patterntype
+                AND NVL (workbook.fills_tab (f).vc_fgrgb, 'x') = NVL (UPPER (p_fgrgb), 'x'))
+            THEN
+               RETURN f;
+            END IF;
+         END LOOP;
+      END IF;
+ 
+      t_ind := workbook.fills_tab.COUNT;
+      workbook.fills_tab (t_ind).vc_patterntype := p_patterntype;
+      workbook.fills_tab (t_ind).vc_fgrgb := UPPER (p_fgrgb);
+      RETURN t_ind;
+   END get_fill;
+ 
+   FUNCTION get_border (p_top       VARCHAR2 := 'thin',
+                        p_bottom    VARCHAR2 := 'thin',
+                        p_left      VARCHAR2 := 'thin',
+                        p_right     VARCHAR2 := 'thin')
+      RETURN PLS_INTEGER
+   AS
+      t_ind   PLS_INTEGER;
+   BEGIN
+      IF workbook.borders_tab.COUNT > 0
+      THEN
+         FOR b IN 0 .. workbook.borders_tab.COUNT - 1
+         LOOP
+            IF (    NVL (workbook.borders_tab (b).vc_top_border, 'x') = NVL (p_top, 'x')
+                AND NVL (workbook.borders_tab (b).vc_bottom_border, 'x') = NVL (p_bottom, 'x')
+                AND NVL (workbook.borders_tab (b).vc_left_border, 'x') = NVL (p_left, 'x')
+                AND NVL (workbook.borders_tab (b).vc_right_border, 'x') = NVL (p_right, 'x'))
+            THEN
+               RETURN b;
+            END IF;
+         END LOOP;
+      END IF;
+ 
+      t_ind := workbook.borders_tab.COUNT;
+      workbook.borders_tab (t_ind).vc_top_border := p_top;
+      workbook.borders_tab (t_ind).vc_bottom_border := p_bottom;
+      workbook.borders_tab (t_ind).vc_left_border := p_left;
+      workbook.borders_tab (t_ind).vc_right_border := p_right;
+      RETURN t_ind;
+   END get_border;
+ 
+   FUNCTION get_alignment (p_vertical VARCHAR2 := NULL, p_horizontal VARCHAR2 := NULL, p_wraptext BOOLEAN := NULL)
+      RETURN t_alignment_rec
+   AS
+      t_rv   t_alignment_rec;
+   BEGIN
+      t_rv.vc_vertical := p_vertical;
+      t_rv.vc_horizontal := p_horizontal;
+      t_rv.bo_wraptext := p_wraptext;
+      RETURN t_rv;
+   END get_alignment;
+ 
+   FUNCTION get_xfid (p_sheet        PLS_INTEGER,
+                      p_col          PLS_INTEGER,
+                      p_row          PLS_INTEGER,
+                      p_numfmtid     PLS_INTEGER := NULL,
+                      p_fontid       PLS_INTEGER := NULL,
+                      p_fillid       PLS_INTEGER := NULL,
+                      p_borderid     PLS_INTEGER := NULL,
+                      p_alignment    t_alignment_rec := NULL)
+      RETURN VARCHAR2
+   AS
+      t_cnt      PLS_INTEGER;
+      t_xfid     PLS_INTEGER;
+      t_xf       t_xf_fmt_rec;
+      t_col_xf   t_xf_fmt_rec;
+      t_row_xf   t_xf_fmt_rec;
+   BEGIN
+      IF workbook.sheets_tab (p_sheet).col_fmts_tab.EXISTS (p_col)
+      THEN
+         t_col_xf := workbook.sheets_tab (p_sheet).col_fmts_tab (p_col);
+      END IF;
+ 
+      IF workbook.sheets_tab (p_sheet).row_fmts_tab.EXISTS (p_row)
+      THEN
+         t_row_xf := workbook.sheets_tab (p_sheet).row_fmts_tab (p_row);
+      END IF;
+ 
+      t_xf.pi_numfmtid :=
+         COALESCE (p_numfmtid,
+                   t_col_xf.pi_numfmtid,
+                   t_row_xf.pi_numfmtid,
+                   0);
+      t_xf.pi_fontid :=
+         COALESCE (p_fontid,
+                   t_col_xf.pi_fontid,
+                   t_row_xf.pi_fontid,
+                   0);
+      t_xf.pi_fillid :=
+         COALESCE (p_fillid,
+                   t_col_xf.pi_fillid,
+                   t_row_xf.pi_fillid,
+                   0);
+      t_xf.pi_borderid :=
+         COALESCE (p_borderid,
+                   t_col_xf.pi_borderid,
+                   t_row_xf.pi_borderid,
+                   0);
+      t_xf.alignment_rec := COALESCE (p_alignment, t_col_xf.alignment_rec, t_row_xf.alignment_rec);
+ 
+      IF (    t_xf.pi_numfmtid + t_xf.pi_fontid + t_xf.pi_fillid + t_xf.pi_borderid = 0
+          AND t_xf.alignment_rec.vc_vertical IS NULL
+          AND t_xf.alignment_rec.vc_horizontal IS NULL
+          AND NOT NVL (t_xf.alignment_rec.bo_wraptext, FALSE))
+      THEN
+         RETURN '';
+      END IF;
+ 
+      IF t_xf.pi_numfmtid > 0
+      THEN
+         set_col_width (p_sheet, p_col, workbook.numfmts_tab (workbook.numfmtindexes_tab (t_xf.pi_numfmtid)).vc_formatcode);
+      END IF;
+ 
+      t_cnt := workbook.cellxfs_tab.COUNT;
+ 
+      FOR i IN 1 .. t_cnt
+      LOOP
+         IF (    workbook.cellxfs_tab (i).pi_numfmtid = t_xf.pi_numfmtid
+             AND workbook.cellxfs_tab (i).pi_fontid = t_xf.pi_fontid
+             AND workbook.cellxfs_tab (i).pi_fillid = t_xf.pi_fillid
+             AND workbook.cellxfs_tab (i).pi_borderid = t_xf.pi_borderid
+             AND NVL (workbook.cellxfs_tab (i).alignment_rec.vc_vertical, 'x') = NVL (t_xf.alignment_rec.vc_vertical, 'x')
+             AND NVL (workbook.cellxfs_tab (i).alignment_rec.vc_horizontal, 'x') = NVL (t_xf.alignment_rec.vc_horizontal, 'x')
+             AND NVL (workbook.cellxfs_tab (i).alignment_rec.bo_wraptext, FALSE) = NVL (t_xf.alignment_rec.bo_wraptext, FALSE))
+         THEN
+            t_xfid := i;
+            EXIT;
+         END IF;
+      END LOOP;
+ 
+      IF t_xfid IS NULL
+      THEN
+         t_cnt := t_cnt + 1;
+         t_xfid := t_cnt;
+         workbook.cellxfs_tab (t_cnt) := t_xf;
+      END IF;
+ 
+      RETURN 's="' || TO_CHAR (t_xfid) || '"';
+   END get_xfid;
+ 
+   PROCEDURE cell (p_col          PLS_INTEGER,
+                   p_row          PLS_INTEGER,
+                   p_value        NUMBER,
+                   p_numfmtid     PLS_INTEGER := NULL,
+                   p_fontid       PLS_INTEGER := NULL,
+                   p_fillid       PLS_INTEGER := NULL,
+                   p_borderid     PLS_INTEGER := NULL,
+                   p_alignment    t_alignment_rec := NULL,
+                   p_sheet        PLS_INTEGER := NULL)
+   AS
+      t_sheet   PLS_INTEGER;
+   BEGIN
+      t_sheet := get_sheet_id (p_sheet);
+      workbook.sheets_tab (t_sheet).sheet_rows_tab (p_row) (p_col).nn_value_id := p_value;
+      workbook.sheets_tab (t_sheet).sheet_rows_tab (p_row) (p_col).vc_style_def := NULL;
+      workbook.sheets_tab (t_sheet).sheet_rows_tab (p_row) (p_col).vc_style_def :=
+         get_xfid (t_sheet,
+                   p_col,
+                   p_row,
+                   p_numfmtid,
+                   p_fontid,
+                   p_fillid,
+                   p_borderid,
+                   p_alignment);
+   END cell;
+ 
+   PROCEDURE cell (p_col          PLS_INTEGER,
+                   p_row          PLS_INTEGER,
+                   p_value        VARCHAR2,
+                   p_numfmtid     PLS_INTEGER := NULL,
+                   p_fontid       PLS_INTEGER := NULL,
+                   p_fillid       PLS_INTEGER := NULL,
+                   p_borderid     PLS_INTEGER := NULL,
+                   p_alignment    t_alignment_rec := NULL,
+                   p_sheet        PLS_INTEGER := NULL)
+   AS
+      t_sheet       PLS_INTEGER;
+      t_alignment   t_alignment_rec := p_alignment;
+   BEGIN
+      t_sheet := get_sheet_id (p_sheet);
+      workbook.sheets_tab (t_sheet).sheet_rows_tab (p_row) (p_col).nn_value_id := add_string (p_value);
+ 
+      IF t_alignment.bo_wraptext IS NULL AND INSTR (p_value, CHR (13)) > 0
+      THEN
+         t_alignment.bo_wraptext := TRUE;
+      END IF;
+ 
+      workbook.sheets_tab (t_sheet).sheet_rows_tab (p_row) (p_col).vc_style_def :=
+            't="s" '
+         || get_xfid (t_sheet,
+                      p_col,
+                      p_row,
+                      p_numfmtid,
+                      p_fontid,
+                      p_fillid,
+                      p_borderid,
+                      t_alignment);
+   END cell;
+ 
+   PROCEDURE cell (p_col          PLS_INTEGER,
+                   p_row          PLS_INTEGER,
+                   p_value        DATE,
+                   p_numfmtid     PLS_INTEGER := NULL,
+                   p_fontid       PLS_INTEGER := NULL,
+                   p_fillid       PLS_INTEGER := NULL,
+                   p_borderid     PLS_INTEGER := NULL,
+                   p_alignment    t_alignment_rec := NULL,
+                   p_sheet        PLS_INTEGER := NULL)
+   AS
+      t_numfmtid   PLS_INTEGER := p_numfmtid;
+      t_sheet      PLS_INTEGER;
+   BEGIN
+      t_sheet := get_sheet_id (p_sheet);
+ 
+      workbook.sheets_tab (t_sheet).sheet_rows_tab (p_row) (p_col).nn_value_id := oradatetoexcel (p_value);
+ 
+      IF     t_numfmtid IS NULL
+         AND NOT (    workbook.sheets_tab (t_sheet).col_fmts_tab.EXISTS (p_col)
+                  AND workbook.sheets_tab (t_sheet).col_fmts_tab (p_col).pi_numfmtid IS NOT NULL)
+         AND NOT (    workbook.sheets_tab (t_sheet).row_fmts_tab.EXISTS (p_row)
+                  AND workbook.sheets_tab (t_sheet).row_fmts_tab (p_row).pi_numfmtid IS NOT NULL)
+      THEN
+         t_numfmtid := get_numfmt ('dd/mm/yyyy');
+      END IF;
+ 
+      workbook.sheets_tab (t_sheet).sheet_rows_tab (p_row) (p_col).vc_style_def :=
+         get_xfid (t_sheet,
+                   p_col,
+                   p_row,
+                   t_numfmtid,
+                   p_fontid,
+                   p_fillid,
+                   p_borderid,
+                   p_alignment);
+   END cell;
+ 
+   PROCEDURE hyperlink (p_col      PLS_INTEGER,
+                        p_row      PLS_INTEGER,
+                        p_url      VARCHAR2,
+                        p_value    VARCHAR2 := NULL,
+                        p_sheet    PLS_INTEGER := NULL)
+   AS
+      t_ind     PLS_INTEGER;
+      t_sheet   PLS_INTEGER;
+   BEGIN
+      t_sheet := get_sheet_id (p_sheet);
+ 
+      workbook.sheets_tab (t_sheet).sheet_rows_tab (p_row) (p_col).nn_value_id := add_string (NVL (p_value, p_url));
+      workbook.sheets_tab (t_sheet).sheet_rows_tab (p_row) (p_col).vc_style_def :=
+            't="s" '
+         || get_xfid (t_sheet,
+                      p_col,
+                      p_row,
+                      '',
+                      get_font ('Calibri', p_theme => 10, p_underline => TRUE));
+      t_ind := workbook.sheets_tab (t_sheet).hyperlinks_tab.COUNT + 1;
+      workbook.sheets_tab (t_sheet).hyperlinks_tab (t_ind).vc_cell := alfan_col (p_col) || TO_CHAR (p_row);
+      workbook.sheets_tab (t_sheet).hyperlinks_tab (t_ind).vc_url := p_url;
+   END hyperlink;
+ 
+   PROCEDURE comment (p_col       PLS_INTEGER,
+                      p_row       PLS_INTEGER,
+                      p_text      VARCHAR2,
+                      p_author    VARCHAR2 := NULL,
+                      p_width     PLS_INTEGER := 150,
+                      p_height    PLS_INTEGER := 100,
+                      p_sheet     PLS_INTEGER := NULL)
+   AS
+      t_ind     PLS_INTEGER;
+      t_sheet   PLS_INTEGER;
+   BEGIN
+      t_sheet := get_sheet_id (p_sheet);
+      t_ind := workbook.sheets_tab (t_sheet).comments_tab.COUNT + 1;
+      workbook.sheets_tab (t_sheet).comments_tab (t_ind).pi_row_nr := p_row;
+      workbook.sheets_tab (t_sheet).comments_tab (t_ind).pi_column_nr := p_col;
+      workbook.sheets_tab (t_sheet).comments_tab (t_ind).vc_text := DBMS_XMLGEN.CONVERT (p_text);
+      workbook.sheets_tab (t_sheet).comments_tab (t_ind).vc_author := DBMS_XMLGEN.CONVERT (p_author);
+      workbook.sheets_tab (t_sheet).comments_tab (t_ind).pi_width := p_width;
+      workbook.sheets_tab (t_sheet).comments_tab (t_ind).pi_height := p_height;
+   END comment;
+ 
+   PROCEDURE mergecells (p_tl_col    PLS_INTEGER                                                                                 -- top left
+                                                ,
+                         p_tl_row    PLS_INTEGER,
+                         p_br_col    PLS_INTEGER                                                                             -- bottom right
+                                                ,
+                         p_br_row    PLS_INTEGER,
+                         p_sheet     PLS_INTEGER := NULL)
+   AS
+      t_ind     PLS_INTEGER;
+      t_sheet   PLS_INTEGER;
+   BEGIN
+      t_sheet := get_sheet_id (p_sheet);
+      t_ind := workbook.sheets_tab (t_sheet).mergecells_tab.COUNT + 1;
+      workbook.sheets_tab (t_sheet).mergecells_tab (t_ind) :=
+         alfan_col (p_tl_col) || TO_CHAR (p_tl_row) || ':' || alfan_col (p_br_col) || TO_CHAR (p_br_row);
+   END mergecells;
+ 
+   PROCEDURE add_validation (p_type           VARCHAR2,
+                             p_sqref          VARCHAR2,
+                             p_style          VARCHAR2 := 'stop'                                               -- stop, warning, information
+                                                                ,
+                             p_formula1       VARCHAR2 := NULL,
+                             p_formula2       VARCHAR2 := NULL,
+                             p_title          VARCHAR2 := NULL,
+                             p_prompt         VARCHAR2 := NULL,
+                             p_show_error     BOOLEAN := FALSE,
+                             p_error_title    VARCHAR2 := NULL,
+                             p_error_txt      VARCHAR2 := NULL,
+                             p_sheet          PLS_INTEGER := NULL)
+   AS
+      t_ind     PLS_INTEGER;
+      t_sheet   PLS_INTEGER;
+   BEGIN
+      t_sheet := get_sheet_id (p_sheet);
+      t_ind := workbook.sheets_tab (t_sheet).validations_tab.COUNT + 1;
+      workbook.sheets_tab (t_sheet).validations_tab (t_ind).vc_validation_type := p_type;
+      workbook.sheets_tab (t_sheet).validations_tab (t_ind).vc_errorstyle := p_style;
+      workbook.sheets_tab (t_sheet).validations_tab (t_ind).vc_sqref := p_sqref;
+      workbook.sheets_tab (t_sheet).validations_tab (t_ind).vc_formula1 := p_formula1;
+      workbook.sheets_tab (t_sheet).validations_tab (t_ind).vc_error_title := p_error_title;
+      workbook.sheets_tab (t_sheet).validations_tab (t_ind).vc_error_txt := p_error_txt;
+      workbook.sheets_tab (t_sheet).validations_tab (t_ind).vc_title := p_title;
+      workbook.sheets_tab (t_sheet).validations_tab (t_ind).vc_prompt := p_prompt;
+      workbook.sheets_tab (t_sheet).validations_tab (t_ind).bo_showerrormessage := p_show_error;
+   END add_validation;
+ 
+   PROCEDURE list_validation (p_sqref_col      PLS_INTEGER,
+                              p_sqref_row      PLS_INTEGER,
+                              p_tl_col         PLS_INTEGER                                                                       -- top left
+                                                          ,
+                              p_tl_row         PLS_INTEGER,
+                              p_br_col         PLS_INTEGER                                                                   -- bottom right
+                                                          ,
+                              p_br_row         PLS_INTEGER,
+                              p_style          VARCHAR2 := 'stop'                                              -- stop, warning, information
+                                                                 ,
+                              p_title          VARCHAR2 := NULL,
+                              p_prompt         VARCHAR2 := NULL,
+                              p_show_error     BOOLEAN := FALSE,
+                              p_error_title    VARCHAR2 := NULL,
+                              p_error_txt      VARCHAR2 := NULL,
+                              p_sheet          PLS_INTEGER := NULL)
+   AS
+   BEGIN
+      add_validation (
+         'list',
+         alfan_col (p_sqref_col) || TO_CHAR (p_sqref_row),
+         p_style         => LOWER (p_style),
+         p_formula1      =>    '$'
+                            || alfan_col (p_tl_col)
+                            || '$'
+                            || TO_CHAR (p_tl_row)
+                            || ':$'
+                            || alfan_col (p_br_col)
+                            || '$'
+                            || TO_CHAR (p_br_row),
+         p_title         => p_title,
+         p_prompt        => p_prompt,
+         p_show_error    => p_show_error,
+         p_error_title   => p_error_title,
+         p_error_txt     => p_error_txt,
+         p_sheet         => p_sheet);
+   END list_validation;
+ 
+   PROCEDURE list_validation (p_sqref_col       PLS_INTEGER,
+                              p_sqref_row       PLS_INTEGER,
+                              p_defined_name    VARCHAR2,
+                              p_style           VARCHAR2 := 'stop'                                             -- stop, warning, information
+                                                                  ,
+                              p_title           VARCHAR2 := NULL,
+                              p_prompt          VARCHAR2 := NULL,
+                              p_show_error      BOOLEAN := FALSE,
+                              p_error_title     VARCHAR2 := NULL,
+                              p_error_txt       VARCHAR2 := NULL,
+                              p_sheet           PLS_INTEGER := NULL)
+   AS
+   BEGIN
+      add_validation ('list',
+                      alfan_col (p_sqref_col) || TO_CHAR (p_sqref_row),
+                      p_style         => LOWER (p_style),
+                      p_formula1      => p_defined_name,
+                      p_title         => p_title,
+                      p_prompt        => p_prompt,
+                      p_show_error    => p_show_error,
+                      p_error_title   => p_error_title,
+                      p_error_txt     => p_error_txt,
+                      p_sheet         => TO_CHAR (p_sheet));
+   END list_validation;
+ 
+   PROCEDURE defined_name (p_tl_col        PLS_INTEGER                                                                           -- top left
+                                                      ,
+                           p_tl_row        PLS_INTEGER,
+                           p_br_col        PLS_INTEGER                                                                       -- bottom right
+                                                      ,
+                           p_br_row        PLS_INTEGER,
+                           p_name          VARCHAR2,
+                           p_sheet         PLS_INTEGER := NULL,
+                           p_localsheet    PLS_INTEGER := NULL)
+   AS
+      t_ind     PLS_INTEGER;
+      t_sheet   PLS_INTEGER;
+   BEGIN
+      t_sheet := get_sheet_id (p_sheet);
+      t_ind := workbook.defined_names_tab.COUNT + 1;
+      workbook.defined_names_tab (t_ind).vc_defined_name := p_name;
+      workbook.defined_names_tab (t_ind).vc_defined_ref :=
+            'Sheet'
+         || TO_CHAR (t_sheet)
+         || '!$'
+         || alfan_col (p_tl_col)
+         || '$'
+         || TO_CHAR (p_tl_row)
+         || ':$'
+         || alfan_col (p_br_col)
+         || '$'
+         || TO_CHAR (p_br_row);
+      workbook.defined_names_tab (t_ind).pi_sheet := p_localsheet;
+   END defined_name;
+ 
+   PROCEDURE set_column_width (p_col PLS_INTEGER, p_width NUMBER, p_sheet PLS_INTEGER := NULL)
+   AS
+   BEGIN
+      workbook.sheets_tab (NVL (p_sheet, workbook.sheets_tab.COUNT)).widths_tab_tab (p_col) := p_width;
+   END set_column_width;
+ 
+   PROCEDURE set_column (p_col          PLS_INTEGER,
+                         p_numfmtid     PLS_INTEGER := NULL,
+                         p_fontid       PLS_INTEGER := NULL,
+                         p_fillid       PLS_INTEGER := NULL,
+                         p_borderid     PLS_INTEGER := NULL,
+                         p_alignment    t_alignment_rec := NULL,
+                         p_sheet        PLS_INTEGER := NULL)
+   AS
+      t_sheet   PLS_INTEGER;
+   BEGIN
+      t_sheet := get_sheet_id (p_sheet);
+      workbook.sheets_tab (t_sheet).col_fmts_tab (p_col).pi_numfmtid := p_numfmtid;
+      workbook.sheets_tab (t_sheet).col_fmts_tab (p_col).pi_fontid := p_fontid;
+      workbook.sheets_tab (t_sheet).col_fmts_tab (p_col).pi_fillid := p_fillid;
+      workbook.sheets_tab (t_sheet).col_fmts_tab (p_col).pi_borderid := p_borderid;
+      workbook.sheets_tab (t_sheet).col_fmts_tab (p_col).alignment_rec := p_alignment;
+   END set_column;
+ 
+   PROCEDURE set_row (p_row          PLS_INTEGER,
+                      p_numfmtid     PLS_INTEGER := NULL,
+                      p_fontid       PLS_INTEGER := NULL,
+                      p_fillid       PLS_INTEGER := NULL,
+                      p_borderid     PLS_INTEGER := NULL,
+                      p_alignment    t_alignment_rec := NULL,
+                      p_sheet        PLS_INTEGER := NULL)
+   AS
+      t_sheet   PLS_INTEGER;
+   BEGIN
+      t_sheet := get_sheet_id (p_sheet);
+      workbook.sheets_tab (t_sheet).row_fmts_tab (p_row).pi_numfmtid := p_numfmtid;
+      workbook.sheets_tab (t_sheet).row_fmts_tab (p_row).pi_fontid := p_fontid;
+      workbook.sheets_tab (t_sheet).row_fmts_tab (p_row).pi_fillid := p_fillid;
+      workbook.sheets_tab (t_sheet).row_fmts_tab (p_row).pi_borderid := p_borderid;
+      workbook.sheets_tab (t_sheet).row_fmts_tab (p_row).alignment_rec := p_alignment;
+   END set_row;
+ 
+   PROCEDURE freeze_rows (p_nr_rows PLS_INTEGER := 1, p_sheet PLS_INTEGER := NULL)
+   AS
+      t_sheet   PLS_INTEGER;
+   BEGIN
+      t_sheet := get_sheet_id (p_sheet);
+      workbook.sheets_tab (t_sheet).pi_freeze_cols := NULL;
+      workbook.sheets_tab (t_sheet).pi_freeze_rows := p_nr_rows;
+   END freeze_rows;
+ 
+   PROCEDURE freeze_cols (p_nr_cols PLS_INTEGER := 1, p_sheet PLS_INTEGER := NULL)
+   AS
+      t_sheet   PLS_INTEGER;
+   BEGIN
+      t_sheet := get_sheet_id (p_sheet);
+      workbook.sheets_tab (t_sheet).pi_freeze_rows := NULL;
+      workbook.sheets_tab (t_sheet).pi_freeze_cols := p_nr_cols;
+   END freeze_cols;
+ 
+   PROCEDURE freeze_pane (p_col PLS_INTEGER, p_row PLS_INTEGER, p_sheet PLS_INTEGER := NULL)
+   AS
+      t_sheet   PLS_INTEGER;
+   BEGIN
+      t_sheet := get_sheet_id (p_sheet);
+      workbook.sheets_tab (t_sheet).pi_freeze_rows := p_row;
+      workbook.sheets_tab (t_sheet).pi_freeze_cols := p_col;
+   END freeze_pane;
+ 
+   PROCEDURE set_autofilter (p_column_start    PLS_INTEGER := NULL,
+                             p_column_end      PLS_INTEGER := NULL,
+                             p_row_start       PLS_INTEGER := NULL,
+                             p_row_end         PLS_INTEGER := NULL,
+                             p_sheet           PLS_INTEGER := NULL)
+   AS
+      t_ind     PLS_INTEGER;
+      t_sheet   PLS_INTEGER;
+   BEGIN
+      t_sheet := get_sheet_id (p_sheet);
+      t_ind := 1;
+      workbook.sheets_tab (t_sheet).autofilters_tab (t_ind).pi_column_start := p_column_start;
+      workbook.sheets_tab (t_sheet).autofilters_tab (t_ind).pi_column_end := p_column_end;
+      workbook.sheets_tab (t_sheet).autofilters_tab (t_ind).pi_row_start := p_row_start;
+      workbook.sheets_tab (t_sheet).autofilters_tab (t_ind).pi_row_end := p_row_end;
+      /*defined_name (p_column_start,
+                    p_row_start,
+                    p_column_end,
+                    p_row_end,
+                    '_xlnm._FilterDatabase',
+                    t_sheet,
+                    t_sheet - 1);*/
+   END set_autofilter;
+ 
+   FUNCTION finish
+      RETURN BLOB
+   AS
+      t_excel                      BLOB;
+      t_xxx                        CLOB;
+      t_tmp                        VARCHAR2 (32767 CHAR);
+      t_str                        VARCHAR2 (32767 CHAR);
+      t_c                          NUMBER;
+      t_h                          NUMBER;
+      t_w                          NUMBER;
+      t_cw                         NUMBER;
+      t_cell                       VARCHAR2 (1000 CHAR);
+      t_row_ind                    PLS_INTEGER;
+      t_col_min                    PLS_INTEGER;
+      t_col_max                    PLS_INTEGER;
+      t_col_ind                    PLS_INTEGER;
+      t_len                        PLS_INTEGER;
+   BEGIN
+      DBMS_LOB.createtemporary (t_excel, TRUE);
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+<Default Extension="xml" ContentType="application/xml"/>
+<Default Extension="vml" ContentType="application/vnd.openxmlformats-officedocument.vmlDrawing"/>
+<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>');
+ 
+      FOR s IN 1 .. workbook.sheets_tab.COUNT
+      LOOP
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '<Override PartName="/xl/worksheets/sheet'
+                          || TO_CHAR (s)
+                          || '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>');
+      END LOOP;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '
+<Override PartName="/xl/theme/theme1.xml" ContentType="application/vnd.openxmlformats-officedocument.theme+xml"/>
+<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+<Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>
+<Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+<Override PartName="/docProps/app.xml" ContentType="application/vnd.openxmlformats-officedocument.extended-properties+xml"/>');
+ 
+      FOR s IN 1 .. workbook.sheets_tab.COUNT
+      LOOP
+         IF workbook.sheets_tab (s).comments_tab.COUNT > 0
+         THEN
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '<Override PartName="/xl/comments'
+                             || TO_CHAR (s)
+                             || '.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.comments+xml"/>');
+         END IF;
+      END LOOP;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '</Types>',
+         p_eof         => TRUE);
+      zip_util_pkg.add_file (t_excel, '[Content_Types].xml', t_xxx);
+      t_xxx := NULL;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:dcmitype="http://purl.org/dc/dcmitype/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<dc:creator>'
+                       || SYS_CONTEXT ('userenv', 'os_user')
+                       || '</dc:creator>
+<cp:lastModifiedBy>'
+                       || SYS_CONTEXT ('userenv', 'os_user')
+                       || '</cp:lastModifiedBy>
+<dcterms:created xsi:type="dcterms:W3CDTF">'
+                       || TO_CHAR (CURRENT_TIMESTAMP, 'yyyy-mm-dd"T"hh24:mi:ssTZH:TZM')
+                       || '</dcterms:created>
+<dcterms:modified xsi:type="dcterms:W3CDTF">'
+                       || TO_CHAR (CURRENT_TIMESTAMP, 'yyyy-mm-dd"T"hh24:mi:ssTZH:TZM')
+                       || '</dcterms:modified>
+</cp:coreProperties>',
+         p_eof         => TRUE);
+      zip_util_pkg.add_file (t_excel, 'docProps/core.xml', t_xxx);
+      t_xxx := NULL;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Properties xmlns="http://schemas.openxmlformats.org/officeDocument/2006/extended-properties" xmlns:vt="http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes">
+<Application>Microsoft Excel</Application>
+<DocSecurity>0</DocSecurity>
+<ScaleCrop>false</ScaleCrop>
+<HeadingPairs>
+<vt:vector size="2" baseType="variant">
+<vt:variant>
+<vt:lpstr>Worksheets</vt:lpstr>
+</vt:variant>
+<vt:variant>
+<vt:i4>'
+                       || TO_CHAR (workbook.sheets_tab.COUNT)
+                       || '</vt:i4>
+</vt:variant>
+</vt:vector>
+</HeadingPairs>
+<TitlesOfParts>
+<vt:vector size="'
+                       || TO_CHAR (workbook.sheets_tab.COUNT)
+                       || '" baseType="lpstr">');
+ 
+      FOR s IN 1 .. workbook.sheets_tab.COUNT
+      LOOP
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '<vt:lpstr>' || workbook.sheets_tab (s).vc_sheet_name || '</vt:lpstr>');
+      END LOOP;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '</vt:vector>
+</TitlesOfParts>
+<LinksUpToDate>false</LinksUpToDate>
+<SharedDoc>false</SharedDoc>
+<HyperlinksChanged>false</HyperlinksChanged>
+<AppVersion>14.0300</AppVersion>
+</Properties>',
+         p_eof         => TRUE);
+      zip_util_pkg.add_file (t_excel, 'docProps/app.xml', t_xxx);
+      t_xxx := NULL;
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/extended-properties" Target="docProps/app.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/>
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>',
+         p_eof         => TRUE);
+      zip_util_pkg.add_file (t_excel, '_rels/.rels', t_xxx);
+      t_xxx := NULL;
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+                       || chr(13) || chr(10)
+                       || '<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac">');
+ 
+      IF workbook.numfmts_tab.COUNT > 0
+      THEN
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '<numFmts count="' || TO_CHAR (workbook.numfmts_tab.COUNT) || '">');
+ 
+         FOR n IN 1 .. workbook.numfmts_tab.COUNT
+         LOOP
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '<numFmt numFmtId="'
+                             || TO_CHAR (workbook.numfmts_tab (n).pi_numfmtid)
+                             || '" formatCode="'
+                             || workbook.numfmts_tab (n).vc_formatcode
+                             || '"/>');
+         END LOOP;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '</numFmts>');
+      END IF;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<fonts count="' || TO_CHAR (workbook.fonts_tab.COUNT) || '" x14ac:knownFonts="1">');
+ 
+      FOR f IN 0 .. workbook.fonts_tab.COUNT - 1
+      LOOP
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '<font>'
+                          || CASE WHEN workbook.fonts_tab (f).bo_bold THEN '<b/>' END
+                          || CASE WHEN workbook.fonts_tab (f).bo_italic THEN '<i/>' END
+                          || CASE WHEN workbook.fonts_tab (f).bo_underline THEN '<u/>' END
+                          || '<sz val="'
+                          || TO_CHAR (workbook.fonts_tab (f).nn_fontsize, 'TM9', 'NLS_NUMERIC_CHARACTERS=.,')
+                          || '"/>
+                             <color '
+                          || CASE
+                                WHEN workbook.fonts_tab (f).vc_rgb IS NOT NULL THEN 'rgb="' || workbook.fonts_tab (f).vc_rgb
+                                ELSE 'theme="' || TO_CHAR (workbook.fonts_tab (f).pi_theme)
+                             END
+                          || '"/>
+                             <name val="'
+                          || workbook.fonts_tab (f).vc_font_name
+                          || '"/>
+                             <family val="'
+                          || TO_CHAR (workbook.fonts_tab (f).pi_family)
+                          || '"/>
+                             <scheme val="none"/>
+                             </font>');
+      END LOOP;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '</fonts><fills count="' || TO_CHAR (workbook.fills_tab.COUNT) || '">');
+ 
+      FOR f IN 0 .. workbook.fills_tab.COUNT - 1
+      LOOP
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '<fill><patternFill patternType="'
+                          || workbook.fills_tab (f).vc_patterntype
+                          || '">'
+                          || CASE WHEN workbook.fills_tab (f).vc_fgrgb IS NOT NULL THEN '<fgColor rgb="' || workbook.fills_tab (f).vc_fgrgb || '"/>' END
+                          || '</patternFill></fill>');
+      END LOOP;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '</fills>
+<borders count="' || TO_CHAR (workbook.borders_tab.COUNT) || '">');
+ 
+      FOR b IN 0 .. workbook.borders_tab.COUNT - 1
+      LOOP
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '<border>'
+                          || CASE
+                                WHEN workbook.borders_tab (b).vc_left_border IS NULL THEN '<left/>'
+                                ELSE '<left style="' || workbook.borders_tab (b).vc_left_border || '"/>'
+                             END
+                          || CASE
+                                WHEN workbook.borders_tab (b).vc_right_border IS NULL THEN '<right/>'
+                                ELSE '<right style="' || workbook.borders_tab (b).vc_right_border || '"/>'
+                             END
+                          || CASE
+                                WHEN workbook.borders_tab (b).vc_top_border IS NULL THEN '<top/>'
+                                ELSE '<top style="' || workbook.borders_tab (b).vc_top_border || '"/>'
+                             END
+                          || CASE
+                                WHEN workbook.borders_tab (b).vc_bottom_border IS NULL THEN '<bottom/>'
+                                ELSE '<bottom style="' || workbook.borders_tab (b).vc_bottom_border || '"/>'
+                             END
+                          || '</border>');
+      END LOOP;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '</borders>
+<cellStyleXfs count="1">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0"/>
+</cellStyleXfs>
+<cellXfs count="' || TO_CHAR (workbook.cellxfs_tab.COUNT + 1) || '">
+<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>');
+ 
+      FOR x IN 1 .. workbook.cellxfs_tab.COUNT
+      LOOP
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<xf numFmtId="'
+                       || TO_CHAR (workbook.cellxfs_tab (x).pi_numfmtid)
+                       || '" fontId="'
+                       || TO_CHAR (workbook.cellxfs_tab (x).pi_fontid)
+                       || '" fillId="'
+                       || TO_CHAR (workbook.cellxfs_tab (x).pi_fillid)
+                       || '" borderId="'
+                       || TO_CHAR (workbook.cellxfs_tab (x).pi_borderid)
+                       || '">');
+ 
+         IF (   workbook.cellxfs_tab (x).alignment_rec.vc_horizontal IS NOT NULL
+             OR workbook.cellxfs_tab (x).alignment_rec.vc_vertical IS NOT NULL
+             OR workbook.cellxfs_tab (x).alignment_rec.bo_wraptext)
+         THEN
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<alignment'
+                       || CASE
+                             WHEN workbook.cellxfs_tab (x).alignment_rec.vc_horizontal IS NOT NULL
+                             THEN ' horizontal="' || workbook.cellxfs_tab (x).alignment_rec.vc_horizontal || '"'
+                          END
+                       || CASE
+                             WHEN workbook.cellxfs_tab (x).alignment_rec.vc_vertical IS NOT NULL
+                             THEN ' vertical="' || workbook.cellxfs_tab (x).alignment_rec.vc_vertical || '"'
+                          END
+                       || CASE WHEN workbook.cellxfs_tab (x).alignment_rec.bo_wraptext
+                               THEN ' wrapText="true"'
+                          END
+                       || '/>');
+         END IF;
+ 
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '</xf>');
+      END LOOP;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '</cellXfs>
+<cellStyles count="1">
+<cellStyle name="Normal" xfId="0" builtinId="0"/>
+</cellStyles>
+<dxfs count="0"/>
+<tableStyles count="0" defaultTableStyle="TableStyleMedium2" defaultPivotStyle="PivotStyleLight16"/>
+<extLst>
+<ext uri="{EB79DEF2-80B8-43e5-95BD-54CBDDF9020C}" xmlns:x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main">
+<x14:slicerStyles defaultSlicerStyle="SlicerStyleLight1"/>
+</ext>
+</extLst>
+</styleSheet>',
+         p_eof         => TRUE);
+      zip_util_pkg.add_file (t_excel, 'xl/styles.xml', t_xxx);
+      t_xxx := NULL;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<fileVersion appName="xl" lastEdited="5" lowestEdited="5" rupBuild="9302"/>
+<workbookPr date1904="false" defaultThemeVersion="124226"/>
+<bookViews>
+<workbookView xWindow="120" yWindow="45" windowWidth="19155" windowHeight="4935"/>
+</bookViews>
+<sheets>');
+ 
+      FOR s IN 1 .. workbook.sheets_tab.COUNT
+      LOOP
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '<sheet name="'
+                          || workbook.sheets_tab (s).vc_sheet_name
+                          || '" sheetId="'
+                          || TO_CHAR (s)
+                          || '" r:id="rId'
+                          || TO_CHAR (9 + s)
+                          || '"/>');
+      END LOOP;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '</sheets>');
+ 
+      IF workbook.defined_names_tab.COUNT > 0
+      THEN
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '<definedNames>');
+ 
+         FOR s IN 1 .. workbook.defined_names_tab.COUNT
+         LOOP
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '<definedName name="'
+                             || workbook.defined_names_tab (s).vc_defined_name
+                             || '"'
+                             || CASE
+                                   WHEN workbook.defined_names_tab (s).pi_sheet IS NOT NULL
+                                   THEN ' localSheetId="' || TO_CHAR (workbook.defined_names_tab (s).pi_sheet) || '"'
+                                END
+                             || '>'
+                             || workbook.defined_names_tab (s).vc_defined_ref
+                             || '</definedName>');
+         END LOOP;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '</definedNames>');
+      END IF;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<calcPr calcId="144525"/></workbook>',
+         p_eof         => TRUE);
+      zip_util_pkg.add_file (t_excel, 'xl/workbook.xml', t_xxx);
+      t_xxx := NULL;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Office Theme">
+<a:themeElements>
+<a:clrScheme name="Office">
+<a:dk1>
+<a:sysClr val="windowText" lastClr="000000"/>
+</a:dk1>
+<a:lt1>
+<a:sysClr val="window" lastClr="FFFFFF"/>
+</a:lt1>
+<a:dk2>
+<a:srgbClr val="1F497D"/>
+</a:dk2>
+<a:lt2>
+<a:srgbClr val="EEECE1"/>
+</a:lt2>
+<a:accent1>
+<a:srgbClr val="4F81BD"/>
+</a:accent1>
+<a:accent2>
+<a:srgbClr val="C0504D"/>
+</a:accent2>
+<a:accent3>
+<a:srgbClr val="9BBB59"/>
+</a:accent3>
+<a:accent4>
+<a:srgbClr val="8064A2"/>
+</a:accent4>
+<a:accent5>
+<a:srgbClr val="4BACC6"/>
+</a:accent5>
+<a:accent6>
+<a:srgbClr val="F79646"/>
+</a:accent6>
+<a:hlink>
+<a:srgbClr val="0000FF"/>
+</a:hlink>
+<a:folHlink>
+<a:srgbClr val="800080"/>
+</a:folHlink>
+</a:clrScheme>
+<a:fontScheme name="Office">
+<a:majorFont>
+<a:latin typeface="Cambria"/>
+<a:ea typeface=""/>
+<a:cs typeface=""/>
+<a:font script="Jpan" typeface="MS P????"/>
+<a:font script="Hang" typeface="?? ??"/>
+<a:font script="Hans" typeface="??"/>
+<a:font script="Hant" typeface="????"/>
+<a:font script="Arab" typeface="Times New Roman"/>
+<a:font script="Hebr" typeface="Times New Roman"/>
+<a:font script="Thai" typeface="Tahoma"/>
+<a:font script="Ethi" typeface="Nyala"/>
+<a:font script="Beng" typeface="Vrinda"/>
+<a:font script="Gujr" typeface="Shruti"/>
+<a:font script="Khmr" typeface="MoolBoran"/>
+<a:font script="Knda" typeface="Tunga"/>
+<a:font script="Guru" typeface="Raavi"/>
+<a:font script="Cans" typeface="Euphemia"/>
+<a:font script="Cher" typeface="Plantagenet Cherokee"/>
+<a:font script="Yiii" typeface="Microsoft Yi Baiti"/>
+<a:font script="Tibt" typeface="Microsoft Himalaya"/>
+<a:font script="Thaa" typeface="MV Boli"/>
+<a:font script="Deva" typeface="Mangal"/>
+<a:font script="Telu" typeface="Gautami"/>
+<a:font script="Taml" typeface="Latha"/>
+<a:font script="Syrc" typeface="Estrangelo Edessa"/>
+<a:font script="Orya" typeface="Kalinga"/>
+<a:font script="Mlym" typeface="Kartika"/>
+<a:font script="Laoo" typeface="DokChampa"/>
+<a:font script="Sinh" typeface="Iskoola Pota"/>
+<a:font script="Mong" typeface="Mongolian Baiti"/>
+<a:font script="Viet" typeface="Times New Roman"/>
+<a:font script="Uigh" typeface="Microsoft Uighur"/>
+<a:font script="Geor" typeface="Sylfaen"/>
+</a:majorFont>
+<a:minorFont>
+<a:latin typeface="Calibri"/>
+<a:ea typeface=""/>
+<a:cs typeface=""/>
+<a:font script="Jpan" typeface="MS P????"/>
+<a:font script="Hang" typeface="?? ??"/>
+<a:font script="Hans" typeface="??"/>
+<a:font script="Hant" typeface="????"/>
+<a:font script="Arab" typeface="Arial"/>
+<a:font script="Hebr" typeface="Arial"/>
+<a:font script="Thai" typeface="Tahoma"/>
+<a:font script="Ethi" typeface="Nyala"/>
+<a:font script="Beng" typeface="Vrinda"/>
+<a:font script="Gujr" typeface="Shruti"/>
+<a:font script="Khmr" typeface="DaunPenh"/>
+<a:font script="Knda" typeface="Tunga"/>
+<a:font script="Guru" typeface="Raavi"/>
+<a:font script="Cans" typeface="Euphemia"/>
+<a:font script="Cher" typeface="Plantagenet Cherokee"/>
+<a:font script="Yiii" typeface="Microsoft Yi Baiti"/>
+<a:font script="Tibt" typeface="Microsoft Himalaya"/>
+<a:font script="Thaa" typeface="MV Boli"/>
+<a:font script="Deva" typeface="Mangal"/>
+<a:font script="Telu" typeface="Gautami"/>
+<a:font script="Taml" typeface="Latha"/>
+<a:font script="Syrc" typeface="Estrangelo Edessa"/>
+<a:font script="Orya" typeface="Kalinga"/>
+<a:font script="Mlym" typeface="Kartika"/>
+<a:font script="Laoo" typeface="DokChampa"/>
+<a:font script="Sinh" typeface="Iskoola Pota"/>
+<a:font script="Mong" typeface="Mongolian Baiti"/>
+<a:font script="Viet" typeface="Arial"/>
+<a:font script="Uigh" typeface="Microsoft Uighur"/>
+<a:font script="Geor" typeface="Sylfaen"/>
+</a:minorFont>
+</a:fontScheme>
+<a:fmtScheme name="Office">
+<a:fillStyleLst>
+<a:solidFill>
+<a:schemeClr val="phClr"/>
+</a:solidFill>
+<a:gradFill rotWithShape="1">
+<a:gsLst>
+<a:gs pos="0">
+<a:schemeClr val="phClr">
+<a:tint val="50000"/>
+<a:satMod val="300000"/>
+</a:schemeClr>
+</a:gs>
+<a:gs pos="35000">
+<a:schemeClr val="phClr">
+<a:tint val="37000"/>
+<a:satMod val="300000"/>
+</a:schemeClr>
+</a:gs>
+<a:gs pos="100000">
+<a:schemeClr val="phClr">
+<a:tint val="15000"/>
+<a:satMod val="350000"/>
+</a:schemeClr>
+</a:gs>
+</a:gsLst>
+<a:lin ang="16200000" scaled="1"/>
+</a:gradFill>
+<a:gradFill rotWithShape="1">
+<a:gsLst>
+<a:gs pos="0">
+<a:schemeClr val="phClr">
+<a:shade val="51000"/>
+<a:satMod val="130000"/>
+</a:schemeClr>
+</a:gs>
+<a:gs pos="80000">
+<a:schemeClr val="phClr">
+<a:shade val="93000"/>
+<a:satMod val="130000"/>
+</a:schemeClr>
+</a:gs>
+<a:gs pos="100000">
+<a:schemeClr val="phClr">
+<a:shade val="94000"/>
+<a:satMod val="135000"/>
+</a:schemeClr>
+</a:gs>
+</a:gsLst>
+<a:lin ang="16200000" scaled="0"/>
+</a:gradFill>
+</a:fillStyleLst>
+<a:lnStyleLst>
+<a:ln w="9525" cap="flat" cmpd="sng" algn="ctr">
+<a:solidFill>
+<a:schemeClr val="phClr">
+<a:shade val="95000"/>
+<a:satMod val="105000"/>
+</a:schemeClr>
+</a:solidFill>
+<a:prstDash val="solid"/>
+</a:ln>
+<a:ln w="25400" cap="flat" cmpd="sng" algn="ctr">
+<a:solidFill>
+<a:schemeClr val="phClr"/>
+</a:solidFill>
+<a:prstDash val="solid"/>
+</a:ln>
+<a:ln w="38100" cap="flat" cmpd="sng" algn="ctr">
+<a:solidFill>
+<a:schemeClr val="phClr"/>
+</a:solidFill>
+<a:prstDash val="solid"/>
+</a:ln>
+</a:lnStyleLst>
+<a:effectStyleLst>
+<a:effectStyle>
+<a:effectLst>
+<a:outerShdw blurRad="40000" dist="20000" dir="5400000" rotWithShape="0">
+<a:srgbClr val="000000">
+<a:alpha val="38000"/>
+</a:srgbClr>
+</a:outerShdw>
+</a:effectLst>
+</a:effectStyle>
+<a:effectStyle>
+<a:effectLst>
+<a:outerShdw blurRad="40000" dist="23000" dir="5400000" rotWithShape="0">
+<a:srgbClr val="000000">
+<a:alpha val="35000"/>
+</a:srgbClr>
+</a:outerShdw>
+</a:effectLst>
+</a:effectStyle>
+<a:effectStyle>
+<a:effectLst>
+<a:outerShdw blurRad="40000" dist="23000" dir="5400000" rotWithShape="0">
+<a:srgbClr val="000000">
+<a:alpha val="35000"/>
+</a:srgbClr>
+</a:outerShdw>
+</a:effectLst>
+<a:scene3d>
+<a:camera prst="orthographicFront">
+<a:rot lat="0" lon="0" rev="0"/>
+</a:camera>
+<a:lightRig rig="threePt" dir="t">
+<a:rot lat="0" lon="0" rev="1200000"/>
+</a:lightRig>
+</a:scene3d>
+<a:sp3d>
+<a:bevelT w="63500" h="25400"/>
+</a:sp3d>
+</a:effectStyle>
+</a:effectStyleLst>
+<a:bgFillStyleLst>
+<a:solidFill>
+<a:schemeClr val="phClr"/>
+</a:solidFill>
+<a:gradFill rotWithShape="1">
+<a:gsLst>
+<a:gs pos="0">
+<a:schemeClr val="phClr">
+<a:tint val="40000"/>
+<a:satMod val="350000"/>
+</a:schemeClr>
+</a:gs>
+<a:gs pos="40000">
+<a:schemeClr val="phClr">
+<a:tint val="45000"/>
+<a:shade val="99000"/>
+<a:satMod val="350000"/>
+</a:schemeClr>
+</a:gs>
+<a:gs pos="100000">
+<a:schemeClr val="phClr">
+<a:shade val="20000"/>
+<a:satMod val="255000"/>
+</a:schemeClr>
+</a:gs>
+</a:gsLst>
+<a:path path="circle">
+<a:fillToRect l="50000" t="-80000" r="50000" b="180000"/>
+</a:path>
+</a:gradFill>
+<a:gradFill rotWithShape="1">
+<a:gsLst>
+<a:gs pos="0">
+<a:schemeClr val="phClr">
+<a:tint val="80000"/>
+<a:satMod val="300000"/>
+</a:schemeClr>
+</a:gs>
+<a:gs pos="100000">
+<a:schemeClr val="phClr">
+<a:shade val="30000"/>
+<a:satMod val="200000"/>
+</a:schemeClr>
+</a:gs>
+</a:gsLst>
+<a:path path="circle">
+<a:fillToRect l="50000" t="50000" r="50000" b="50000"/>
+</a:path>
+</a:gradFill>
+</a:bgFillStyleLst>
+</a:fmtScheme>
+</a:themeElements>
+<a:objectDefaults/>
+<a:extraClrSchemeLst/>
+</a:theme>',
+         p_eof =>         TRUE);
+      zip_util_pkg.add_file (t_excel, 'xl/theme/theme1.xml', t_xxx);
+      t_xxx := NULL;
+ 
+      FOR s IN 1 .. workbook.sheets_tab.COUNT
+      LOOP
+         t_col_min := 16384;
+         t_col_max := 1;
+         t_row_ind := workbook.sheets_tab (s).sheet_rows_tab.FIRST;
+ 
+         WHILE t_row_ind IS NOT NULL
+         LOOP
+            t_col_min := LEAST (t_col_min, workbook.sheets_tab (s).sheet_rows_tab (t_row_ind).FIRST);
+            t_col_max := GREATEST (t_col_max, workbook.sheets_tab (s).sheet_rows_tab (t_row_ind).LAST);
+            t_row_ind := workbook.sheets_tab (s).sheet_rows_tab.NEXT (t_row_ind);
+         END LOOP;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac">
+<dimension ref="'
+                       || alfan_col (t_col_min)
+                       || workbook.sheets_tab (s).sheet_rows_tab.FIRST
+                       || ':'
+                       || alfan_col (t_col_max)
+                       || workbook.sheets_tab (s).sheet_rows_tab.LAST
+                       || '"/>
+<sheetViews>
+<sheetView'
+                       || CASE WHEN s = 1 THEN ' tabSelected="1"' END
+                       || ' workbookViewId="0">');
+ 
+         IF workbook.sheets_tab (s).pi_freeze_rows > 0 AND workbook.sheets_tab (s).pi_freeze_cols > 0
+         THEN
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<pane xSplit="'
+                        || TO_CHAR (workbook.sheets_tab (s).pi_freeze_cols)
+                        || '" '
+                        || 'ySplit="'
+                        || TO_CHAR (workbook.sheets_tab (s).pi_freeze_rows)
+                        || '" '
+                        || 'topLeftCell="'
+                        || alfan_col (workbook.sheets_tab (s).pi_freeze_cols + 1)
+                        || TO_CHAR (workbook.sheets_tab (s).pi_freeze_rows + 1)
+                        || '" '
+                        || 'activePane="bottomLeft" state="frozen"/>');
+         ELSE
+            IF workbook.sheets_tab (s).pi_freeze_rows > 0
+            THEN
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '<pane ySplit="'
+                                || TO_CHAR (workbook.sheets_tab (s).pi_freeze_rows)
+                                || '" topLeftCell="A'
+                                || TO_CHAR (workbook.sheets_tab (s).pi_freeze_rows + 1)
+                                || '" activePane="bottomLeft" state="frozen"/>');
+            END IF;
+ 
+            IF workbook.sheets_tab (s).pi_freeze_cols > 0
+            THEN
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '<pane xSplit="'
+                                || TO_CHAR (workbook.sheets_tab (s).pi_freeze_cols)
+                                || '" topLeftCell="'
+                                || alfan_col (workbook.sheets_tab (s).pi_freeze_cols + 1)
+                                || '1" activePane="bottomLeft" state="frozen"/>');
+            END IF;
+         END IF;
+ 
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '</sheetView>
+</sheetViews>
+<sheetFormatPr defaultRowHeight="15" x14ac:dyDescent="0.25"/>');
+ 
+         IF workbook.sheets_tab (s).widths_tab_tab.COUNT > 0
+         THEN
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '<cols>');
+            t_col_ind := workbook.sheets_tab (s).widths_tab_tab.FIRST;
+ 
+            WHILE t_col_ind IS NOT NULL
+            LOOP
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '<col min="'
+                                || TO_CHAR (t_col_ind)
+                                || '" max="'
+                                || TO_CHAR (t_col_ind)
+                                || '" width="'
+                                || TO_CHAR (workbook.sheets_tab (s).widths_tab_tab (t_col_ind), 'TM9', 'NLS_NUMERIC_CHARACTERS=.,')
+                                || '" customWidth="1"/>');
+               t_col_ind := workbook.sheets_tab (s).widths_tab_tab.NEXT (t_col_ind);
+            END LOOP;
+ 
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '</cols>');
+         END IF;
+ 
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '<sheetData>');
+         t_row_ind := workbook.sheets_tab (s).sheet_rows_tab.FIRST;
+ 
+         WHILE t_row_ind IS NOT NULL
+         LOOP
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '<row r="' || t_row_ind || '" spans="' || TO_CHAR (t_col_min) || ':' || TO_CHAR (t_col_max) || '">');
+            t_col_ind := workbook.sheets_tab (s).sheet_rows_tab (t_row_ind).FIRST;
+ 
+            WHILE t_col_ind IS NOT NULL
+            LOOP
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '<c r="'
+                                || alfan_col (t_col_ind)
+                                || TO_CHAR (t_row_ind)
+                                || '"'
+                                || ' '
+                                || workbook.sheets_tab (s).sheet_rows_tab (t_row_ind) (t_col_ind).vc_style_def
+                                || '><v>'
+                                || TO_CHAR (workbook.sheets_tab (s).sheet_rows_tab (t_row_ind) (t_col_ind).nn_value_id,
+                                            'TM9',
+                                            'NLS_NUMERIC_CHARACTERS=.,')
+                                || '</v></c>');
+ 
+               t_col_ind := workbook.sheets_tab (s).sheet_rows_tab (t_row_ind).NEXT (t_col_ind);
+            END LOOP;
+ 
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '</row>');
+            t_row_ind := workbook.sheets_tab (s).sheet_rows_tab.NEXT (t_row_ind);
+         END LOOP;
+ 
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '</sheetData>');
+ 
+         FOR a IN 1 .. workbook.sheets_tab (s).autofilters_tab.COUNT
+         LOOP
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '<autoFilter ref="'
+                             || alfan_col (NVL (workbook.sheets_tab (s).autofilters_tab (A).pi_column_start, t_col_min))
+                             || TO_CHAR (NVL (workbook.sheets_tab (s).autofilters_tab (a).pi_row_start, workbook.sheets_tab (s).sheet_rows_tab.FIRST))
+                             || ':'
+                             || alfan_col (
+                                   COALESCE (workbook.sheets_tab (s).autofilters_tab (a).pi_column_end,
+                                             workbook.sheets_tab (s).autofilters_tab (a).pi_column_start,
+                                             t_col_max))
+                             || TO_CHAR (NVL (workbook.sheets_tab (s).autofilters_tab (A).pi_row_end, workbook.sheets_tab (s).sheet_rows_tab.LAST))
+                             || '"/>');
+         END LOOP;
+ 
+         IF workbook.sheets_tab (s).mergecells_tab.COUNT > 0
+         THEN
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '<mergeCells count="' || TO_CHAR (workbook.sheets_tab (s).mergecells_tab.COUNT) || '">');
+ 
+            FOR m IN 1 .. workbook.sheets_tab (s).mergecells_tab.COUNT
+            LOOP
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '<mergeCell ref="' || workbook.sheets_tab (s).mergecells_tab (m) || '"/>');
+            END LOOP;
+ 
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '</mergeCells>');
+         END IF;
+ 
+         --
+ 
+         IF workbook.sheets_tab (s).validations_tab.COUNT > 0
+         THEN
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '<dataValidations count="' || TO_CHAR (workbook.sheets_tab (s).validations_tab.COUNT) || '">');
+ 
+            FOR m IN 1 .. workbook.sheets_tab (s).validations_tab.COUNT
+            LOOP
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '<dataValidation'
+                                || ' type="'
+                                || workbook.sheets_tab (s).validations_tab (m).vc_validation_type
+                                || '"'
+                                || ' errorStyle="'
+                                || workbook.sheets_tab (s).validations_tab (m).vc_errorstyle
+                                || '"'
+                                || ' allowBlank="'
+                                || CASE WHEN NVL (workbook.sheets_tab (s).validations_tab (m).bo_allowblank, TRUE) THEN '1' ELSE '0' END
+                                || '"'
+                                || ' sqref="'
+                                || workbook.sheets_tab (s).validations_tab (m).vc_sqref
+                                || '"');
+ 
+               IF workbook.sheets_tab (s).validations_tab (m).vc_prompt IS NOT NULL
+               THEN
+                  clob_vc_concat(
+                     p_clob        => t_xxx,
+                     p_vc_buffer   => t_tmp,
+                     p_vc_addition => ' showInputMessage="1" prompt="'
+                                   || workbook.sheets_tab (s).validations_tab (m).vc_prompt
+                                   || '"');
+ 
+                  IF workbook.sheets_tab (s).validations_tab (m).vc_title IS NOT NULL
+                  THEN
+                     clob_vc_concat(
+                        p_clob        => t_xxx,
+                        p_vc_buffer   => t_tmp,
+                        p_vc_addition => ' promptTitle="'
+                                      || workbook.sheets_tab (s).validations_tab (m).vc_title
+                                      || '"');
+                  END IF;
+               END IF;
+ 
+               IF workbook.sheets_tab (s).validations_tab (m).bo_showerrormessage
+               THEN
+                  clob_vc_concat(
+                     p_clob        => t_xxx,
+                     p_vc_buffer   => t_tmp,
+                     p_vc_addition => ' showErrorMessage="1"');
+ 
+                  IF workbook.sheets_tab (s).validations_tab (m).vc_error_title IS NOT NULL
+                  THEN
+                     clob_vc_concat(
+                        p_clob        => t_xxx,
+                        p_vc_buffer   => t_tmp,
+                        p_vc_addition => ' errorTitle="'
+                                      || workbook.sheets_tab (s).validations_tab (m).vc_error_title
+                                      || '"');
+                  END IF;
+ 
+                  IF workbook.sheets_tab (s).validations_tab (m).vc_error_txt IS NOT NULL
+                  THEN
+                     clob_vc_concat(
+                        p_clob        => t_xxx,
+                        p_vc_buffer   => t_tmp,
+                        p_vc_addition => ' error="'
+                                      || workbook.sheets_tab (s).validations_tab (m).vc_error_txt
+                                      || '"');
+                  END IF;
+               END IF;
+ 
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '>');
+ 
+               IF workbook.sheets_tab (s).validations_tab (m).vc_formula1 IS NOT NULL
+               THEN
+                  clob_vc_concat(
+                     p_clob        => t_xxx,
+                     p_vc_buffer   => t_tmp,
+                     p_vc_addition => '<formula1>'
+                                   || workbook.sheets_tab (s).validations_tab (m).vc_formula1
+                                   || '</formula1>');
+               END IF;
+ 
+               IF workbook.sheets_tab (s).validations_tab (m).vc_formula2 IS NOT NULL
+               THEN
+                  clob_vc_concat(
+                     p_clob        => t_xxx,
+                     p_vc_buffer   => t_tmp,
+                     p_vc_addition => '<formula2>'
+                                   || workbook.sheets_tab (s).validations_tab (m).vc_formula2
+                                   || '</formula2>');
+               END IF;
+ 
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '</dataValidation>');
+            END LOOP;
+ 
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '</dataValidations>');
+         END IF;
+ 
+         IF workbook.sheets_tab (s).hyperlinks_tab.COUNT > 0
+         THEN
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '<hyperlinks>');
+ 
+            FOR h IN 1 .. workbook.sheets_tab (s).hyperlinks_tab.COUNT
+            LOOP
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '<hyperlink ref="'
+                                || workbook.sheets_tab (s).hyperlinks_tab (h).vc_cell
+                                || '" r:id="rId'
+                                || TO_CHAR (h)
+                                || '"/>');
+            END LOOP;
+ 
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '</hyperlinks>');
+         END IF;
+ 
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '<pageMargins left="0.7" right="0.7" top="0.75" bottom="0.75" header="0.3" footer="0.3"/>');
+ 
+         IF workbook.sheets_tab (s).comments_tab.COUNT > 0
+         THEN
+            -- AMEI, 20141129 Bugfix for
+            -- t_xxx := t_xxx || '<legacyDrawing r:id="rId' || (workbook.sheets_tab (s).hyperlinks_tab.COUNT + 1) || '"/>';
+            -- Raised ORA-06502: PL/SQL: numerischer oder Wertefehler,
+            -- occurs when a at least on column has a Help Text,
+            -- occurs NOT when NONE column has a Help Text at all.
+            -- Bugfix by explicit conversion TO_CHAR(...)
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '<legacyDrawing r:id="rId'
+                             || TO_CHAR (workbook.sheets_tab (s).hyperlinks_tab.COUNT + 1)
+                             || '"/>');
+         END IF;
+ 
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '</worksheet>',
+            p_eof         => TRUE);
+         zip_util_pkg.add_file (t_excel, 'xl/worksheets/sheet' || TO_CHAR (s) || '.xml', t_xxx);
+         t_xxx := NULL;
+ 
+         IF workbook.sheets_tab (s).hyperlinks_tab.COUNT > 0 OR workbook.sheets_tab (s).comments_tab.COUNT > 0
+         THEN
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">');
+ 
+            IF workbook.sheets_tab (s).comments_tab.COUNT > 0
+            THEN
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '<Relationship Id="rId'
+                                || TO_CHAR (workbook.sheets_tab (s).hyperlinks_tab.COUNT + 2)
+                                || '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/comments" Target="../comments'
+                                || s
+                                || '.xml"/>');
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '<Relationship Id="rId'
+                                || TO_CHAR (workbook.sheets_tab (s).hyperlinks_tab.COUNT + 1)
+                                || '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/vmlDrawing" Target="../drawings/vmlDrawing'
+                                || TO_CHAR (s)
+                                || '.vml"/>');
+            END IF;
+ 
+            FOR h IN 1 .. workbook.sheets_tab (s).hyperlinks_tab.COUNT
+            LOOP
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '<Relationship Id="rId'
+                                || TO_CHAR (h)
+                                || '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="'
+                                || workbook.sheets_tab (s).hyperlinks_tab (h).vc_url
+                                || '" TargetMode="External"/>');
+            END LOOP;
+ 
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '</Relationships>',
+               p_eof         => TRUE);
+            zip_util_pkg.add_file (t_excel, 'xl/worksheets/_rels/sheet' || TO_CHAR (s) || '.xml.rels', t_xxx);
+            t_xxx := NULL;
+         END IF;
+ 
+         IF workbook.sheets_tab (s).comments_tab.COUNT > 0
+         THEN
+            DECLARE
+               cnt          PLS_INTEGER;
+               author_ind   st_author;
+            BEGIN
+               gv_authors_tab.delete;
+ 
+               FOR c IN 1 .. workbook.sheets_tab (s).comments_tab.COUNT
+               LOOP
+                  gv_authors_tab (workbook.sheets_tab (s).comments_tab (c).vc_author) := 0;
+               END LOOP;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<comments xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+<authors>');
+               cnt := 0;
+               author_ind := gv_authors_tab.FIRST;
+ 
+               WHILE author_ind IS NOT NULL OR gv_authors_tab.NEXT (author_ind) IS NOT NULL
+               LOOP
+                  gv_authors_tab (author_ind) := cnt;
+                  clob_vc_concat(
+                     p_clob        => t_xxx,
+                     p_vc_buffer   => t_tmp,
+                     p_vc_addition => '<author>' || author_ind || '</author>');
+                  cnt := cnt + 1;
+                  author_ind := gv_authors_tab.NEXT (author_ind);
+               END LOOP;
+            END;
+ 
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '</authors><commentList>');
+ 
+            FOR c IN 1 .. workbook.sheets_tab (s).comments_tab.COUNT
+            LOOP
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '<comment ref="'
+                                || alfan_col (workbook.sheets_tab (s).comments_tab (c).pi_column_nr)
+                                || TO_CHAR (workbook.sheets_tab (s).comments_tab (c).pi_row_nr)
+                                || '" authorId="'
+                                || gv_authors_tab (workbook.sheets_tab (s).comments_tab (c).vc_author)
+                                || '"><text>');
+ 
+               IF workbook.sheets_tab (s).comments_tab (c).vc_author IS NOT NULL
+               THEN
+                  clob_vc_concat(
+                     p_clob        => t_xxx,
+                     p_vc_buffer   => t_tmp,
+                     p_vc_addition => '<r><rPr><b/><sz val="9"/><color indexed="81"/><rFont val="Tahoma"/><charset val="1"/></rPr><t xml:space="preserve">'
+                                   || workbook.sheets_tab (s).comments_tab (c).vc_author
+                                   || ':</t></r>');
+               END IF;
+ 
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '<r><rPr><sz val="9"/><color indexed="81"/><rFont val="Tahoma"/><charset val="1"/></rPr><t xml:space="preserve">'
+                             || CASE WHEN workbook.sheets_tab (s).comments_tab (c).vc_author IS NOT NULL THEN '' END
+                             || workbook.sheets_tab (s).comments_tab (c).vc_text
+                             || '</t></r></text></comment>');
+            END LOOP;
+ 
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '</commentList></comments>',
+               p_eof         => TRUE);
+            zip_util_pkg.add_file (t_excel, 'xl/comments' || TO_CHAR (s) || '.xml', t_xxx);
+            t_xxx := NULL;
+ 
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '<xml xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+<o:shapelayout v:ext="edit"><o:idmap v:ext="edit" data="2"/></o:shapelayout>
+<v:shapetype id="_x0000_t202" coordsize="21600,21600" o:spt="202" path="m,l,21600r21600,l21600,xe"><v:stroke joinstyle="miter"/><v:path gradientshapeok="t" o:connecttype="rect"/></v:shapetype>');
+ 
+            FOR c IN 1 .. workbook.sheets_tab (s).comments_tab.COUNT
+            LOOP
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '<v:shape id="_x0000_s'
+                                || TO_CHAR (c)
+                                || '" type="#_x0000_t202" style="position:absolute;margin-left:35.25pt;margin-top:3pt;z-index:'
+                                || TO_CHAR (c)
+                                || ';visibility:hidden;" fillcolor="#ffffe1" o:insetmode="auto">
+<v:fill color2="#ffffe1"/><v:shadow on="t" color="black" obscured="t"/><v:path o:connecttype="none"/>
+<v:textbox style="mso-direction-alt:auto"><div style="text-align:left"></div></v:textbox>
+<x:ClientData ObjectType="Note"><x:MoveWithCells/><x:SizeWithCells/>');
+               t_w := workbook.sheets_tab (s).comments_tab (c).pi_width;
+               t_c := 1;
+ 
+               LOOP
+                  IF workbook.sheets_tab (s).widths_tab_tab.EXISTS (workbook.sheets_tab (s).comments_tab (c).pi_column_nr + t_c)
+                  THEN
+                     t_cw := 256 * workbook.sheets_tab (s).widths_tab_tab (workbook.sheets_tab (s).comments_tab (c).pi_column_nr + t_c);
+                     t_cw := TRUNC ( (t_cw + 18) / 256 * 7);                                              -- assume default 11 point Calibri
+                  ELSE
+                     t_cw := 64;
+                  END IF;
+ 
+                  EXIT WHEN t_w < t_cw;
+                  t_c := t_c + 1;
+                  t_w := t_w - t_cw;
+               END LOOP;
+ 
+               t_h := workbook.sheets_tab (s).comments_tab (c).pi_height;
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '<x:Anchor>'
+                                || TO_CHAR (workbook.sheets_tab (s).comments_tab (c).pi_column_nr)
+                                || ',15,'
+                                || TO_CHAR (workbook.sheets_tab (s).comments_tab (c).pi_row_nr)
+                                || ',30,'
+                                || TO_CHAR (workbook.sheets_tab (s).comments_tab (c).pi_column_nr + t_c - 1)
+                                || ','
+                                || TO_CHAR (ROUND (t_w))
+                                || ','
+                                || TO_CHAR (workbook.sheets_tab (s).comments_tab (c).pi_row_nr + 1 + TRUNC (t_h / 20))
+                                || ','
+                                || TO_CHAR (MOD (t_h, 20))
+                                || '</x:Anchor>');
+               clob_vc_concat(
+                  p_clob        => t_xxx,
+                  p_vc_buffer   => t_tmp,
+                  p_vc_addition => '<x:AutoFill>false</x:AutoFill><x:Row>'
+                                || TO_CHAR (workbook.sheets_tab (s).comments_tab (c).pi_row_nr - 1)
+                                || '</x:Row><x:Column>'
+                                || TO_CHAR (workbook.sheets_tab (s).comments_tab (c).pi_column_nr - 1)
+                                || '</x:Column></x:ClientData></v:shape>');
+            END LOOP;
+ 
+            clob_vc_concat(
+               p_clob        => t_xxx,
+               p_vc_buffer   => t_tmp,
+               p_vc_addition => '</xml>',
+               p_eof         => TRUE);
+            zip_util_pkg.add_file (t_excel, 'xl/drawings/vmlDrawing' || TO_CHAR (s) || '.vml', t_xxx);
+            t_xxx := NULL;
+         END IF;
+      END LOOP;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>
+<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+<Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/theme" Target="theme/theme1.xml"/>');
+ 
+      FOR s IN 1 .. workbook.sheets_tab.COUNT
+      LOOP
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '<Relationship Id="rId'
+                          || TO_CHAR (9 + s)
+                          || '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'
+                          || TO_CHAR (s)
+                          || '.xml"/>');
+      END LOOP;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '</Relationships>',
+         p_eof         => TRUE);
+      zip_util_pkg.add_file (t_excel, 'xl/_rels/workbook.xml.rels', t_xxx);
+      t_xxx := NULL;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="'
+                       || workbook.pi_str_cnt
+                       || '" uniqueCount="'
+                       || TO_CHAR (workbook.strings_tab.COUNT)
+                       || '">');
+ 
+      FOR i IN 0 .. workbook.str_ind_tab.COUNT - 1
+      LOOP
+         clob_vc_concat(
+            p_clob        => t_xxx,
+            p_vc_buffer   => t_tmp,
+            p_vc_addition => '<si><t>'
+                          || DBMS_XMLGEN.CONVERT (SUBSTR (workbook.str_ind_tab (i), 1, 32000))
+                          || '</t></si>');
+      END LOOP;
+ 
+      clob_vc_concat(
+         p_clob        => t_xxx,
+         p_vc_buffer   => t_tmp,
+         p_vc_addition => '</sst>',
+         p_eof         => TRUE);
+      zip_util_pkg.add_file (t_excel, 'xl/sharedStrings.xml', t_xxx);
+      t_xxx := NULL;
+      zip_util_pkg.finish_zip (t_excel);
+      clear_workbook;
+      RETURN t_excel;
+   END finish;
+ 
+   FUNCTION query2sheet (p_sql VARCHAR2, p_column_headers BOOLEAN := TRUE, p_sheet PLS_INTEGER := NULL)
+      RETURN BLOB
+   AS
+      t_sheet       PLS_INTEGER;
+      t_c           INTEGER;
+      t_col_cnt     INTEGER;
+      t_desc_tab    DBMS_SQL.desc_tab2;
+      d_tab         DBMS_SQL.date_table;
+      n_tab         DBMS_SQL.number_table;
+      v_tab         DBMS_SQL.varchar2_table;
+      t_bulk_size   PLS_INTEGER := 200;
+      t_r           INTEGER;
+      t_cur_row     PLS_INTEGER;
+   BEGIN
+      t_sheet := COALESCE (p_sheet, new_sheet);
+      t_c := DBMS_SQL.open_cursor;
+      DBMS_SQL.parse (t_c, p_sql, DBMS_SQL.native);
+      DBMS_SQL.describe_columns2 (t_c, t_col_cnt, t_desc_tab);
+ 
+      FOR c IN 1 .. t_col_cnt
+      LOOP
+         IF p_column_headers
+         THEN
+            cell (c,
+                  1,
+                  t_desc_tab (c).col_name,
+                  p_sheet   => t_sheet);
+         END IF;
+ 
+         CASE
+            WHEN t_desc_tab (c).col_type IN (2, 100, 101)
+            THEN
+               DBMS_SQL.define_array (t_c,
+                                      c,
+                                      n_tab,
+                                      t_bulk_size,
+                                      1);
+            WHEN t_desc_tab (c).col_type IN (12,
+                                             178,
+                                             179,
+                                             180,
+                                             181,
+                                             231)
+            THEN
+               DBMS_SQL.define_array (t_c,
+                                      c,
+                                      d_tab,
+                                      t_bulk_size,
+                                      1);
+            WHEN t_desc_tab (c).col_type IN (1,
+                                             8,
+                                             9,
+                                             96,
+                                             112)
+            THEN
+               DBMS_SQL.define_array (t_c,
+                                      c,
+                                      v_tab,
+                                      t_bulk_size,
+                                      1);
+            ELSE
+               NULL;
+         END CASE;
+      END LOOP;
+ 
+      t_cur_row := CASE WHEN p_column_headers THEN 2 ELSE 1 END;
+ 
+      t_r := DBMS_SQL.execute (t_c);
+ 
+      LOOP
+         t_r := DBMS_SQL.fetch_rows (t_c);
+ 
+         IF t_r > 0
+         THEN
+            FOR c IN 1 .. t_col_cnt
+            LOOP
+               CASE
+                  WHEN t_desc_tab (c).col_type IN (2, 100, 101)
+                  THEN
+                     DBMS_SQL.COLUMN_VALUE (t_c, c, n_tab);
+ 
+                     FOR i IN 0 .. t_r - 1
+                     LOOP
+                        IF n_tab (i + n_tab.FIRST) IS NOT NULL
+                        THEN
+                           cell (c,
+                                 t_cur_row + i,
+                                 n_tab (i + n_tab.FIRST),
+                                 p_sheet   => t_sheet);
+                        END IF;
+                     END LOOP;
+ 
+                     n_tab.delete;
+                  WHEN t_desc_tab (c).col_type IN (12,
+                                                   178,
+                                                   179,
+                                                   180,
+                                                   181,
+                                                   231)
+                  THEN
+                     DBMS_SQL.COLUMN_VALUE (t_c, c, d_tab);
+ 
+                     FOR i IN 0 .. t_r - 1
+                     LOOP
+                        IF d_tab (i + d_tab.FIRST) IS NOT NULL
+                        THEN
+                           cell (c,
+                                 t_cur_row + i,
+                                 d_tab (i + d_tab.FIRST),
+                                 p_sheet   => t_sheet);
+                        END IF;
+                     END LOOP;
+ 
+                     d_tab.delete;
+                  WHEN t_desc_tab (c).col_type IN (1,
+                                                   8,
+                                                   9,
+                                                   96,
+                                                   112)
+                  THEN
+                     DBMS_SQL.COLUMN_VALUE (t_c, c, v_tab);
+ 
+                     FOR i IN 0 .. t_r - 1
+                     LOOP
+                        IF v_tab (i + v_tab.FIRST) IS NOT NULL
+                        THEN
+                           cell (c,
+                                 t_cur_row + i,
+                                 v_tab (i + v_tab.FIRST),
+                                 p_sheet   => t_sheet);
+                        END IF;
+                     END LOOP;
+ 
+                     v_tab.delete;
+                  ELSE
+                     NULL;
+               END CASE;
+            END LOOP;
+         END IF;
+ 
+         EXIT WHEN t_r != t_bulk_size;
+         t_cur_row := t_cur_row + t_r;
+      END LOOP;
+ 
+      DBMS_SQL.close_cursor (t_c);
+      RETURN finish;
+   EXCEPTION
+      WHEN OTHERS
+      THEN
+         IF DBMS_SQL.is_open (t_c)
+         THEN
+            DBMS_SQL.close_cursor (t_c);
+         END IF;
+ 
+         RETURN NULL;
+   END query2sheet;
+ 
+   FUNCTION finish2 (p_clob                 IN OUT NOCOPY CLOB,
+                     p_columns              PLS_INTEGER,
+                     p_rows                 PLS_INTEGER,
+                     p_XLSX_date_format     VARCHAR2,
+                     p_XLSX_datetime_format VARCHAR2)
+      RETURN BLOB
+   AS
+      t_excel               BLOB;
+      t_xxx                 CLOB;
+      t_str                 VARCHAR2 (32767);
+   BEGIN
+      DBMS_LOB.createtemporary (t_excel, TRUE);
+    DBMS_LOB.createtemporary (t_xxx, TRUE);
+    --
+      t_str := '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+           xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <dimension ref="A1:'
+                       || alfan_col (p_columns)
+                       || p_rows
+                       || '"/>
+  <sheetViews>
+    <sheetView tabSelected="1"
+               workbookViewId="0">
+      <pane ySplit="1"
+            topLeftCell="A2"
+            activePane="bottomLeft"
+            state="frozen"/>
+      <selection pane="bottomLeft"
+                 activeCell="A2"
+                 sqref="A2"/>
+    </sheetView>
+  </sheetViews><sheetData>';
+      DBMS_LOB.writeappend (t_xxx, length(t_str), t_str);
+    DBMS_LOB.append (t_xxx, p_clob);
+    DBMS_LOB.freetemporary (p_clob);
+      t_str := '</sheetData><autoFilter ref="A1:'
+                             || alfan_col (p_columns)
+                             || p_rows
+               || '"/>
+</worksheet>';
+      DBMS_LOB.writeappend (t_xxx, length(t_str), t_str);
+      zip_util_pkg.add_file (t_excel, 'xl/worksheets/sheet1.xml', t_xxx);
+      dbms_lob.trim( t_xxx, 0 );
+      --
+      t_str := '<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml" />
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml" />
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml" />
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml" />
+  <Override PartName="/docProps/core.xml" ContentType="application/vnd.openxmlformats-package.core-properties+xml"/>
+</Types>';
+      DBMS_LOB.writeappend (t_xxx, length(t_str), t_str);
+      zip_util_pkg.add_file (t_excel, '[Content_Types].xml', t_xxx);
+      dbms_lob.trim( t_xxx, 0 );
+      --
+      t_str := '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Target="xl/workbook.xml" Id="r_main" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"/>
+  <Relationship Target="docProps/core.xml" Id="r_props" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties"/>
+</Relationships>';
+      DBMS_LOB.writeappend (t_xxx, length(t_str), t_str);
+      zip_util_pkg.add_file (t_excel, '_rels/.rels', t_xxx);
+      dbms_lob.trim( t_xxx, 0 );
+      --
+      t_str := '<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+          xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets>
+    <sheet name="Sheet1"
+           sheetId="1"
+           r:id="r_sheet1" />
+  </sheets>
+  <definedNames>
+    <definedName name="_xlnm._FilterDatabase"
+                 localSheetId="0"
+                 hidden="1">Sheet1!$A$1:'
+           || alfan_col(p_columns) || '$' || p_rows
+           || '</definedName>
+  </definedNames>
+</workbook>';
+      DBMS_LOB.writeappend (t_xxx, length(t_str), t_str);
+      zip_util_pkg.add_file (t_excel, 'xl/workbook.xml', t_xxx);
+      dbms_lob.trim( t_xxx, 0 );
+      --
+      t_str := '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties"
+                   xmlns:dc="http://purl.org/dc/elements/1.1/"
+                   xmlns:dcterms="http://purl.org/dc/terms/"
+                   xmlns:dcmitype="http://purl.org/dc/dcmitype/"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <dc:creator>'
+    || NVL(v('APP_USER'),SYS_CONTEXT ('userenv', 'os_user'))
+    || '</dc:creator>
+  <cp:lastModifiedBy>'
+    || NVL(v('APP_USER'),SYS_CONTEXT ('userenv', 'os_user'))
+    || '</cp:lastModifiedBy>
+  <dcterms:created xsi:type="dcterms:W3CDTF">'
+    || TO_CHAR (sysdate, 'yyyy-mm-dd"T"hh24:mi:ss')
+    || '</dcterms:created>
+  <dcterms:modified xsi:type="dcterms:W3CDTF">'
+    || TO_CHAR (sysdate, 'yyyy-mm-dd"T"hh24:mi:ss')
+    || '</dcterms:modified>
+</cp:coreProperties>';
+    DBMS_LOB.writeappend (t_xxx, length(t_str), t_str);
+      zip_util_pkg.add_file (t_excel, 'docProps/core.xml', t_xxx);
+      dbms_lob.trim( t_xxx, 0 );
+      --
+      t_str := '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <numFmts count="2">
+    <numFmt numFmtId="1000"
+            formatCode="' || orafmt2excel(p_XLSX_date_format) || '" />
+    <numFmt numFmtId="1001"
+            formatCode="' || orafmt2excel(p_XLSX_datetime_format) || '" />
+  </numFmts>
+  <fonts count="2">
+    <font />
+    <font>
+      <b/>
+    </font>
+  </fonts>
+  <fills count="3">
+    <fill>
+      <patternFill patternType="none"/>
+    </fill>
+    <fill>
+      <patternFill patternType="gray125"/>
+    </fill>
+    <fill>
+      <patternFill patternType="solid">
+        <fgColor rgb="FFE1E1E1"/>
+        <bgColor indexed="64"/>
+      </patternFill>
+    </fill>
+  </fills>
+  <borders count="1">
+    <border />
+  </borders>
+  <cellStyleXfs count="1">
+    <xf />
+  </cellStyleXfs>
+  <cellXfs count="4">
+    <xf />
+    <xf fontId="1" fillId="2" applyFont="1" applyFill="1"/>
+    <xf numFmtId="1000" />
+    <xf numFmtId="1001" />
+  </cellXfs>
+</styleSheet>';
+      DBMS_LOB.writeappend (t_xxx, length(t_str), t_str);
+      zip_util_pkg.add_file (t_excel, 'xl/styles.xml', t_xxx);
+      dbms_lob.trim( t_xxx, 0 );
+      --
+      t_str := '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Target="worksheets/sheet1.xml" Id="r_sheet1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"/>
+  <Relationship Target="styles.xml" Id="r_styles" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles"/>
+</Relationships>';
+      DBMS_LOB.writeappend (t_xxx, length(t_str), t_str);
+      zip_util_pkg.add_file (t_excel, 'xl/_rels/workbook.xml.rels', t_xxx);
+      dbms_lob.trim( t_xxx, 0 );
+      --
+      zip_util_pkg.finish_zip (t_excel);
+      DBMS_LOB.freetemporary (t_xxx);
+      RETURN t_excel;
+   exception
+    when others then
+        raise_application_error(-20002, '|+|' || sqlerrm || ',' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE || '|+|');
+   END finish2;
+ 
+   FUNCTION query2sheet2(p_sql                  VARCHAR2,
+                         p_XLSX_date_format     VARCHAR2 := 'dd/mm/yyyy',
+                         p_XLSX_datetime_format VARCHAR2 := 'dd/mm/yyyy hh24:mi:ss')
+      RETURN BLOB
+   AS
+      t_c               INTEGER;
+      t_r               INTEGER;
+      t_desc_tab        DBMS_SQL.desc_tab2;
+      t_clob_sql        CLOB;
+      t_clob_result     CLOB;
+      t_column_name     VARCHAR2(30);
+      t_column_type     VARCHAR2(10);
+      t_str             VARCHAR2(32767);
+      t_cols_count      PLS_INTEGER := 0;
+      t_rows_count      PLS_INTEGER := 0;
+   BEGIN
+      DBMS_LOB.createtemporary (t_clob_sql, true);
+      t_c := DBMS_SQL.open_cursor;
+      DBMS_SQL.parse (t_c, p_sql, DBMS_SQL.native);
+      DBMS_SQL.describe_columns2 (t_c, t_cols_count, t_desc_tab);
+ 
+      t_str := 'select xmlserialize(content xmlagg(t_xml)) as t_xml, count(*) as cnt from ( select '
+            ||      'xmlelement("row",';
+      DBMS_LOB.writeappend(t_clob_sql, length(t_str), t_str);
+      FOR c IN 1 .. t_cols_count
+      LOOP
+         t_column_name := t_desc_tab (c).col_name;
+         t_str := 'xmlelement("c",xmlattributes(''inlineStr'' as "t",''1'' as "s"),xmlelement("is",xmlelement("t",xmlcdata('''||t_column_name||'''))))' || case when c != t_cols_count then ',' end;
+         DBMS_LOB.writeappend(t_clob_sql, length(t_str), t_str);
+      END LOOP;
+      t_str := ') as t_xml from dual ';
+ 
+      DBMS_LOB.writeappend(t_clob_sql, length(t_str), t_str);
+      t_str := ' union all select '
+            ||      'xmlelement("row",';
+      DBMS_LOB.writeappend(t_clob_sql, length(t_str), t_str);
+      FOR c IN 1 .. t_cols_count
+      LOOP
+         t_column_name := t_desc_tab (c).col_name;
+         t_column_type :=
+            case
+                when t_desc_tab(c).col_type IN (2,100,101)              then 'n' -- number
+                when t_desc_tab(c).col_type IN (12,178,179,180,181,231) then 'd' -- date
+                when t_desc_tab(c).col_type IN (1,9,96,112)             then 'inlineStr' -- char
+                when t_desc_tab(c).col_type IN (8)                      then 'long' -- long
+                else 'other'
+            end;
+         t_str :=
+                'xmlelement("c",'
+              ||    'xmlattributes('''||case when t_column_type in ('long','other') then 'inlineStr' else t_column_type end||''' as "t"'
+              ||case when t_column_type != 'd' then '),' else ',case when nvl(trunc('||t_column_name||'),trunc(sysdate))=nvl('||t_column_name||',trunc(sysdate)) then ''2'' else ''3'' end as "s"),' end
+              ||case
+                    when t_column_type = 'inlineStr' then
+                        'xmlelement("is",xmlelement("t",xmlcdata('||t_column_name||')))'
+                    when t_column_type = 'long' then
+                        'xmlelement("is",xmlelement("t",xmlcdata(''I don''''t know how to select longs'')))'
+                    when t_column_type = 'other' then
+                        'xmlelement("is",xmlelement("t",xmlcdata(to_clob('||t_column_name||'))))'
+                    else
+                        'case '
+                        ||'when '||t_column_name||' is not null then xmlelement("v",'||case when t_column_type='d' then 'case when nvl(trunc('||t_column_name||'),trunc(sysdate))=nvl('||t_column_name||',trunc(sysdate)) then to_char('||t_column_name||',''yyyymmdd'') else to_char('||t_column_name||',''yyyymmdd"T"hh24miss'') end' else 'xmlcdata('||t_column_name||')' end ||') '
+                        ||'else xmlelement("v") '
+                        ||'end'
+                end
+              ||')'
+              || case when c != t_cols_count then ',' end;
+         DBMS_LOB.writeappend(t_clob_sql, length(t_str), t_str);
+      END LOOP;
+      t_str := ') as t_xml FROM ( ' || p_sql || ' )) ';
+      DBMS_LOB.writeappend (t_clob_sql, length(t_str), t_str);
+      DBMS_SQL.parse (t_c, t_clob_sql, DBMS_SQL.native);
+      DBMS_LOB.freetemporary (t_clob_sql);
+      DBMS_SQL.define_column (t_c, 1, t_clob_result);
+      DBMS_SQL.define_column (t_c, 2, t_rows_count);
+      t_r := DBMS_SQL.execute_and_fetch (t_c);
+      DBMS_SQL.column_value (t_c, 1, t_clob_result);
+      DBMS_SQL.column_value (t_c, 2, t_rows_count);
+      DBMS_SQL.close_cursor (t_c);
+      return finish2(p_clob             => t_clob_result,
+                     p_columns          => t_cols_count,
+                     p_rows             => t_rows_count,
+                     p_XLSX_date_format      => p_XLSX_date_format,
+                     p_XLSX_datetime_format  => p_XLSX_datetime_format) ;
+   EXCEPTION
+      WHEN OTHERS THEN
+         IF DBMS_SQL.is_open (t_c) THEN DBMS_SQL.close_cursor (t_c); END IF;
+         if DBMS_LOB.istemporary (t_clob_sql)=1 then DBMS_LOB.freetemporary (t_clob_sql); end if;
+         raise_application_error(-20001, '|+|' || sqlerrm || ',' || DBMS_UTILITY.FORMAT_ERROR_BACKTRACE || '|+|');
+   END query2sheet2;
+END;
+
+```
+
+
+
+
+## ZIP_UTIL_PKG
+
+
+### SPECIFICATION
+
+```sql
+create or replace PACKAGE zip_util_pkg
+  AUTHID CURRENT_USER
+AS
+
+/**
+* Purpose:      Package handles zipping and unzipping of files
+*
+* Remarks:      by Anton Scheffer, see http://forums.oracle.com/forums/thread.jspa?messageID=9289744#9289744
+*
+*               for unzipping, see http://technology.amis.nl/blog/8090/parsing-a-microsoft-word-docx-and-unzip-zipfiles-with-plsql
+*               for zipping, see http://forums.oracle.com/forums/thread.jspa?threadID=1115748&tstart=0
+*
+* Who     Date        Description
+* ------  ----------  --------------------------------
+* MBR     09.01.2011  Created
+* MK      16.04.2014  Removed UTL_FILE dependencies and file operations
+* MK      01.07.2014  Added get_file_clob to immediately retrieve file content as a CLOB
+*
+* @headcom
+**/
+
+  /** List of all files within zipped file */
+  TYPE t_file_list IS TABLE OF CLOB;
+
+
+  FUNCTION little_endian( p_big IN NUMBER
+                        , p_bytes IN pls_integer := 4
+                        )
+    RETURN RAW;
+
+  FUNCTION get_file_list( p_zipped_blob IN BLOB
+                        , p_encoding IN VARCHAR2 := NULL /* Use CP850 for zip files created with a German Winzip to see umlauts, etc */
+                        )
+    RETURN t_file_list;
+
+  FUNCTION get_file( p_zipped_blob IN BLOB
+                   , p_file_name IN VARCHAR2
+                   , p_encoding IN VARCHAR2 := NULL
+                   )
+    RETURN BLOB;
+
+  FUNCTION get_file_clob( p_zipped_blob IN BLOB
+                        , p_file_name IN VARCHAR2
+                        , p_encoding IN VARCHAR2 := NULL
+                        )
+    RETURN CLOB;
+
+  PROCEDURE add_file( p_zipped_blob IN OUT NOCOPY BLOB
+                    , p_name IN VARCHAR2
+                    , p_content IN BLOB
+                    )
+  ;
+
+  PROCEDURE add_file( p_zipped_blob IN OUT NOCOPY BLOB
+                    , p_name IN VARCHAR2
+                    , p_content CLOB
+                    )
+  ;
+
+  PROCEDURE finish_zip( p_zipped_blob IN OUT NOCOPY BLOB);
+
+END zip_util_pkg;
+```
+
+### BODY
+
+
+```sql
+create or replace package body zip_util_pkg
+is
+
+/**
+* Purpose:      Package handles zipping and unzipping of files
+*
+* Remarks:      by Anton Scheffer, see http://forums.oracle.com/forums/thread.jspa?messageID=9289744#9289744
+*
+*               for unzipping, see http://technology.amis.nl/blog/8090/parsing-a-microsoft-word-docx-and-unzip-zipfiles-with-plsql
+*               for zipping, see http://forums.oracle.com/forums/thread.jspa?threadID=1115748&tstart=0
+*
+* Who     Date        Description
+* ------  ----------  --------------------------------
+* MBR     09.01.2011  Created
+* MBR     21.05.2012  Fixed a bug related to use of dbms_lob.substr in get_file (use dbms_lob.copy instead)
+* MK      01.07.2014  Added get_file_clob to immediatly retrieve file content as a CLOB
+*
+* @headcom
+*/
+
+  /* Constants */
+  c_max_length CONSTANT PLS_INTEGER := 32767;
+  c_file_comment CONSTANT RAW(32767) := utl_raw.cast_to_raw('Implementation by Anton Scheffer');
+
+  /**
+  * Convert to little endian raw
+  */
+  FUNCTION little_endian( p_big IN NUMBER
+                        , p_bytes IN pls_integer := 4
+                        )
+    RETURN RAW
+  AS
+  BEGIN
+    RETURN utl_raw.substr( utl_raw.cast_from_binary_integer( p_big
+                                                             , utl_raw.little_endian
+                                                           )
+                         , 1
+                         , p_bytes
+                         );
+  END little_endian;
+
+  FUNCTION get_modify_date( p_modify_date IN DATE DEFAULT SYSDATE)
+    RETURN RAW
+  AS
+  BEGIN
+    RETURN little_endian( to_number( to_char( p_modify_date, 'dd' ) )
+                          + to_number( to_char( p_modify_date, 'mm' ) ) * 32
+                          + ( to_number( to_char( p_modify_date, 'yyyy' ) ) - 1980 ) * 512
+                        , 2
+                        );
+  END get_modify_date;
+
+  FUNCTION get_modify_time( p_modify_date IN DATE DEFAULT SYSDATE)
+    RETURN RAW
+  AS
+  BEGIN
+    RETURN little_endian( to_number( to_char( p_modify_date, 'ss' ) ) / 2
+                          + to_number( to_char( p_modify_date, 'mi' ) ) * 32
+                          + to_number( to_char( p_modify_date, 'hh24' ) ) * 2048
+                        , 2
+                        );
+  END get_modify_time;
+
+
+  FUNCTION raw2num( p_value in raw )
+    RETURN NUMBER
+  AS
+  BEGIN                                               -- note: FFFFFFFF => -1
+    RETURN utl_raw.cast_to_binary_integer( p_value
+                                         , utl_raw.little_endian
+                                         );
+
+  END raw2num;
+
+  FUNCTION raw2varchar2( p_raw IN RAW
+                       , p_encoding IN VARCHAR2
+                       )
+    RETURN VARCHAR2
+  AS
+  BEGIN
+    RETURN nvl( utl_i18n.raw_to_char( p_raw
+                                    , p_encoding
+                                    )
+              , utl_i18n.raw_to_char ( p_raw
+                                     , utl_i18n.map_charset( p_encoding
+                                                           , utl_i18n.generic_context
+                                                           , utl_i18n.iana_to_oracle
+                                                           )
+                                     )
+              );
+  END raw2varchar2;
+
+  FUNCTION raw2varchar2( p_zipped_blob IN BLOB
+                       , p_start_index IN NUMBER
+                       , p_end_index IN NUMBER
+                       , p_encoding IN VARCHAR2
+                       )
+    RETURN VARCHAR2
+  AS
+  BEGIN
+    RETURN raw2varchar2( dbms_lob.substr( p_zipped_blob
+                                        , p_start_index
+                                        , p_end_index
+                                        )
+                       , p_encoding
+                       );
+  END raw2varchar2;
+
+
+  FUNCTION raw2num( p_zipped_blob IN BLOB
+                  , p_start_index IN NUMBER
+                  , p_end_index IN NUMBER
+                  )
+    RETURN NUMBER
+  AS
+  BEGIN
+    RETURN raw2num( dbms_lob.substr( p_zipped_blob
+                                   , p_start_index
+                                   , p_end_index
+                                   )
+                  );
+  END raw2num;
+
+  FUNCTION get_file_list( p_zipped_blob IN BLOB
+                        , p_encoding IN VARCHAR2 := NULL
+  )
+    RETURN t_file_list
+  AS
+    l_index INTEGER;
+    l_header_index INTEGER;
+    l_file_list t_file_list;
+  BEGIN
+    l_index := dbms_lob.getlength( p_zipped_blob ) - 21;
+    LOOP
+      EXIT WHEN dbms_lob.substr( p_zipped_blob, 4, l_index ) = hextoraw( '504B0506' )
+             OR l_index < 1;
+      l_index := l_index - 1;
+    END LOOP;
+
+    IF l_index <= 0 THEN
+      RETURN NULL;
+    END IF;
+
+    l_header_index := raw2num( p_zipped_blob, 4, l_index + 16 ) + 1;
+    l_file_list := t_file_list( );
+    l_file_list.EXTEND( raw2num( p_zipped_blob, 2, l_index + 10 ) );
+
+    FOR i IN 1 .. raw2num( p_zipped_blob, 2, l_index + 8 )
+    LOOP
+      l_file_list( i ) := raw2varchar2( p_zipped_blob
+                                      , raw2num( p_zipped_blob, 2, l_header_index + 28 )
+                                      , l_header_index + 46
+                                      , p_encoding
+                                      );
+      l_header_index := l_header_index
+                      + 46
+                      + raw2num( dbms_lob.substr( p_zipped_blob, 2, l_header_index + 28 ) )
+                      + raw2num( dbms_lob.substr( p_zipped_blob, 2, l_header_index + 30 ) )
+                      + raw2num( dbms_lob.substr( p_zipped_blob, 2, l_header_index + 32 ) );
+    END LOOP;
+
+    RETURN l_file_list;
+  END get_file_list;
+
+  FUNCTION get_file( p_zipped_blob IN BLOB
+                   , p_file_name IN VARCHAR2
+                   , p_encoding IN VARCHAR2 := NULL
+                   )
+    RETURN BLOB
+  AS
+    l_retval BLOB;
+    l_index INTEGER;
+    l_header_index INTEGER;
+    l_file_index INTEGER;
+  BEGIN
+    l_index := dbms_lob.getlength( p_zipped_blob ) - 21;
+    LOOP
+      EXIT WHEN dbms_lob.substr( p_zipped_blob, 4, l_index ) = hextoraw( '504B0506' )
+             OR l_index < 1;
+      l_index := l_index - 1;
+    END LOOP;
+
+    IF l_index <= 0 THEN
+      RETURN NULL;
+    END IF;
+
+    l_header_index := raw2num( p_zipped_blob, 4, l_index + 16 ) + 1;
+    FOR i IN 1 .. raw2num( p_zipped_blob, 2, l_index + 8 )
+    LOOP
+      IF p_file_name = raw2varchar2( p_zipped_blob
+                                   , raw2num( p_zipped_blob, 2, l_header_index + 28 )
+                                   , l_header_index + 46
+                                   , p_encoding
+                                   )
+      THEN
+        IF dbms_lob.substr( p_zipped_blob, 2, l_header_index + 10 ) = hextoraw( '0800' ) -- deflate
+        THEN
+          l_file_index := raw2num( p_zipped_blob, 4, l_header_index + 42 );
+          l_retval := hextoraw( '1F8B0800000000000003' ); -- gzip header
+          dbms_lob.copy( l_retval
+                       , p_zipped_blob
+                       , raw2num( p_zipped_blob, 4, l_file_index + 19 )
+                       , 11
+                       , l_file_index
+                         + 31
+                         + raw2num( p_zipped_blob, 2, l_file_index + 27 )
+                         + raw2num( p_zipped_blob, 2, l_file_index + 29 )
+                       );
+          dbms_lob.append( l_retval
+                         , dbms_lob.substr( p_zipped_blob, 4, l_file_index + 15 )
+                         );
+          dbms_lob.append( l_retval
+                         , dbms_lob.substr( p_zipped_blob, 4, l_file_index + 23 )
+                         );
+          RETURN utl_compress.lz_uncompress( l_retval );
+        END IF;
+        IF dbms_lob.substr( p_zipped_blob, 2, l_header_index + 10) = hextoraw( '0000' ) -- The file is stored (no compression)
+        THEN
+          l_file_index := raw2num( p_zipped_blob, 4, l_header_index + 42 );
+
+          dbms_lob.createtemporary(l_retval, cache => true);
+
+          dbms_lob.copy(dest_lob => l_retval,
+                        src_lob => p_zipped_blob,
+                        amount => raw2num( p_zipped_blob, 4, l_file_index + 19 ),
+                        dest_offset => 1,
+                        src_offset => l_file_index + 31 + raw2num(dbms_lob.substr(p_zipped_blob, 2, l_file_index + 27)) + raw2num(dbms_lob.substr( p_zipped_blob, 2, l_file_index + 29))
+                       );
+
+          RETURN l_retval;
+        END IF;
+      END IF;
+      l_header_index := l_header_index
+                      + 46
+                      + raw2num( p_zipped_blob, 2, l_header_index + 28 )
+                      + raw2num( p_zipped_blob, 2, l_header_index + 30 )
+                      + raw2num( p_zipped_blob, 2, l_header_index + 32 );
+    END LOOP;
+    RETURN NULL;
+  END get_file;
+
+  FUNCTION get_file_clob( p_zipped_blob IN BLOB
+                        , p_file_name IN VARCHAR2
+                        , p_encoding IN VARCHAR2 := NULL
+                        )
+    RETURN CLOB
+  AS
+    l_file_blob BLOB;
+    l_return CLOB;
+    l_dest_offset INTEGER := 1;
+    l_src_offset INTEGER := 1;
+    l_warning INTEGER;
+    l_lang_ctx INTEGER := dbms_lob.DEFAULT_LANG_CTX;
+  BEGIN
+    l_file_blob := get_file( p_zipped_blob => p_zipped_blob
+                           , p_file_name => p_file_name
+                           , p_encoding => p_encoding
+                           );
+    IF l_file_blob IS NULL THEN
+      raise_application_error( -20000
+                             , 'File not found...'
+                             );
+    END IF;
+    dbms_lob.createtemporary (l_return, true);
+    dbms_lob.converttoclob( dest_lob => l_return
+                          , src_blob => l_file_blob
+                          , amount => dbms_lob.lobmaxsize
+                          , dest_offset => l_dest_offset
+                          , src_offset => l_src_offset
+                          , blob_csid => dbms_lob.default_csid
+                          , lang_context =>l_lang_ctx
+                          , warning => l_warning
+                          );
+    RETURN l_return;
+  END get_file_clob;
+
+  PROCEDURE add_file( p_zipped_blob IN OUT NOCOPY BLOB
+                    , p_name IN VARCHAR2
+                    , p_content IN BLOB
+  )
+  AS
+    l_new_file BLOB;
+    l_content_length INTEGER;
+  BEGIN
+    l_new_file := utl_compress.lz_compress( p_content );
+    l_content_length := dbms_lob.getlength( l_new_file );
+
+    IF p_zipped_blob IS NULL THEN
+      dbms_lob.createtemporary( p_zipped_blob, true );
+    END IF;
+    dbms_lob.APPEND( p_zipped_blob
+                   , utl_raw.concat ( hextoraw( '504B0304' )                                -- Local file header signature
+                                    , hextoraw( '1400' )                                    -- version 2.0
+                                    , hextoraw( '0000' )                                    -- no General purpose bits
+                                    , hextoraw( '0800' )                                    -- deflate
+                                    , get_modify_time                                       -- File last modification time
+                                    , get_modify_date                                       -- File last modification date
+                                    , dbms_lob.substr( l_new_file, 4, l_content_length - 7) -- CRC-321
+                                    , little_endian( l_content_length - 18 )                -- compressed size
+                                    , little_endian( dbms_lob.getlength( p_content ) )      -- uncompressed size
+                                    , little_endian( LENGTH( p_name ), 2 )                  -- File name length
+                                    , hextoraw( '0000' )                                    -- Extra field length
+                                    , utl_raw.cast_to_raw( p_name )                         -- File name
+                                    )
+                   );
+    dbms_lob.copy( p_zipped_blob
+                 , l_new_file
+                 , l_content_length - 18
+                 , dbms_lob.getlength( p_zipped_blob ) + 1
+                 , 11
+                 );  -- compressed content
+    dbms_lob.freetemporary( l_new_file );
+  END add_file;
+
+  PROCEDURE add_file( p_zipped_blob IN OUT NOCOPY BLOB
+                    , p_name IN VARCHAR2
+                    , p_content CLOB
+                    )
+  AS
+    l_tmp BLOB;
+    dest_offset INTEGER := 1;
+    src_offset INTEGER := 1;
+    l_warning INTEGER;
+    l_lang_ctx INTEGER := dbms_lob.DEFAULT_LANG_CTX;
+  BEGIN
+    dbms_lob.createtemporary( l_tmp, true );
+    dbms_lob.converttoblob( l_tmp
+                          , p_content
+                          , dbms_lob.lobmaxsize
+                          , dest_offset
+                          , src_offset
+                          , nls_charset_id( 'AL32UTF8' )
+                          , l_lang_ctx
+                          , l_warning
+                          );
+    add_file( p_zipped_blob, p_name, l_tmp );
+    dbms_lob.freetemporary( l_tmp );
+  END add_file;
+
+  PROCEDURE finish_zip( p_zipped_blob IN OUT NOCOPY BLOB )
+  AS
+    l_cnt pls_integer := 0;
+    l_offset INTEGER;
+    l_offset_directory INTEGER;
+    l_offset_header INTEGER;
+  BEGIN
+    l_offset_directory := dbms_lob.getlength( p_zipped_blob );
+    l_offset := dbms_lob.instr( p_zipped_blob
+                              , hextoraw( '504B0304' )
+                              , 1
+                              );
+    WHILE l_offset > 0 LOOP
+      l_cnt := l_cnt + 1;
+      dbms_lob.APPEND( p_zipped_blob
+                     , utl_raw.concat( hextoraw( '504B0102' )                           -- Central directory file header signature
+                                     , hextoraw( '1400' )                               -- version 2.0
+                                     , dbms_lob.substr( p_zipped_blob, 26, l_offset + 4 )
+                                     , hextoraw( '0000' )                               -- File comment length
+                                     , hextoraw( '0000' )                               -- Disk number where file starts
+                                     , hextoraw( '0100' )                               -- Internal file attributes
+                                     , hextoraw( '2000B681' )                           -- External file attributes
+                                     , little_endian( l_offset - 1 )                    -- Relative offset of local file header
+                                     , dbms_lob.substr( p_zipped_blob
+                                                      , utl_raw.cast_to_binary_integer( dbms_lob.substr( p_zipped_blob
+                                                                                                       , 2
+                                                                                                       , l_offset + 26
+                                                                                                       )
+                                                                                      , utl_raw.little_endian
+                                                                                      )
+                                                      , l_offset + 30
+                                                      )                                 -- File name
+                                    )
+                     );
+      l_offset := dbms_lob.instr( p_zipped_blob
+                                , hextoraw( '504B0304' )
+                                , l_offset + 32
+                                );
+    END LOOP;
+
+    l_offset_header := dbms_lob.getlength( p_zipped_blob );
+    dbms_lob.APPEND( p_zipped_blob
+                  , utl_raw.concat( hextoraw( '504B0506' )                                         -- End of central directory signature
+                                   , hextoraw( '0000' )                                            -- Number of this disk
+                                   , hextoraw( '0000' )                                            -- Disk where central directory starts
+                                   , little_endian( l_cnt, 2 )                                     -- Number of central directory records on this disk
+                                   , little_endian( l_cnt, 2 )                                     -- Total number of central directory records
+                                   , little_endian( l_offset_header - l_offset_directory )         -- Size of central directory
+                                   , little_endian( l_offset_directory )                           -- Relative offset of local file header
+                                   , little_endian( nvl( utl_raw.length( c_file_comment ), 0 ), 2) -- ZIP file comment length
+                                   , c_file_comment
+                                   )
+                    );
+  END finish_zip;
+
+end zip_util_pkg;
+```
 
 
 
