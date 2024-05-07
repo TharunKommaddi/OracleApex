@@ -5,10 +5,16 @@
     - [`https://cardoso.hashnode.dev/scrolling-columns-in-interactive-reports-and-interactive-grids-in-oracle-apex`](https://cardoso.hashnode.dev/scrolling-columns-in-interactive-reports-and-interactive-grids-in-oracle-apex "Visit Link")
 
 
-1. **Scrolling Columns in Interactive Reports and Interactive Grids in Oracle APEX**
-    - [`https://cardoso.hashnode.dev/scrolling-columns-in-interactive-reports-and-interactive-grids-in-oracle-apex`](https://cardoso.hashnode.dev/scrolling-columns-in-interactive-reports-and-interactive-grids-in-oracle-apex "Visit Link")
+2. **chipbaber - oracle text and few other stuff**
+    - [`https://github.com/chipbaber`](https://github.com/chipbaber "Visit Link")
 	
 	
+3. **benqmamun - Backup complete orcale apex app + data base**
+    - [`https://github.com/benqmamun/POS-SOFTWARE-Oracle-APEX`](https://github.com/benqmamun/POS-SOFTWARE-Oracle-APEX "Visit Link")
+	
+	
+4. **Create a custom color palette with any form of format **
+    - [`https://www.radix-ui.com/colors/custom`](https://www.radix-ui.com/colors/custom "Visit Link")
 	
 	
 	
