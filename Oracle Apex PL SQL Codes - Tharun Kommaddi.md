@@ -13,7 +13,7 @@
     - [`https://github.com/benqmamun/POS-SOFTWARE-Oracle-APEX`](https://github.com/benqmamun/POS-SOFTWARE-Oracle-APEX "Visit Link")
 	
 	
-4. **Create a custom color palette with any form of format **
+4. **Create a custom color palette with any form of format**
     - [`https://www.radix-ui.com/colors/custom`](https://www.radix-ui.com/colors/custom "Visit Link")
 	
 	
