@@ -32073,4 +32073,11 @@ order by cte1.LETZTE_AENDERUNG_DATUM desc
 ```
 
 
+# Count the number of occurrences for each unique/distinct value in the IN_KRAFT_RELEVANT column of the t_ms_parameter table
+
+```sql
+SELECT IN_KRAFT_RELEVANT, COUNT(*) 
+FROM t_ms_parameter
+GROUP BY IN_KRAFT_RELEVANT;
+```
 
