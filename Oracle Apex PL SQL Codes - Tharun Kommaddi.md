@@ -281,9 +281,9 @@ ALTER TABLE T_VORSCHRIFT_REF_LAND ADD Bemerkung_Englisch VARCHAR2(4000 CHAR);
 
 # Page 25 tabel T_VORSCHRIFT_REF_THEMA 
 
-```sql
-ALTER TABLE T_VORSCHRIFT_REF_THEMA ADD Bemerkung_Englisch VARCHAR2(4000 CHAR);
 ```
+ALTER TABLE T_VORSCHRIFT_REF_THEMA ADD Bemerkung_Englisch VARCHAR2(4000 CHAR);
+```sql
 
 
 
@@ -5433,8 +5433,8 @@ li b {
 ```
 
 
-#  Icon will show instead of link in interactive Report but when we click on icon it will 
-redirect to link in new tab. for that we need to write that code in sql report using case statement
+# Underline . Icon will show instead of link in interactive Report but when we click on icon it will redirect to link in new tab. for that we need to write that code in sql report using case statement
+
 ```sql
 CASE WHEN v.url_getex_vorschrift IS NOT NULL 
             THEN '<a href="' || v.url_getex_vorschrift || '" title="' || v.url_getex_vorschrift || '"><span class="fa fa-link"></span></a>'
@@ -5444,6 +5444,7 @@ END AS getex_vorschrift_link
 
 
 # To empty the columsn name we will use nbsp; for the column to keep empty in interactive report
+
 ```sql
 &nbsp;
 ```
@@ -5451,6 +5452,7 @@ END AS getex_vorschrift_link
 
 
 #  Procedure with two parameters returning output like select statement
+
 ```sql
 CREATE OR REPLACE PROCEDURE FILTER_DATA (
     p_operator IN VARCHAR2,
@@ -32071,6 +32073,7 @@ where
 
 order by cte1.LETZTE_AENDERUNG_DATUM desc
 ```
+
 
 
 # Count the number of occurrences for each unique/distinct value in the IN_KRAFT_RELEVANT column of the t_ms_parameter table
