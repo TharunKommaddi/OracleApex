@@ -1,4 +1,19 @@
+# LINKS
 
+
+1. **Scrolling Columns in Interactive Reports and Interactive Grids in Oracle APEX**
+    - [`https://cardoso.hashnode.dev/scrolling-columns-in-interactive-reports-and-interactive-grids-in-oracle-apex`](https://cardoso.hashnode.dev/scrolling-columns-in-interactive-reports-and-interactive-grids-in-oracle-apex "Visit Link")
+
+
+1. **Scrolling Columns in Interactive Reports and Interactive Grids in Oracle APEX**
+    - [`https://cardoso.hashnode.dev/scrolling-columns-in-interactive-reports-and-interactive-grids-in-oracle-apex`](https://cardoso.hashnode.dev/scrolling-columns-in-interactive-reports-and-interactive-grids-in-oracle-apex "Visit Link")
+	
+	
+	
+	
+	
+	
+	
 # Inserts distinct translations from apex_application_trans_repos into T_TRANSLATION_TABLE where German and English texts differ for application_id 112 and ensures no duplicate German entries in the T_TRANSLATION_TABLE.
 
 ```sql
@@ -3820,6 +3835,24 @@ function (options) {
 
 
 # Complete Oracle Text package in dynamic and also in lov ( list of value) 
+
+
+## LINKS 
+
+- [`https://stackoverflow.com/questions/19476447/oracle-text-search-on-multiple-tables-and-joins`](https://stackoverflow.com/questions/19476447/oracle-text-search-on-multiple-tables-and-joins "Visit Link")
+
+- [`https://forums.oracle.com/ords/apexds/post/building-index-from-multiple-tables-for-text-search-0964`](https://forums.oracle.com/ords/apexds/post/building-index-from-multiple-tables-for-text-search-0964 "Visit Link")
+
+- [`https://www.orafaq.com/forum/t/204625/`](https://www.orafaq.com/forum/t/204625/ "Visit Link")
+
+- [`https://asktom.oracle.com/ords/f?p=100%3A11%3A0%3A%3A%3A%3AP11_QUESTION_ID%3A9455353124561`](https://asktom.oracle.com/ords/f?p=100%3A11%3A0%3A%3A%3A%3AP11_QUESTION_ID%3A9455353124561 "Visit Link")
+
+- [`https://forums.oracle.com/ords/apexds/post/create-a-text-index-on-multiple-tables-3390`](https://forums.oracle.com/ords/apexds/post/create-a-text-index-on-multiple-tables-3390 "Visit Link")
+
+
+
+
+
 
 ### Specification
 ```sql
