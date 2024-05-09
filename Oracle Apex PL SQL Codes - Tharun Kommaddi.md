@@ -17,7 +17,9 @@
 	
 4. **Create a custom color palette with any form of format**
     - [`https://www.radix-ui.com/colors/custom`](https://www.radix-ui.com/colors/custom "Visit Link")
-	
+
+5. **Oracle Property Graphs: 7 Astonishing Benefits to Enterprises**
+    - [`[https://www.radix-ui.com/colors/custom](https://pierre-yotti-it.com/oracle-property-graphs-7-astonishing-benefits-to-enterprises/)`]([https://www.radix-ui.com/colors/custom](https://pierre-yotti-it.com/oracle-property-graphs-7-astonishing-benefits-to-enterprises/) "Visit Link")
 	
 	
 	
