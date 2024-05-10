@@ -32153,3 +32153,37 @@ WHERE
   TEXT_9 = 'x' OR
   TEXT_10 = 'x';
 ```
+
+
+
+# HEIRARCHY TREE CODE REGULAR EXPRESSIONS
+
+```SQL
+SELECT  vrt.themaid, th.nummer , th.bezeichnung AS Thema
+FROM t_vorschrift_ref_thema vrt
+JOIN T_THEMA th ON vrt.themaid = th.THEMAID
+WHERE vrt.VORSCHRIFTID = 7029 -- Ensuring 'VORSCHRIFTID' is qualified by 'vrt'
+AND vrt.themaid IN (
+    SELECT th2.THEMAID 
+    FROM T_THEMA th2 
+    WHERE th2.THEMAID NOT IN (
+        SELECT DISTINCT th3.PARENTID 
+        FROM T_THEMA th3 
+        WHERE th3.PARENTID IS NOT NULL
+       
+    )
+)
+
+
+
+ORDER BY 
+    TO_NUMBER(SUBSTR(th.nummer, 1, INSTR(th.nummer, '.') - 1)),
+    TO_NUMBER(SUBSTR(th.nummer, INSTR(th.nummer, '.') + 1));
+	
+	
+ORDER BY 
+    TO_NUMBER(REGEXP_SUBSTR(th.nummer, '^[^.]+', 1, 1)),
+    TO_NUMBER(REGEXP_SUBSTR(th.nummer, '[^.]+', 1, 2)),
+    TO_NUMBER(REGEXP_SUBSTR(th.nummer, '[^.]+', 1, 3)),
+    TO_NUMBER(REGEXP_SUBSTR(th.nummer, '[^.]+', 1, 4));
+```
