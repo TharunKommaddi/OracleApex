@@ -32155,7 +32155,6 @@ WHERE
 ```
 
 
-
 # HEIRARCHY TREE CODE REGULAR EXPRESSIONS
 
 ```SQL
@@ -32186,4 +32185,495 @@ ORDER BY
     TO_NUMBER(REGEXP_SUBSTR(th.nummer, '[^.]+', 1, 2)),
     TO_NUMBER(REGEXP_SUBSTR(th.nummer, '[^.]+', 1, 3)),
     TO_NUMBER(REGEXP_SUBSTR(th.nummer, '[^.]+', 1, 4));
+```
+
+
+
+# HOW TO DEBUG FUNCTION QUERY RETURN CODES
+
+
+```sql
+create or replace PACKAGE BODY PCK_RI_EXPORT AS
+  FUNCTION fGetSQLExportCombined RETURN CLOB AS
+    lSQL CLOB;
+  BEGIN
+    lSQL := '
+   with cte_kc as (  
+    select trc.themaid, listagg(kc.bezeichnung, '', '') within group (order by kc.bezeichnung) as liste_cluster
+    from t_thema_ref_cluster trc
+    join t_konzern_cluster kc on (kc.konzern_clusterid = trc.konzern_clusterid)
+    group by trc.themaid
+), cte_krz as (select LISTAGG(tebak.KURZ, '', '') WITHIN GROUP (ORDER BY tebak.KURZ) KURZ,t.themaid
+    from t_thema t
+    left outer join T_THEMA_REF_ET_B_AK ttrebak on ttrebak.THEMAID = t.themaid
+    left outer join t_et_b_ak tebak on tebak.ET_B_AKID = ttrebak.ET_B_AKID
+    group by t.themaid
+ ), cte1 as (
+    select anzeige_in, cd.landid, cd.themaid, cd.vorschriftid, rr_vorschriftid, v.vorschrift_nummer, v_rr.vorschrift_nummer as rr_vorschrift_nummer,
+    
+    count(*) over (partition by cd.landid, cd.themaid) max_thema_land, rr_ursp_verknuepfung,
+    v_vk.vorschrift_nummer as verkn_vorschrift, t.nummer as thema_nummer, nvl(t2.name_eng,t.bezeichnung) as thema,
+    cd.regel_nr, t.thema_sortorder, cte_kc.liste_cluster konzern_clusters, cte_krz.kurz, t2.DESCRIPTION_SOC_DE, t2.DESCRIPTION_SOC_EN
+    from v_thema_baum t
+    join t_land_statement_of_completeness lsc  on (lsc.themaid = t.themaid and lsc.landid = v(''P430_LAND''))
+    join t_thema t2 on (t.themaid = t2.themaid)
+    join t_cockpit_daten cd on (cd.themaid = t.themaid and anzeige_in = 30 and cd.landid = v(''P430_LAND'') and cd.anzeigen = 1)
+    left outer join t_vorschrift v on (cd.vorschriftid = v.vorschriftid)
+    left outer join t_vorschrift v_rr on (cd.rr_vorschriftid = v_rr.vorschriftid)
+    left outer join t_vorschrift v_vk on (cd.verkn_vorschriftid = v_vk.vorschriftid)
+    left outer join cte_kc on (cte_kc.themaid = cd.themaid)
+    left outer join cte_krz on (cte_krz.themaid = cd.themaid)   
+), cte_land as (
+    select einsatzdatum_modellid
+    from t_land l
+    where l.landid = v(''P430_LAND'')
+),cte_future_result as (
+select
+    
+    thema_sortorder as future_thema_sortorder, 
+    rank() over (partition by cte1.themaid order by cte1.vorschrift_nummer) future_row_index,
+    thema_nummer as future_thema_nummer, 
+    thema as future_thema,
+    DESCRIPTION_SOC_DE as future_DESCRIPTION_SOC_DE,
+    DESCRIPTION_SOC_EN as future_DESCRIPTION_SOC_EN,
+    nvl(cte1.rr_vorschrift_nummer, cte1.vorschrift_nummer) as future_local_regulation,
+    null as future_correction,
+    null as future_comment,
+    vret_ik.einsatzdatum future_in_kraft,
+    case when regel_nr in (180,190,200,210,220) then rr_ursp_vk.datum_neue_typen else vret_nt.einsatzdatum end future_neue_typen,
+    case when regel_nr in (180,190,200,210,220) then rr_ursp_vk.datum_alle_typen else vret_af.einsatzdatum end future_alle_fzg,
+    null as future_comment_vko,
+    konzern_clusters as future_konzern_clusters,
+    kurz as future_kurz,
+    themaid
+from cte1
+cross join cte_land
+left outer join t_vorschrift_ref_vorschrift rr_ursp_vk on (cte1.rr_ursp_verknuepfung = rr_ursp_vk.vorschrift_ref_vorschriftid)
+left outer join t_vorschrift_ref_einsatzdatum_typ vret_ik on (cte1.vorschriftid = vret_ik.vorschriftid and vret_ik.einsatzdatum_typid = 1000)
+left outer join t_vorschrift_ref_einsatzdatum_typ vret_nt on (cte1.vorschriftid = vret_nt.vorschriftid 
+                and vret_nt.einsatzdatum_typid = case einsatzdatum_modellid when 10 then 1010 when 20 then 1022 when 30 then 1030 end)
+left outer join t_vorschrift_ref_einsatzdatum_typ vret_af on (cte1.vorschriftid = vret_af.vorschriftid
+                and vret_af.einsatzdatum_typid = case einsatzdatum_modellid when 10 then 1011 when 20 then 1023 when 30 then 1031 end)
+
+order by thema_sortorder, future_row_index
+
+), 
+cte_thema as (select t.themaid ct_themaid,
+                    t.NUMMER,
+                    nvl(t.name_eng,t.bezeichnung) as thema,
+                    t.DESCRIPTION_SOC_EN,
+                    
+                    t.name_eng,
+                    t.bezeichnung,
+                   vt.thema_sortorder,
+                   cte_kc.liste_cluster konzern_clusters,
+                   cte_krz.kurz,
+                   vt.leaf
+
+            from v_thema_baum vt
+    full outer join t_thema t on (t.themaid = vt.themaid)
+    left outer join cte_kc on (cte_kc.themaid = t.themaid)
+    left outer join cte_krz on (cte_krz.themaid = t.themaid)
+),
+cte_current as(select cd.landid,
+      cd.themaid as current_themaid,
+       cd.vorschriftid,
+       
+       row_number() over (partition by  cd.themaid order by v.vorschrift_nummer)  rowindexid,
+       row_number() over (partition by cd.themaid order by v.vorschrift_nummer) index_thema_land_anzeige,
+       nvl(v.vorschrift_nummer,v_rr.vorschrift_nummer) as current_local_regulation
+from t_cockpit_daten cd
+left outer join t_vorschrift v on (cd.vorschriftid = v.vorschriftid)
+left outer join t_vorschrift v_rr on (cd.rr_vorschriftid = v_rr.vorschriftid)
+where cd.ANZEIGE_IN in (10,20)
+and anzeigen = 1
+and cd.landid = v(''P430_LAND'')
+order by cd.themaid,ROWINDEXID
+),
+cte3 as (select cte_current.landid, cte_current.current_themaid, nvl(t.name_eng,t.bezeichnung) as thema, 
+    max(index_thema_land_anzeige) as max_thema_land, t.nummer as thema_nummer, vt.thema_sortorder,
+    cte_kc.liste_cluster konzern_clusters 
+    from v_thema_baum vt
+    join t_thema t on (t.themaid = vt.themaid)
+    join t_land_statement_of_completeness lsc on (lsc.themaid = t.themaid and lsc.landid = v(''P430_LAND''))
+    left outer join cte_current on (cte_current.current_themaid = vt.themaid)
+    left outer join cte_kc on (cte_kc.themaid = vt.themaid) 
+    group by cte_current.landid, cte_current.current_themaid, t.bezeichnung, t.nummer, vt.thema_sortorder, t.name_eng , cte_kc.liste_cluster
+), cte_current_result as (
+select  cte3.landid, 
+        cte3.thema_sortorder AS current_thema_sortorder,
+        ctc.rowindexid AS current_rowindex,
+        cte3.thema_nummer AS current_thema_nummer,
+        cte3.thema AS current_thema, 
+        
+        ctc.current_local_regulation,
+        null as current_correction, 
+        null as current_comment,
+        null as current_comment_vko,
+        null as future_correction,
+        null as future_comment,
+        cte3.konzern_clusters as current_konzern_clusters,
+        cte_krz.kurz AS current_kurz,
+        cte3.current_themaid as themaid
+      from cte3
+     left outer join cte_current ctc on (ctc.current_themaid=cte3.current_themaid)
+     left outer join cte_krz on(cte3.current_themaid=cte_krz.themaid)
+     left outer join cte_thema cth on(cte3.current_themaid =cth.ct_themaid)
+    order by cte3.thema_sortorder,ctc.rowindexid
+) Select   
+            
+            t5.nummer as "Topic ID",
+
+            t5.thema as "Topic",
+
+            t5.DESCRIPTION_SOC_EN as "topics description SoC",
+            ccr.current_local_regulation as "Local Regulation",
+            ccr.current_correction as "Correction",
+            ccr.current_comment as "Comment",
+            cfr.future_local_regulation as "Local Regulation",
+            future_in_kraft as "Enactement Date",
+            future_neue_typen as "Implementation date New Type",
+            future_alle_fzg as "Implementation date All Vehicles",
+            cfr.future_correction as "Correction",
+            cfr.future_comment as "Comment",
+            nvl(ccr.current_comment_vko, cfr.future_comment_vko) as "Comment VKO",  
+            t5.konzern_clusters as "Group Clusters",
+            t5.kurz  as "AK",
+            t5.leaf as "Leaf"
+from cte_current_result ccr
+full outer join cte_future_result cfr on (ccr.themaid = cfr.themaid and ccr.current_rowindex = cfr.future_row_index)
+full outer join cte_thema t5 on t5.ct_themaid = ccr.themaid
+-- order by thema_sortorder, nvl(current_rowindex, future_row_index)
+ORDER BY 
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, ''^[^.]+'', 1, 1)) NULLS FIRST,
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, ''[^.]+'', 1, 2)) NULLS FIRST,
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, ''[^.]+'', 1, 3)) NULLS FIRST,
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, ''[^.]+'', 1, 4)) NULLS FIRST,
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, ''[^.]+'', 1, 5)) NULLS FIRST,
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, ''[^.]+'', 1, 6)) NULLS FIRST
+
+
+    ';
+    RETURN lSQL;
+  END fGetSQLExportCombined;
+END PCK_RI_EXPORT;
+```
+
+
+
+```sql
+declare
+    lSQL CLOB;
+  BEGIN
+    lSQL := '
+   with cte_kc as (  
+    select trc.themaid, listagg(kc.bezeichnung, '', '') within group (order by kc.bezeichnung) as liste_cluster
+    from t_thema_ref_cluster trc
+    join t_konzern_cluster kc on (kc.konzern_clusterid = trc.konzern_clusterid)
+    group by trc.themaid
+), cte_krz as (select LISTAGG(tebak.KURZ, '', '') WITHIN GROUP (ORDER BY tebak.KURZ) KURZ,t.themaid
+    from t_thema t
+    left outer join T_THEMA_REF_ET_B_AK ttrebak on ttrebak.THEMAID = t.themaid
+    left outer join t_et_b_ak tebak on tebak.ET_B_AKID = ttrebak.ET_B_AKID
+    group by t.themaid
+ ), cte1 as (
+    select anzeige_in, cd.landid, cd.themaid, cd.vorschriftid, rr_vorschriftid, v.vorschrift_nummer, v_rr.vorschrift_nummer as rr_vorschrift_nummer,
+    
+    count(*) over (partition by cd.landid, cd.themaid) max_thema_land, rr_ursp_verknuepfung,
+    v_vk.vorschrift_nummer as verkn_vorschrift, t.nummer as thema_nummer, nvl(t2.name_eng,t.bezeichnung) as thema,
+    cd.regel_nr, t.thema_sortorder, cte_kc.liste_cluster konzern_clusters, cte_krz.kurz, t2.DESCRIPTION_SOC_DE, t2.DESCRIPTION_SOC_EN
+    from v_thema_baum t
+    join t_land_statement_of_completeness lsc  on (lsc.themaid = t.themaid and lsc.landid = v(''P430_LAND''))
+    join t_thema t2 on (t.themaid = t2.themaid)
+    join t_cockpit_daten cd on (cd.themaid = t.themaid and anzeige_in = 30 and cd.landid = v(''P430_LAND'') and cd.anzeigen = 1)
+    left outer join t_vorschrift v on (cd.vorschriftid = v.vorschriftid)
+    left outer join t_vorschrift v_rr on (cd.rr_vorschriftid = v_rr.vorschriftid)
+    left outer join t_vorschrift v_vk on (cd.verkn_vorschriftid = v_vk.vorschriftid)
+    left outer join cte_kc on (cte_kc.themaid = cd.themaid)
+    left outer join cte_krz on (cte_krz.themaid = cd.themaid)   
+), cte_land as (
+    select einsatzdatum_modellid
+    from t_land l
+    where l.landid = v(''P430_LAND'')
+),cte_future_result as (
+select
+    
+    thema_sortorder as future_thema_sortorder, 
+    rank() over (partition by cte1.themaid order by cte1.vorschrift_nummer) future_row_index,
+    thema_nummer as future_thema_nummer, 
+    thema as future_thema,
+    DESCRIPTION_SOC_DE as future_DESCRIPTION_SOC_DE,
+    DESCRIPTION_SOC_EN as future_DESCRIPTION_SOC_EN,
+    nvl(cte1.rr_vorschrift_nummer, cte1.vorschrift_nummer) as future_local_regulation,
+    null as future_correction,
+    null as future_comment,
+    vret_ik.einsatzdatum future_in_kraft,
+    case when regel_nr in (180,190,200,210,220) then rr_ursp_vk.datum_neue_typen else vret_nt.einsatzdatum end future_neue_typen,
+    case when regel_nr in (180,190,200,210,220) then rr_ursp_vk.datum_alle_typen else vret_af.einsatzdatum end future_alle_fzg,
+    null as future_comment_vko,
+    konzern_clusters as future_konzern_clusters,
+    kurz as future_kurz,
+    themaid
+from cte1
+cross join cte_land
+left outer join t_vorschrift_ref_vorschrift rr_ursp_vk on (cte1.rr_ursp_verknuepfung = rr_ursp_vk.vorschrift_ref_vorschriftid)
+left outer join t_vorschrift_ref_einsatzdatum_typ vret_ik on (cte1.vorschriftid = vret_ik.vorschriftid and vret_ik.einsatzdatum_typid = 1000)
+left outer join t_vorschrift_ref_einsatzdatum_typ vret_nt on (cte1.vorschriftid = vret_nt.vorschriftid 
+                and vret_nt.einsatzdatum_typid = case einsatzdatum_modellid when 10 then 1010 when 20 then 1022 when 30 then 1030 end)
+left outer join t_vorschrift_ref_einsatzdatum_typ vret_af on (cte1.vorschriftid = vret_af.vorschriftid
+                and vret_af.einsatzdatum_typid = case einsatzdatum_modellid when 10 then 1011 when 20 then 1023 when 30 then 1031 end)
+
+order by thema_sortorder, future_row_index
+
+), 
+cte_thema as (select t.themaid ct_themaid,
+                    t.NUMMER,
+                    nvl(t.name_eng,t.bezeichnung) as thema,
+                    t.DESCRIPTION_SOC_EN,
+                    
+                    t.name_eng,
+                    t.bezeichnung,
+                   vt.thema_sortorder,
+                   cte_kc.liste_cluster konzern_clusters,
+                   cte_krz.kurz,
+                   vt.leaf
+
+            from v_thema_baum vt
+    full outer join t_thema t on (t.themaid = vt.themaid)
+    left outer join cte_kc on (cte_kc.themaid = t.themaid)
+    left outer join cte_krz on (cte_krz.themaid = t.themaid)
+),
+cte_current as(select cd.landid,
+      cd.themaid as current_themaid,
+       cd.vorschriftid,
+       
+       row_number() over (partition by  cd.themaid order by v.vorschrift_nummer)  rowindexid,
+       row_number() over (partition by cd.themaid order by v.vorschrift_nummer) index_thema_land_anzeige,
+       nvl(v.vorschrift_nummer,v_rr.vorschrift_nummer) as current_local_regulation
+from t_cockpit_daten cd
+left outer join t_vorschrift v on (cd.vorschriftid = v.vorschriftid)
+left outer join t_vorschrift v_rr on (cd.rr_vorschriftid = v_rr.vorschriftid)
+where cd.ANZEIGE_IN in (10,20)
+and anzeigen = 1
+and cd.landid = v(''P430_LAND'')
+order by cd.themaid,ROWINDEXID
+),
+cte3 as (select cte_current.landid, cte_current.current_themaid, nvl(t.name_eng,t.bezeichnung) as thema, 
+    max(index_thema_land_anzeige) as max_thema_land, t.nummer as thema_nummer, vt.thema_sortorder,
+    cte_kc.liste_cluster konzern_clusters 
+    from v_thema_baum vt
+    join t_thema t on (t.themaid = vt.themaid)
+    join t_land_statement_of_completeness lsc on (lsc.themaid = t.themaid and lsc.landid = v(''P430_LAND''))
+    left outer join cte_current on (cte_current.current_themaid = vt.themaid)
+    left outer join cte_kc on (cte_kc.themaid = vt.themaid) 
+    group by cte_current.landid, cte_current.current_themaid, t.bezeichnung, t.nummer, vt.thema_sortorder, t.name_eng , cte_kc.liste_cluster
+), cte_current_result as (
+select  cte3.landid, 
+        cte3.thema_sortorder AS current_thema_sortorder,
+        ctc.rowindexid AS current_rowindex,
+        cte3.thema_nummer AS current_thema_nummer,
+        cte3.thema AS current_thema, 
+        
+        ctc.current_local_regulation,
+        null as current_correction, 
+        null as current_comment,
+        null as current_comment_vko,
+        null as future_correction,
+        null as future_comment,
+        cte3.konzern_clusters as current_konzern_clusters,
+        cte_krz.kurz AS current_kurz,
+        cte3.current_themaid as themaid
+      from cte3
+     left outer join cte_current ctc on (ctc.current_themaid=cte3.current_themaid)
+     left outer join cte_krz on(cte3.current_themaid=cte_krz.themaid)
+     left outer join cte_thema cth on(cte3.current_themaid =cth.ct_themaid)
+    order by cte3.thema_sortorder,ctc.rowindexid
+) Select   
+            
+            t5.nummer as "Topic ID",
+
+            t5.thema as "Topic",
+
+            t5.DESCRIPTION_SOC_EN as "topics description SoC",
+            ccr.current_local_regulation as "Local Regulation",
+            ccr.current_correction as "Correction",
+            ccr.current_comment as "Comment",
+            cfr.future_local_regulation as "Local Regulation",
+            future_in_kraft as "Enactement Date",
+            future_neue_typen as "Implementation date New Type",
+            future_alle_fzg as "Implementation date All Vehicles",
+            cfr.future_correction as "Correction",
+            cfr.future_comment as "Comment",
+            nvl(ccr.current_comment_vko, cfr.future_comment_vko) as "Comment VKO",  
+            t5.konzern_clusters as "Group Clusters",
+            t5.kurz  as "AK",
+            t5.leaf as "Leaf"
+from cte_current_result ccr
+full outer join cte_future_result cfr on (ccr.themaid = cfr.themaid and ccr.current_rowindex = cfr.future_row_index)
+full outer join cte_thema t5 on t5.ct_themaid = ccr.themaid
+-- order by thema_sortorder, nvl(current_rowindex, future_row_index)
+ORDER BY 
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, ''^[^.]+'', 1, 1)) NULLS FIRST,
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, ''[^.]+'', 1, 2)) NULLS FIRST,
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, ''[^.]+'', 1, 3)) NULLS FIRST,
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, ''[^.]+'', 1, 4)) NULLS FIRST,
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, ''[^.]+'', 1, 5)) NULLS FIRST,
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, ''[^.]+'', 1, 6)) NULLS FIRST
+
+
+    ';
+   dbms_output.put_line(lSQL);
+  END;
+```
+
+
+```sql
+  with cte_kc as (  
+    select trc.themaid, listagg(kc.bezeichnung, ', ') within group (order by kc.bezeichnung) as liste_cluster
+    from t_thema_ref_cluster trc
+    join t_konzern_cluster kc on (kc.konzern_clusterid = trc.konzern_clusterid)
+    group by trc.themaid
+), cte_krz as (select LISTAGG(tebak.KURZ, ', ') WITHIN GROUP (ORDER BY tebak.KURZ) KURZ,t.themaid
+    from t_thema t
+    left outer join T_THEMA_REF_ET_B_AK ttrebak on ttrebak.THEMAID = t.themaid
+    left outer join t_et_b_ak tebak on tebak.ET_B_AKID = ttrebak.ET_B_AKID
+    group by t.themaid
+ ), cte1 as (
+    select anzeige_in, cd.landid, cd.themaid, cd.vorschriftid, rr_vorschriftid, v.vorschrift_nummer, v_rr.vorschrift_nummer as rr_vorschrift_nummer,
+    
+    count(*) over (partition by cd.landid, cd.themaid) max_thema_land, rr_ursp_verknuepfung,
+    v_vk.vorschrift_nummer as verkn_vorschrift, t.nummer as thema_nummer, nvl(t2.name_eng,t.bezeichnung) as thema,
+    cd.regel_nr, t.thema_sortorder, cte_kc.liste_cluster konzern_clusters, cte_krz.kurz, t2.DESCRIPTION_SOC_DE, t2.DESCRIPTION_SOC_EN
+    from v_thema_baum t
+    join t_land_statement_of_completeness lsc  on (lsc.themaid = t.themaid and lsc.landid = v('P430_LAND'))
+    join t_thema t2 on (t.themaid = t2.themaid)
+    join t_cockpit_daten cd on (cd.themaid = t.themaid and anzeige_in = 30 and cd.landid = v('P430_LAND') and cd.anzeigen = 1)
+    left outer join t_vorschrift v on (cd.vorschriftid = v.vorschriftid)
+    left outer join t_vorschrift v_rr on (cd.rr_vorschriftid = v_rr.vorschriftid)
+    left outer join t_vorschrift v_vk on (cd.verkn_vorschriftid = v_vk.vorschriftid)
+    left outer join cte_kc on (cte_kc.themaid = cd.themaid)
+    left outer join cte_krz on (cte_krz.themaid = cd.themaid)   
+), cte_land as (
+    select einsatzdatum_modellid
+    from t_land l
+    where l.landid = v('P430_LAND')
+),cte_future_result as (
+select
+    
+    thema_sortorder as future_thema_sortorder, 
+    rank() over (partition by cte1.themaid order by cte1.vorschrift_nummer) future_row_index,
+    thema_nummer as future_thema_nummer, 
+    thema as future_thema,
+    DESCRIPTION_SOC_DE as future_DESCRIPTION_SOC_DE,
+    DESCRIPTION_SOC_EN as future_DESCRIPTION_SOC_EN,
+    nvl(cte1.rr_vorschrift_nummer, cte1.vorschrift_nummer) as future_local_regulation,
+    null as future_correction,
+    null as future_comment,
+    vret_ik.einsatzdatum future_in_kraft,
+    case when regel_nr in (180,190,200,210,220) then rr_ursp_vk.datum_neue_typen else vret_nt.einsatzdatum end future_neue_typen,
+    case when regel_nr in (180,190,200,210,220) then rr_ursp_vk.datum_alle_typen else vret_af.einsatzdatum end future_alle_fzg,
+    null as future_comment_vko,
+    konzern_clusters as future_konzern_clusters,
+    kurz as future_kurz,
+    themaid
+from cte1
+cross join cte_land
+left outer join t_vorschrift_ref_vorschrift rr_ursp_vk on (cte1.rr_ursp_verknuepfung = rr_ursp_vk.vorschrift_ref_vorschriftid)
+left outer join t_vorschrift_ref_einsatzdatum_typ vret_ik on (cte1.vorschriftid = vret_ik.vorschriftid and vret_ik.einsatzdatum_typid = 1000)
+left outer join t_vorschrift_ref_einsatzdatum_typ vret_nt on (cte1.vorschriftid = vret_nt.vorschriftid 
+                and vret_nt.einsatzdatum_typid = case einsatzdatum_modellid when 10 then 1010 when 20 then 1022 when 30 then 1030 end)
+left outer join t_vorschrift_ref_einsatzdatum_typ vret_af on (cte1.vorschriftid = vret_af.vorschriftid
+                and vret_af.einsatzdatum_typid = case einsatzdatum_modellid when 10 then 1011 when 20 then 1023 when 30 then 1031 end)
+order by thema_sortorder, future_row_index
+), 
+cte_thema as (select t.themaid ct_themaid,
+                    t.NUMMER,
+                    nvl(t.name_eng,t.bezeichnung) as thema,
+                    t.DESCRIPTION_SOC_EN,
+                    
+                    t.name_eng,
+                    t.bezeichnung,
+                   vt.thema_sortorder,
+                   cte_kc.liste_cluster konzern_clusters,
+                   cte_krz.kurz,
+                   vt.leaf
+            from v_thema_baum vt
+    full outer join t_thema t on (t.themaid = vt.themaid)
+    left outer join cte_kc on (cte_kc.themaid = t.themaid)
+    left outer join cte_krz on (cte_krz.themaid = t.themaid)
+),
+cte_current as(select cd.landid,
+      cd.themaid as current_themaid,
+       cd.vorschriftid,
+       
+       row_number() over (partition by  cd.themaid order by v.vorschrift_nummer)  rowindexid,
+       row_number() over (partition by cd.themaid order by v.vorschrift_nummer) index_thema_land_anzeige,
+       nvl(v.vorschrift_nummer,v_rr.vorschrift_nummer) as current_local_regulation
+from t_cockpit_daten cd
+left outer join t_vorschrift v on (cd.vorschriftid = v.vorschriftid)
+left outer join t_vorschrift v_rr on (cd.rr_vorschriftid = v_rr.vorschriftid)
+where cd.ANZEIGE_IN in (10,20)
+and anzeigen = 1
+and cd.landid = v('P430_LAND')
+order by cd.themaid,ROWINDEXID
+),
+cte3 as (select cte_current.landid, cte_current.current_themaid, nvl(t.name_eng,t.bezeichnung) as thema, 
+    max(index_thema_land_anzeige) as max_thema_land, t.nummer as thema_nummer, vt.thema_sortorder,
+    cte_kc.liste_cluster konzern_clusters 
+    from v_thema_baum vt
+    join t_thema t on (t.themaid = vt.themaid)
+    join t_land_statement_of_completeness lsc on (lsc.themaid = t.themaid and lsc.landid = v('P430_LAND'))
+    left outer join cte_current on (cte_current.current_themaid = vt.themaid)
+    left outer join cte_kc on (cte_kc.themaid = vt.themaid) 
+    group by cte_current.landid, cte_current.current_themaid, t.bezeichnung, t.nummer, vt.thema_sortorder, t.name_eng , cte_kc.liste_cluster
+), cte_current_result as (
+select  cte3.landid, 
+        cte3.thema_sortorder AS current_thema_sortorder,
+        ctc.rowindexid AS current_rowindex,
+        cte3.thema_nummer AS current_thema_nummer,
+        cte3.thema AS current_thema, 
+        
+        ctc.current_local_regulation,
+        null as current_correction, 
+        null as current_comment,
+        null as current_comment_vko,
+        null as future_correction,
+        null as future_comment,
+        cte3.konzern_clusters as current_konzern_clusters,
+        cte_krz.kurz AS current_kurz,
+        cte3.current_themaid as themaid
+      from cte3
+     left outer join cte_current ctc on (ctc.current_themaid=cte3.current_themaid)
+     left outer join cte_krz on(cte3.current_themaid=cte_krz.themaid)
+     left outer join cte_thema cth on(cte3.current_themaid =cth.ct_themaid)
+    order by cte3.thema_sortorder,ctc.rowindexid
+) Select   
+            
+            t5.nummer as "Topic ID",
+            t5.thema as "Topic",
+            t5.DESCRIPTION_SOC_EN as "topics description SoC",
+            ccr.current_local_regulation as "Local Regulation",
+            ccr.current_correction as "Correction",
+            ccr.current_comment as "Comment",
+            cfr.future_local_regulation as "Local Regulation",
+            future_in_kraft as "Enactement Date",
+            future_neue_typen as "Implementation date New Type",
+            future_alle_fzg as "Implementation date All Vehicles",
+            cfr.future_correction as "Correction",
+            cfr.future_comment as "Comment",
+            nvl(ccr.current_comment_vko, cfr.future_comment_vko) as "Comment VKO",  
+            t5.konzern_clusters as "Group Clusters",
+            t5.kurz  as "AK",
+            t5.leaf as "Leaf"
+from cte_current_result ccr
+full outer join cte_future_result cfr on (ccr.themaid = cfr.themaid and ccr.current_rowindex = cfr.future_row_index)
+full outer join cte_thema t5 on t5.ct_themaid = ccr.themaid
+-- order by thema_sortorder, nvl(current_rowindex, future_row_index)
+ORDER BY 
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, '^[^.]+', 1, 1)) NULLS FIRST,
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, '[^.]+', 1, 2)) NULLS FIRST,
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, '[^.]+', 1, 3)) NULLS FIRST,
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, '[^.]+', 1, 4)) NULLS FIRST,
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, '[^.]+', 1, 5)) NULLS FIRST,
+    TO_NUMBER(REGEXP_SUBSTR(t5.nummer, '[^.]+', 1, 6)) NULLS FIRST
 ```
