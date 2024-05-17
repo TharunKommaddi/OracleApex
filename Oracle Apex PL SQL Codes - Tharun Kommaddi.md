@@ -33467,7 +33467,7 @@ END PCK_RI_EXPORT;
 
 # Interactive Grid Heirachical view colors or colours and css code text unwrap and wrap header data region IG1 is static id
 
-```sql
+```css
 .col .rel-col {
     width: auto;
     float: right;
