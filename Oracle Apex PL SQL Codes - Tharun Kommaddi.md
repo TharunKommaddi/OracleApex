@@ -21,6 +21,10 @@
 5. **Oracle Property Graphs: 7 Astonishing Benefits to Enterprises**
     - [`https://pierre-yotti-it.com/oracle-property-graphs-7-astonishing-benefits-to-enterprises/`](https://pierre-yotti-it.com/oracle-property-graphs-7-astonishing-benefits-to-enterprises/ "Visit Link")
 	
+6. **Wrap Column Text in Reports**
+	- [`https://www.magalyiraheta.com/blog/oracle-apex-wrap-column-text-in-reports`](https://www.magalyiraheta.com/blog/oracle-apex-wrap-column-text-in-reports "Visit Link")
+	
+	
 	
 	
 # Inserts distinct translations from apex_application_trans_repos into T_TRANSLATION_TABLE where German and English texts differ for application_id 112 and ensures no duplicate German entries in the T_TRANSLATION_TABLE.
