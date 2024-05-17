@@ -33498,6 +33498,8 @@ END PCK_RI_EXPORT;
 
 # Interactive Grid dont work with order by. use sub query for the interactive grid select * from( or select * from (
 
+
+```sql
 SELECT 
         current_thema_sortorder,
         future_thema_sortorder,
@@ -33679,7 +33681,7 @@ Select  -- current_thema_sortorder,
 from cte_current_output co
 full outer join cte_future_output fo on (co.current_thema_sortorder = fo.future_thema_sortorder and co.current_rowindex = fo.future_rowindex)
 order by nvl(co.current_thema_sortorder, fo.future_thema_sortorder), nvl(co.current_rowindex, fo.future_rowindex));
-
+```
 
 
 # QUERY TO CHECK THE CURRENT SCHEMA, TRIGGER STATUS
