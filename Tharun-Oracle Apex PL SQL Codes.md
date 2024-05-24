@@ -473,8 +473,8 @@ SELECT T1.name_eng, t2.name_eng, t1.bezeichnung, t2.bezeichnung from t_thema t1,
 
    
    
-# View V_VORSCHRIFT_EQUAL added land_eng
-
+# View V_VORSCHRIFT_EQUAL added land_eng listagg 
+ 
 
 ```sql
 CREATE OR REPLACE FORCE EDITIONABLE VIEW "VORSCHRIFTEN_ADMIN"."V_VORSCHRIFT_EQUAL" ("LOCAL_VORSCHRIFT", "PERMALINK", "VORSCHRIFTID", "EQUAL_VORSCHRIFT", "PERMALINK_EQUAL", "VORSCHRIFTID_EQUAL", "LAND", "B_NUMMER", "AK_KURZ", "LAND_ENG") AS 
@@ -492,7 +492,8 @@ listagg(distinct tl.land,',') within group(order by b_nummer) as land,
 LISTAGG(distinct tl.b_nummer,',') within group (order by tl.b_nummer) as b_nummer,
 listagg(distinct ak.kurz,',') within group (order by ak.kurz) AK_Kurz,
 listagg(distinct tl.land_eng,',') within group(order by b_nummer) as land_eng
-
+listagg(trim(kc.bezeichnung), ', ') within group (order by kc.bezeichnung) as liste_cluster
+listagg(kc.bezeichnung, ', ') as cluster_list
 
 from cte1 t1
 left outer join t_vorschrift_ref_thema_ref_land tvrtl on (t1.vorschriftid= tvrtl.vorschriftid and tvrtl.geloescht =0)
@@ -33849,4 +33850,117 @@ BEGIN
   :new.LETZTE_AENDERUNG_DATUM := sysdate;
   :new.LETZTE_AENDERUNG_BENUTZERID := PCK_RI.fGetUserId;
 END;
+```
+
+
+
+# DELETE OR TRASH ICON IN REPORT AND IN WORKING AND EDIT ICON IN REPORT WITHOUT USING INBUILT APEX ICON ATRRIBUTES
+
+
+```sql
+'<a href='||'"'||APEX_PAGE.GET_URL ( 
+        p_clear_cache => 104,
+        p_page   => 104,  
+        p_items  =>  'P104_THEMAID'  ||',P104_VORSCHRIFTID,P104_OPEN_TO_DELETE,'||'P104_THEMA_READ_ONLY', 
+        p_values => vt.themaid||','||:P25_VORSCHRIFTID ||',1,0'  )||'"'|| '"><span class="fa fa-trash" alt="' 
+                                                                                                                || emano_util.fLang('Löschen', 'Delete') 
+                                                                                                                || '" title="' 
+                                                                                                                || emano_util.fLang('Löschen', 'Delete') 
+                                                                                                                || '"></span></a>' AS link,
+
+case when PCK_RI.fIsAuthorized01(pck_ri.fGetUserid,25,200) = 1 and (:P25_EDIT_MODE = 1) 
+     then '<a href='||'"'||APEX_PAGE.GET_URL (      
+                                       p_clear_cache => 104,
+                                       p_page   => 104,  
+                                       p_items  =>   'P104_THEMAID'   
+                                       ||',P104_VORSCHRIFTID,P104_THEMA_READ_ONLY', 
+                                       p_values => vt.themaid||','||vrt.vorschriftid ||','|| 0 ) ||
+                     '"'|| '"><span class="fa fa-pencil" alt="' 
+|| emano_util.fLang('Bearbeiten', 'Edit') 
+|| '" title="' 
+|| emano_util.fLang('Bearbeiten', 'Edit') 
+|| '"></span></a>' || ' ' 
+ELSE NULL END AS lnk,
+
+```
+
+
+
+# HOVER BACKGROUND FONT COLOR COLOUR TEXT
+
+
+.hl {
+  background-color: yellow;
+  
+  /* Tharun added */
+  color: black;
+}
+
+
+.hl:hover {
+    color: black;
+}
+
+
+# PENCIL SYMBOLS ICON EDIT LINKS
+
+```css
+<span aria-label="Edit"><span class="fa fa-edit" aria-hidden="true" title="Edit"></span></span>
+PCK_RI.fCreateLinkIfUrl("LINK", 250) as LINK,
+<span aria-label="Bearbeiten"><span class="fa fa-pencil" aria-hidden="true" title="Bearbeiten"></span></span>
+
+
+Identification
+Column Name 	LINK_NETZ
+Target			Page Number
+Link Text		<span class="fa fa-network-hub" title="Vernetzungsansicht öffnen" alt="Vernetzungsansicht öffnen"></span>
+Link Attributes	target="_blank"
+
+Identification
+Column Name     PERMALINK
+Heading			<span title="Permalink">&nbsp;</span>
+Column Formatting
+HTML Expression
+<span class="fa fa-link" title="Permalink in Zwischenablage kopieren" alt="Permalink in Zwischenablage kopieren" onClick="javascript:navigator.clipboard.writeText('#PERMALINK#');alert('Der Permalink wurde in die Zwischenablage kopiert:\n\n#PERMALINK#');"></span>
+
+
+Identification
+Column Name     CHECKBOX
+Type			Plain Text
+Heading			<input type="checkbox" value="all" />
+Column Formatting
+HTML Expression
+<input type="checkbox" value="#VORSCHRIFTID#" />
+
+
+
+```
+
+
+# CASE CONDITION
+
+```SQL
+ase when (vs.status_update_getex is null) then '-'
+                 when vs.status_update_getex  =10 then 'aktuell' 
+            when vs.status_update_getex  =20 then 'nicht aktuell' 
+            when vs.status_update_getex  =30 then  'nicht in Getex'  end  as status_update_getex,
+```
+
+
+# QUERY SCHEDULER JOBS SQL
+
+```sql
+SELECT JOB_NAME, SCHEDULE_TYPE, REPEAT_INTERVAL, START_DATE, END_DATE, ENABLED
+FROM USER_SCHEDULER_JOBS
+WHERE JOB_NAME = 'J_WARN_MISSED_DATA';
+```
+
+
+# GETTING COMMENTS FOR COLUMN USING SQL QUERY
+
+
+```sql
+SELECT COLUMN_NAME, COMMENTS
+FROM ALL_COL_COMMENTS
+WHERE TABLE_NAME = 'T_THEMA' AND COLUMN_NAME = 'BETA_FLAG';
 ```
