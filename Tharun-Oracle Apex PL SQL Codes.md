@@ -33888,7 +33888,7 @@ ELSE NULL END AS lnk,
 
 # HOVER BACKGROUND FONT COLOR COLOUR TEXT
 
-
+```css
 .hl {
   background-color: yellow;
   
@@ -33900,6 +33900,7 @@ ELSE NULL END AS lnk,
 .hl:hover {
     color: black;
 }
+```
 
 
 # PENCIL SYMBOLS ICON EDIT LINKS
@@ -33932,15 +33933,13 @@ Column Formatting
 HTML Expression
 <input type="checkbox" value="#VORSCHRIFTID#" />
 
-
-
 ```
 
 
 # CASE CONDITION
 
 ```SQL
-ase when (vs.status_update_getex is null) then '-'
+case when (vs.status_update_getex is null) then '-'
                  when vs.status_update_getex  =10 then 'aktuell' 
             when vs.status_update_getex  =20 then 'nicht aktuell' 
             when vs.status_update_getex  =30 then  'nicht in Getex'  end  as status_update_getex,
