@@ -29245,7 +29245,7 @@ WHERE TABLE_NAME = 'T_THEMA' AND COLUMN_NAME = 'BETA_FLAG';
 
 ### SQL QUERY
 
-```sql```
+```sql
 
 -- NOT ADDED LEAD_VKO COLUMN
 
@@ -29539,8 +29539,6 @@ OUTER APPLY (
     fetch first row only  
 ) equi
 /
-
-
 
 ```
 
@@ -30866,7 +30864,7 @@ regiontitle()
 [`Link to Google Drive Folder - APEX_DATA_EXPORT`](https://youtu.be/KV6uRU0Fk3w)
 
 
-```SQL
+```plsql
 DECLARE
   sqlqry clob;
   lVorschriftID number := :P25_VORSCHRIFTID;
@@ -30907,6 +30905,5 @@ BEGIN
 
   RETURN sqlqry;
 END;
-
-
 ```
+
