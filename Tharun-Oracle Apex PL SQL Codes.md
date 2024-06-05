@@ -3881,1637 +3881,6 @@ function (options) {
 ```
 
 
-# Complete Oracle Text package in dynamic and also in lov ( list of value) 
-
-
-## LINKS 
-
-- [`https://stackoverflow.com/questions/19476447/oracle-text-search-on-multiple-tables-and-joins`](https://stackoverflow.com/questions/19476447/oracle-text-search-on-multiple-tables-and-joins "Visit Link")
-
-- [`https://forums.oracle.com/ords/apexds/post/building-index-from-multiple-tables-for-text-search-0964`](https://forums.oracle.com/ords/apexds/post/building-index-from-multiple-tables-for-text-search-0964 "Visit Link")
-
-- [`https://www.orafaq.com/forum/t/204625/`](https://www.orafaq.com/forum/t/204625/ "Visit Link")
-
-- [`https://asktom.oracle.com/ords/f?p=100%3A11%3A0%3A%3A%3A%3AP11_QUESTION_ID%3A9455353124561`](https://asktom.oracle.com/ords/f?p=100%3A11%3A0%3A%3A%3A%3AP11_QUESTION_ID%3A9455353124561 "Visit Link")
-
-- [`https://forums.oracle.com/ords/apexds/post/create-a-text-index-on-multiple-tables-3390`](https://forums.oracle.com/ords/apexds/post/create-a-text-index-on-multiple-tables-3390 "Visit Link")
-
-
-
-
-
-
-### Specification
-```sql
-create or replace package pck_ri_vorschrift_oracle_text_pkg authid current_user is 
-    -- Checks if Oracle Text is available
-    function text_is_available return boolean; 
-    -- Procedures for creating and managing text preferences
-    procedure create_text_preferences(
-        p_pref_name         in varchar2, 
-        p_object_name       in varchar2, 
-        p_columns           in varchar2, 
-        p_section_group     in varchar2, 
-        p_tag               in varchar2, 
-        p_lexer_name        in varchar2, 
-        p_mixed_case        in varchar2, 
-        p_base_letter       in varchar2, 
-        p_base_letter_type  in varchar2
-    );
-    -- Procedures for dropping text preferences
-    procedure drop_text_preferences(p_pref_name in varchar2);
-    -- Procedures for creating text indexes
-    procedure create_text_index(
-        p_index_name    in varchar2, 
-        p_table_name    in varchar2, 
-        p_column_name   in varchar2, 
-        p_sg_pref       in varchar2, 
-        p_ds_pref       in varchar2, 
-        p_lx_pref       in varchar2
-    );
-    -- Procedures for dropping text indexes
-    procedure drop_text_index(p_index_name in varchar2);
-    -- Initialization procedure to set up Oracle Text for specified tables
-    --procedure init_oracle_text; 
-    -- Function to convert end-user queries into Oracle Text queries
-    function convert_text_query(p_enduser_query in varchar2) return varchar2;
-    
-end pck_ri_vorschrift_oracle_text_pkg;
-```
-
-### BODY
-
-```sql
-create or replace package body pck_ri_vorschrift_oracle_text_pkg is
-    procedure execute_sql(p_sql in varchar2, p_throw_error in boolean default true) is 
-    begin 
-        execute immediate p_sql; 
-    exception 
-        when others then  
-            if p_throw_error then 
-                raise; 
-            end if;
-    end execute_sql; 
-    function text_is_available return boolean is 
-        l_dummy number; 
-    begin 
-        select 1 into l_dummy from sys.all_objects 
-         where owner = 'CTXSYS' and object_name = 'CTX_DDL' and rownum = 1; 
-        return true; 
-    exception  
-        when NO_DATA_FOUND then 
-            return false; 
-    end text_is_available; 
-    procedure create_text_preferences(p_pref_name in varchar2, p_object_name in varchar2, p_columns in varchar2, p_section_group in varchar2, p_tag in varchar2, p_lexer_name in varchar2, p_mixed_case in varchar2, p_base_letter in varchar2, p_base_letter_type in varchar2) is
-    begin 
-        execute_sql('begin ' ||
-                    'ctx_ddl.create_preference(''' || p_pref_name || ''', ''' || p_object_name || '''); ' ||
-                    'ctx_ddl.set_attribute(''' || p_pref_name || ''', ''COLUMNS'', ''' || p_columns || '''); ' ||
-                    'ctx_ddl.create_section_group(''' || p_section_group || ''', ''XML_SECTION_GROUP''); ' ||
-                    'ctx_ddl.add_field_section(''' || p_section_group || ''', ''' || p_tag || ''', ''' || p_tag || ''', true); ' ||
-                    'ctx_ddl.create_preference(''' || p_lexer_name || ''', ''BASIC_LEXER''); ' ||
-                    'ctx_ddl.set_attribute(''' || p_lexer_name || ''', ''MIXED_CASE'', ''' || p_mixed_case || '''); ' ||
-                    'ctx_ddl.set_attribute(''' || p_lexer_name || ''', ''BASE_LETTER'', ''' || p_base_letter || '''); ' ||
-                    'ctx_ddl.set_attribute(''' || p_lexer_name || ''', ''BASE_LETTER_TYPE'', ''' || p_base_letter_type || '''); ' ||
-                    'end;');
-    end create_text_preferences;
-    procedure drop_text_preferences(p_pref_name in varchar2) is 
-    begin 
-        execute_sql('begin ctx_ddl.drop_preference(''' || p_pref_name || '''); end;', false);
-    end drop_text_preferences;
-    procedure create_text_index(p_index_name in varchar2, p_table_name in varchar2, p_column_name in varchar2, p_sg_pref in varchar2, p_ds_pref in varchar2, p_lx_pref in varchar2) is 
-    begin 
-        execute_sql('create index ' || p_index_name || ' on ' || p_table_name || '(' || p_column_name || ') ' ||
-                    'indextype is ctxsys.context parameters (''section group ' || p_sg_pref || ' datastore ' || p_ds_pref || ' lexer ' || p_lx_pref || ' stoplist ctxsys.empty_stoplist memory 10M sync (on commit)'')');
-    end create_text_index;
-    procedure drop_text_index(p_index_name in varchar2) is 
-    begin 
-        execute_sql('drop index ' || p_index_name || ' force');
-    end drop_text_index;
-    
- -- commented
-    /*procedure init_oracle_text is 
-    begin 
-        if text_is_available then 
-            -- Specific setup for T_VORSCHRIFT_SYNTHETIC
-            create_text_preferences('RI_VORSCHRIFT_DS_PREF', 'MULTI_COLUMN_DATASTORE', 'VORSCHRIFT_NUMMER,VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 'RI_VORSCHRIFT_SG_PREF', 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 'RI_VORSCHRIFT_LX_PREF', 'NO', 'YES', 'GENERIC');
-            create_text_index('RI_VORSCHRIFT_TEXT_FTX', 'T_VORSCHRIFT_SYNTHETIC', 'VORSCHRIFT_NUMMER', 'RI_VORSCHRIFT_SG_PREF', 'RI_VORSCHRIFT_DS_PREF', 'RI_VORSCHRIFT_LX_PREF');
-            -- Specific setup for T_VORSCHRIFT_SYNTHETIC_1
-            create_text_preferences('RI_VORSCHRIFT_DS_PREF_1', 'MULTI_COLUMN_DATASTORE', 'VORSCHRIFT_NUMMER,VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 'RI_VORSCHRIFT_SG_PREF_1', 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 'RI_VORSCHRIFT_LX_PREF_1', 'NO', 'YES', 'GENERIC');
-            create_text_index('RI_VORSCHRIFT_TEXT_FTX_1', 'T_VORSCHRIFT_SYNTHETIC_1', 'VORSCHRIFT_NUMMER', 'RI_VORSCHRIFT_SG_PREF_1', 'RI_VORSCHRIFT_DS_PREF_1', 'RI_VORSCHRIFT_LX_PREF_1');
-            -- Specific setup for T_NORM
-            create_text_preferences('RI_VORSCHRIFT_DS_PREF_NORM', 'MULTI_COLUMN_DATASTORE', 'BEZEICHNUNG', 'RI_VORSCHRIFT_SG_PREF_NORM', 'BEZEICHNUNG', 'RI_VORSCHRIFT_LX_PREF_NORM', 'NO', 'YES', 'GENERIC');
-            create_text_index('RI_VORSCHRIFT_TEXT_FTX_NORM', 'T_NORM', 'BEZEICHNUNG', 'RI_VORSCHRIFT_SG_PREF_NORM', 'RI_VORSCHRIFT_DS_PREF_NORM', 'RI_VORSCHRIFT_LX_PREF_NORM');
-        end if; 
-    end init_oracle_text; */
-    function convert_text_query( p_enduser_query in varchar2 ) return varchar2  
-is  
-    l_tokens       apex_t_varchar2 := apex_t_varchar2();
-    c_xml constant varchar2(32767) := '<query><textquery><progression>' || 
-                                        '<seq>#NORMAL#</seq>' || 
-                                        '<seq>#FUZZY#</seq>' || 
-                                      '</progression></textquery></query>'; 
-    l_textquery    varchar2(32767);
-    --------------------------------------------------------------------------------
-    procedure tokenize
-    is
-        c_len constant pls_integer := length( p_enduser_query );
-        l_pos pls_integer := 1;
-        l_char varchar2( 1 char );
-        l_quoted boolean := false;
-        l_token  varchar2(32767);
-    begin
-        <<char_reader_loop>>
-        while l_pos <= c_len loop
-            l_char := substr( p_enduser_query, l_pos, 1 );
-            if l_char = '"' then
-                if substr( p_enduser_query, l_pos + 1) = '"' then
-                     l_token := l_token || l_char;
-                     l_pos := l_pos + 2;
-                     continue char_reader_loop;
-                end if;
-                l_token := trim( both from l_token );
-                if l_token is not null then
-                    if l_quoted then
-                        apex_string.push( l_tokens, l_token );
-                    else
-                        l_tokens := l_tokens multiset union apex_string.split( l_token, ' ' );
-                    end if;
-                    l_token := '';
-                end if;
-                l_quoted := not l_quoted;
-            else
-                l_token := l_token || l_char;
-            end if;
-            l_pos := l_pos + 1;
-        end loop char_reader_loop;
-        l_token := trim( both from l_token );
-        if l_token is not null then
-            l_tokens := l_tokens multiset union (apex_string.split( l_token, ' ' ));
-        end if;
-    end tokenize;
-    --------------------------------------------------------------------------------
-    function generate_query( 
-            p_feature in varchar2) 
-            return varchar2 is 
-        l_query       varchar2(32767); 
-        l_clean_token varchar2(32767); 
-        l_not         boolean;
-    begin 
-        for i in 1..l_tokens.count loop 
-            l_clean_token := lower( regexp_replace( l_tokens( i ), '[<>{}/()*%&!$?.:,;\+#]', '' ) ); 
-            l_not         := false;
-            if ltrim( rtrim( l_clean_token ) ) is not null then 
-                l_not := l_clean_token like '-%' AND l_clean_token NOT like '-';
-                if l_query is not null and not l_not then
-                    l_query := l_query || ' and '; 
-                end if; 
-                if l_not then
-                    l_query := l_query || 'NOT ';
-                    l_clean_token := substr( l_clean_token, 2 );
-                end if;
-                if p_feature = 'FUZZY' then
-                    if l_clean_token like '%"%' then
-                        l_query := l_query || 'FUZZY("' || trim(both '"' from l_clean_token) || '", 50, 500) ';
-                    else
-                        l_query := l_query || 'FUZZY({' || l_clean_token || '}, 50, 500) ';
-                    end if;
-                else
-                    if l_clean_token like '%"%' then
-                        l_query := l_query || '"' || trim(both '"' from l_clean_token) || '"';
-                    else
-                        l_query := l_query || '{' || l_clean_token || '}';
-                    end if;
-                end if;
-            end if; 
-        end loop; 
-        return ltrim( rtrim( l_query ));  
-    end generate_query; 
-begin 
-    if substr( p_enduser_query, 1, 8 ) = 'ORATEXT:' then 
-        return substr( p_enduser_query, 9 ); 
-    else  
-        l_textquery := c_xml; 
-        
-        if substr(p_enduser_query, 1, 1) = '"' and substr(p_enduser_query, -1) = '"' then
-    l_textquery := replace( l_textquery, '#NORMAL#', '"' || trim(both '"' from p_enduser_query) || '"' );
-    l_textquery := replace( l_textquery, '#FUZZY#', 'FUZZY("' || trim(both '"' from p_enduser_query) || '", 50, 500)' );
-else
-    tokenize;
-    l_textquery := replace( l_textquery, '#NORMAL#', generate_query( 'NORMAL' ) );
-    l_textquery := replace( l_textquery, '#FUZZY#', generate_query( 'FUZZY' ) );
-end if;
-        
-        apex_debug.info( '#### Oracle TEXT Query is: %s', l_textquery);
-        return l_textquery; 
-    end if; 
-end convert_text_query;
-end pck_ri_vorschrift_oracle_text_pkg;
-```
-
-# lov (list of value ) oracle text
-
-```sql
-with cte_la as (
-    select 
-        normid,
-        nvl(listagg(trim(la.b_nummer), ', ') within group (order by la.b_nummer), null) as laender_nummer,
-        nvl(listagg(trim(la.LAND), ', ') within group (order by la.LAND), null) as laender_name
-    from t_norm_ref_land nrl
-    left outer join t_land la on nrl.landid = la.landid
-    group by normid
-)
-select 
-    n.normid, 
-    n.bezeichnung as BEZEICHNUNG,
-    :APEX$F1 as search_string,
-    cte_la.laender_nummer as B_NUMMER,
-    cte_la.laender_name as LAND
-from T_NORM n
-left outer join cte_la on cte_la.normid = n.normid
-where n.normid not in (1016) 
-  and (:APEX$F1 is null or contains(n.BEZEICHNUNG, (select PCK_RI_VORSCHRIFT_ORACLE_TEXT_PKG.convert_text_query(nvl(:APEX$F1, 'xxx')) from dual), 1) > 0)
-order by n.BEZEICHNUNG asc;
-```
-
-
-# Complete Oracle Text package in static 
-
-### Specification
-```sql
-create or replace package pck_ri_vorschrift_oracle_text_pkg authid current_user is 
- 
-    function text_is_available return boolean; 
- 
-    procedure create_text_preferences;
-    procedure create_text_preferences_1;
-    procedure create_text_preferences_norm; 
- 
-    procedure drop_text_preferences;
-    procedure drop_text_preferences_1;
-    procedure drop_text_preferences_norm; 
- 
-    procedure create_text_index;
-    procedure create_text_index_1;
-    procedure create_text_index_norm; 
- 
-    procedure drop_text_index;
-    procedure drop_text_index_1;
-    procedure drop_text_index_norm; 
- 
-    procedure init_oracle_text; 
- 
-    function convert_text_query( p_enduser_query  in varchar2 ) return varchar2; 
- 
-end pck_ri_vorschrift_oracle_text_pkg;
-```
-
-# BODY
-```sql
-create or replace package body pck_ri_vorschrift_oracle_text_pkg is 
-    procedure execute_sql( 
-        p_sql         in varchar2,  
-        p_throw_error in boolean default true 
-    ) is 
-    begin 
-        execute immediate p_sql; 
-    exception 
-        when others then  
-            if p_throw_error then raise; end if; 
-    end execute_sql; 
-    
-    function text_is_available return boolean  
-    is 
-        l_dummy number; 
-    begin 
-        select 1 into l_dummy  
-          from sys.all_objects 
-         where owner       = 'CTXSYS'  
-           and object_name = 'CTX_DDL'  
-           and rownum      = 1; 
-        return true; 
-    exception  
-        when NO_DATA_FOUND then return false; 
-    end text_is_available; 
-
-    procedure init_oracle_text is 
-    begin 
-        if text_is_available then 
-            create_text_preferences; 
-            create_text_index; 
-        end if; 
-    end init_oracle_text; 
-    
-    procedure drop_text_index is  
-    begin 
-        execute_sql( q'#drop index RI_VORSCHRIFT_TEXT_FTX force#' ); 
-    end drop_text_index;
-
-
-    procedure drop_text_index_1 is  
-    begin 
-        execute_sql( q'#drop index RI_VORSCHRIFT_TEXT_FTX_1 force#' ); 
-    end drop_text_index_1;
-
-    procedure drop_text_index_norm is  
-    begin 
-        execute_sql( q'#drop index RI_VORSCHRIFT_TEXT_FTX_NORM force#' ); 
-    end drop_text_index_norm; 
-
-
-    procedure drop_text_preferences is 
-    begin 
-        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_LX_PREF'); end;#', false );  
-        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_DS_PREF'); end;#', false );  
-        execute_sql( q'#begin ctx_ddl.drop_section_group( 'RI_VORSCHRIFT_SG_PREF'); end;#', false );  
-    end drop_text_preferences;
-
-    procedure drop_text_preferences_1 is 
-    begin 
-        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_LX_PREF_1'); end;#', false );  
-        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_DS_PREF_1'); end;#', false );  
-        execute_sql( q'#begin ctx_ddl.drop_section_group( 'RI_VORSCHRIFT_SG_PREF_1'); end;#', false );  
-    end drop_text_preferences_1;
-
-    procedure drop_text_preferences_norm is 
-    begin 
-        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_LX_PREF'); end;#', false );  
-        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_DS_PREF'); end;#', false );  
-        execute_sql( q'#begin ctx_ddl.drop_section_group( 'RI_VORSCHRIFT_SG_PREF'); end;#', false );  
-    end drop_text_preferences_norm;
-    
-    procedure create_text_preferences is 
-    begin 
-        -- Datastore Preference: Index the VORSCHRIFT_NUMMER and the VORSCHRIFT_BEZEICHNUNG_DEUTSCH columns 
-        execute_sql(q'#  
-        begin 
-            ctx_ddl.create_preference( 
-                preference_name  => 'RI_VORSCHRIFT_DS_PREF', 
-                object_name      => 'MULTI_COLUMN_DATASTORE' 
-            ); 
-         
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_DS_PREF', 
-                attribute_name   => 'COLUMNS', 
-                attribute_value  => 'VORSCHRIFT_NUMMER,VORSCHRIFT_BEZEICHNUNG_DEUTSCH' 
-            ); 
-         
-            ctx_ddl.create_section_group( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF', 
-                group_type       => 'XML_SECTION_GROUP' 
-            ); 
-         
-            ctx_ddl.add_field_section( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF', 
-                section_name     => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
-                tag              => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
-                visible          => true 
-            ); 
-         
-            ctx_ddl.add_field_section( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF', 
-                section_name     => 'VORSCHRIFT_NUMMER', 
-                tag              => 'VORSCHRIFT_NUMMER', 
-                visible          => true 
-            ); 
-         
-            ctx_ddl.create_preference( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
-                object_name      => 'BASIC_LEXER' 
-            ); 
-         
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
-                attribute_name   => 'MIXED_CASE', 
-                attribute_value  => 'NO' 
-            ); 
-         
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
-                attribute_name   => 'BASE_LETTER', 
-                attribute_value  => 'YES' 
-            ); 
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
-                attribute_name   => 'BASE_LETTER_TYPE', 
-                attribute_value  => 'GENERIC' 
-            ); 
-        end;#' 
-        );  
-    end create_text_preferences;
-
-
-
-
-procedure create_text_preferences_1 is 
-    begin 
-        -- Datastore Preference: Index the VORSCHRIFT_NUMMER and the VORSCHRIFT_BEZEICHNUNG_DEUTSCH columns 
-        execute_sql(q'#  
-        begin 
-            ctx_ddl.create_preference( 
-                preference_name  => 'RI_VORSCHRIFT_DS_PREF_1', 
-                object_name      => 'MULTI_COLUMN_DATASTORE' 
-            ); 
-         
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_DS_PREF_1', 
-                attribute_name   => 'COLUMNS', 
-                attribute_value  => 'VORSCHRIFT_NUMMER,VORSCHRIFT_BEZEICHNUNG_DEUTSCH' 
-            ); 
-         
-            ctx_ddl.create_section_group( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF_1', 
-                group_type       => 'XML_SECTION_GROUP' 
-            ); 
-         
-            ctx_ddl.add_field_section( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF_1', 
-                section_name     => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
-                tag              => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
-                visible          => true 
-            ); 
-         
-            ctx_ddl.add_field_section( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF_1', 
-                section_name     => 'VORSCHRIFT_NUMMER', 
-                tag              => 'VORSCHRIFT_NUMMER', 
-                visible          => true 
-            ); 
-         
-            ctx_ddl.create_preference( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
-                object_name      => 'BASIC_LEXER' 
-            ); 
-         
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
-                attribute_name   => 'MIXED_CASE', 
-                attribute_value  => 'NO' 
-            ); 
-         
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
-                attribute_name   => 'BASE_LETTER', 
-                attribute_value  => 'YES' 
-            ); 
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
-                attribute_name   => 'BASE_LETTER_TYPE', 
-                attribute_value  => 'GENERIC' 
-            ); 
-        end;#' 
-        );  
-    end create_text_preferences_1;
-
-
-
-
-
-
- procedure create_text_preferences_norm is 
-    begin
-
-     execute_sql(q'#  
-        begin  
-            ctx_ddl.create_preference( 
-                preference_name  => 'RI_VORSCHRIFT_DS_PREF_NORM', 
-                object_name      => 'MULTI_COLUMN_DATASTORE' 
-            ); 
-
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_DS_PREF_NORM', 
-                attribute_name   => 'COLUMNS', 
-                attribute_value  => 'BEZEICHNUNG'
-            ); 
-
-            ctx_ddl.create_section_group( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF_NORM', 
-                group_type       => 'XML_SECTION_GROUP' 
-            ); 
-
-            ctx_ddl.add_field_section( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF_NORM', 
-                section_name     => 'BEZEICHNUNG', 
-                tag              => 'BEZEICHNUNG', 
-                visible          => true 
-            ); 
-
-            ctx_ddl.create_preference( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
-                object_name      => 'BASIC_LEXER' 
-            ); 
-
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
-                attribute_name   => 'MIXED_CASE', 
-                attribute_value  => 'NO' 
-            ); 
-
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
-                attribute_name   => 'BASE_LETTER', 
-                attribute_value  => 'YES' 
-            ); 
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
-                attribute_name   => 'BASE_LETTER_TYPE', 
-                attribute_value  => 'GENERIC' 
-            ); 
-    end;#' 
-        );  
-    end create_text_preferences_norm;
-
-
-    procedure create_text_index is 
-    begin 
-        execute immediate  
-q'#create index ri_vorschrift_text_ftx on T_VORSCHRIFT_SYNTHETIC (VORSCHRIFT_NUMMER) 
-   indextype is ctxsys.context parameters ( 'section group  RI_VORSCHRIFT_SG_PREF 
-                                             datastore      RI_VORSCHRIFT_DS_PREF 
-                                             lexer          RI_VORSCHRIFT_LX_PREF 
-                                             stoplist       ctxsys.empty_stoplist 
-                                             memory         10M 
-                                             sync           (on commit)')#'; 
-    end create_text_index;
-
-
-
-    procedure create_text_index_1 is 
-    begin 
-        execute immediate  
-q'#create index ri_vorschrift_text_ftx_1 on T_VORSCHRIFT_SYNTHETIC_1 (VORSCHRIFT_NUMMER) 
-   indextype is ctxsys.context parameters ( 'section group  RI_VORSCHRIFT_SG_PREF_1
-                                             datastore      RI_VORSCHRIFT_DS_PREF_1
-                                             lexer          RI_VORSCHRIFT_LX_PREF_1
-                                             stoplist       ctxsys.empty_stoplist 
-                                             memory         10M 
-                                             sync           (on commit)')#'; 
-    end create_text_index_1;
-
-
-
-
-
-procedure create_text_index_norm is
-begin 
-        execute immediate  
-q'#create index ri_vorschrift_text_ftx_norm on T_norm (BEZEICHNUNG) 
-   indextype is ctxsys.context parameters ( 'section group  RI_VORSCHRIFT_SG_PREF_NORM 
-                                             datastore      RI_VORSCHRIFT_DS_PREF_NORM 
-                                             lexer          RI_VORSCHRIFT_LX_PREF_NORM 
-                                             stoplist       ctxsys.empty_stoplist 
-                                             memory         10M 
-                                             sync           (on commit)')#'; 
-    end create_text_index_norm;
-
-
-/*
-
--- minus not working correctly in lov ( list of value ) also for this convert text query function
-
- function convert_text_query( p_enduser_query in varchar2 ) return varchar2  
-is  
-    l_tokens       apex_t_varchar2 := apex_t_varchar2();
-
-    c_xml constant varchar2(32767) := '<query><textquery><progression>' || 
-                                        '<seq>#NORMAL#</seq>' || 
-                                        '<seq>#FUZZY#</seq>' || 
-                                      '</progression></textquery></query>'; 
-    l_textquery    varchar2(32767);
-
-    --------------------------------------------------------------------------------
-    procedure tokenize
-    is
-        c_len constant pls_integer := length( p_enduser_query );
-        l_pos pls_integer := 1;
-        l_char varchar2( 1 char );
-        l_quoted boolean := false;
-        l_token  varchar2(32767);
-    begin
-        <<char_reader_loop>>
-        while l_pos <= c_len loop
-            l_char := substr( p_enduser_query, l_pos, 1 );
-            if l_char = '"' then
-                if substr( p_enduser_query, l_pos + 1) = '"' then
-                     l_token := l_token || l_char;
-                     l_pos := l_pos + 2;
-                     continue char_reader_loop;
-                end if;
-                l_token := trim( both from l_token );
-                if l_token is not null then
-                    if l_quoted then
-                        apex_string.push( l_tokens, l_token );
-                    else
-                        l_tokens := l_tokens multiset union apex_string.split( l_token, ' ' );
-                    end if;
-                    l_token := '';
-                end if;
-
-                l_quoted := not l_quoted;
-            else
-                l_token := l_token || l_char;
-            end if;
-            l_pos := l_pos + 1;
-        end loop char_reader_loop;
-
-        l_token := trim( both from l_token );
-        if l_token is not null then
-            l_tokens := l_tokens multiset union (apex_string.split( l_token, ' ' ));
-        end if;
-    end tokenize;
-    --------------------------------------------------------------------------------
-    function generate_query( 
-            p_feature in varchar2) 
-            return varchar2 is 
-        l_query       varchar2(32767); 
-        l_clean_token varchar2(32767); 
-        l_not         boolean;
-    begin 
-        for i in 1..l_tokens.count loop 
-            l_clean_token := lower( regexp_replace( l_tokens( i ), '[<>{}/()*%&!$?.:,;\+#]', '' ) ); 
-            l_not         := false;
-            if ltrim( rtrim( l_clean_token ) ) is not null then 
-
-                l_not := l_clean_token like '-%';
-
-                if l_query is not null and not l_not then
-                    l_query := l_query || ' and '; 
-                end if; 
-
-                if l_not then
-                    l_query := l_query || 'NOT ';
-                    l_clean_token := substr( l_clean_token, 2 );
-                end if;
-
-                if p_feature = 'FUZZY' then
-                    if l_clean_token like '%"%' then
-                        l_query := l_query || 'FUZZY("' || trim(both '"' from l_clean_token) || '", 50, 500) ';
-                    else
-                        l_query := l_query || 'FUZZY({' || l_clean_token || '}, 50, 500) ';
-                    end if;
-                else
-                    if l_clean_token like '%"%' then
-                        l_query := l_query || '"' || trim(both '"' from l_clean_token) || '"';
-                    else
-                        l_query := l_query || '{' || l_clean_token || '}';
-                    end if;
-                end if;
-
-            end if; 
-        end loop; 
-        return ltrim( rtrim( l_query ));  
-    end generate_query; 
-begin 
-    if substr( p_enduser_query, 1, 8 ) = 'ORATEXT:' then 
-        return substr( p_enduser_query, 9 ); 
-    else  
-        l_textquery := c_xml; 
-
-        
-        if substr(p_enduser_query, 1, 1) = '"' and substr(p_enduser_query, -1) = '"' then
-    l_textquery := replace( l_textquery, '#NORMAL#', '"' || trim(both '"' from p_enduser_query) || '"' );
-    l_textquery := replace( l_textquery, '#FUZZY#', 'FUZZY("' || trim(both '"' from p_enduser_query) || '", 50, 500)' );
-else
-    tokenize;
-    l_textquery := replace( l_textquery, '#NORMAL#', generate_query( 'NORMAL' ) );
-    l_textquery := replace( l_textquery, '#FUZZY#', generate_query( 'FUZZY' ) );
-end if;
-        
-        apex_debug.info( '#### Oracle TEXT Query is: %s', l_textquery);
-        return l_textquery; 
-    end if; 
-end convert_text_query;
-*/
-```
-
-
-### minus working correctly in lov ( list of value ) also for this convert text query function
-```sql
-function convert_text_query( p_enduser_query in varchar2 ) return varchar2  
-is  
-    l_tokens       apex_t_varchar2 := apex_t_varchar2();
-    c_xml constant varchar2(32767) := '<query><textquery><progression>' || 
-                                        '<seq>#NORMAL#</seq>' || 
-                                        '<seq>#FUZZY#</seq>' || 
-                                      '</progression></textquery></query>'; 
-    l_textquery    varchar2(32767);
-    --------------------------------------------------------------------------------
-    procedure tokenize
-    is
-        c_len constant pls_integer := length( p_enduser_query );
-        l_pos pls_integer := 1;
-        l_char varchar2( 1 char );
-        l_quoted boolean := false;
-        l_token  varchar2(32767);
-    begin
-        <<char_reader_loop>>
-        while l_pos <= c_len loop
-            l_char := substr( p_enduser_query, l_pos, 1 );
-            if l_char = '"' then
-                if substr( p_enduser_query, l_pos + 1) = '"' then
-                     l_token := l_token || l_char;
-                     l_pos := l_pos + 2;
-                     continue char_reader_loop;
-                end if;
-                l_token := trim( both from l_token );
-                if l_token is not null then
-                    if l_quoted then
-                        apex_string.push( l_tokens, l_token );
-                    else
-                        l_tokens := l_tokens multiset union apex_string.split( l_token, ' ' );
-                    end if;
-                    l_token := '';
-                end if;
-                l_quoted := not l_quoted;
-            else
-                l_token := l_token || l_char;
-            end if;
-            l_pos := l_pos + 1;
-        end loop char_reader_loop;
-        l_token := trim( both from l_token );
-        if l_token is not null then
-            l_tokens := l_tokens multiset union (apex_string.split( l_token, ' ' ));
-        end if;
-    end tokenize;
-    --------------------------------------------------------------------------------
-    function generate_query( 
-            p_feature in varchar2) 
-            return varchar2 is 
-        l_query       varchar2(32767); 
-        l_clean_token varchar2(32767); 
-        l_not         boolean;
-    begin 
-        for i in 1..l_tokens.count loop 
-            l_clean_token := lower( regexp_replace( l_tokens( i ), '[<>{}/()*%&!$?.:,;\+#]', '' ) ); 
-            l_not         := false;
-            if ltrim( rtrim( l_clean_token ) ) is not null then 
-                l_not := l_clean_token like '-%' AND l_clean_token NOT like '-';
-                if l_query is not null and not l_not then
-                    l_query := l_query || ' and '; 
-                end if; 
-                if l_not then
-                    l_query := l_query || 'NOT ';
-                    l_clean_token := substr( l_clean_token, 2 );
-                end if;
-                if p_feature = 'FUZZY' then
-                    if l_clean_token like '%"%' then
-                        l_query := l_query || 'FUZZY("' || trim(both '"' from l_clean_token) || '", 50, 500) ';
-                    else
-                        l_query := l_query || 'FUZZY({' || l_clean_token || '}, 50, 500) ';
-                    end if;
-                else
-                    if l_clean_token like '%"%' then
-                        l_query := l_query || '"' || trim(both '"' from l_clean_token) || '"';
-                    else
-                        l_query := l_query || '{' || l_clean_token || '}';
-                    end if;
-                end if;
-            end if; 
-        end loop; 
-        return ltrim( rtrim( l_query ));  
-    end generate_query; 
-begin 
-    if substr( p_enduser_query, 1, 8 ) = 'ORATEXT:' then 
-        return substr( p_enduser_query, 9 ); 
-    else  
-        l_textquery := c_xml; 
-        
-        if substr(p_enduser_query, 1, 1) = '"' and substr(p_enduser_query, -1) = '"' then
-    l_textquery := replace( l_textquery, '#NORMAL#', '"' || trim(both '"' from p_enduser_query) || '"' );
-    l_textquery := replace( l_textquery, '#FUZZY#', 'FUZZY("' || trim(both '"' from p_enduser_query) || '", 50, 500)' );
-else
-    tokenize;
-    l_textquery := replace( l_textquery, '#NORMAL#', generate_query( 'NORMAL' ) );
-    l_textquery := replace( l_textquery, '#FUZZY#', generate_query( 'FUZZY' ) );
-end if;
-        
-        apex_debug.info( '#### Oracle TEXT Query is: %s', l_textquery);
-        return l_textquery; 
-    end if; 
-end convert_text_query;
-end pck_ri_vorschrift_oracle_text_pkg;
-
-
--- lov (list of value ) oracle text
-
-
-with cte_la as (
-    select 
-        normid,
-        nvl(listagg(trim(la.b_nummer), ', ') within group (order by la.b_nummer), null) as laender_nummer,
-        nvl(listagg(trim(la.LAND), ', ') within group (order by la.LAND), null) as laender_name
-    from t_norm_ref_land nrl
-    left outer join t_land la on nrl.landid = la.landid
-    group by normid
-)
-select 
-    n.normid, 
-    n.bezeichnung as BEZEICHNUNG,
-    :APEX$F1 as search_string,
-    cte_la.laender_nummer as B_NUMMER,
-    cte_la.laender_name as LAND
-from T_NORM n
-left outer join cte_la on cte_la.normid = n.normid
-where n.normid not in (1016) 
-  and (:APEX$F1 is null or contains(n.BEZEICHNUNG, (select PCK_RI_VORSCHRIFT_ORACLE_TEXT_PKG.convert_text_query(nvl(:APEX$F1, 'xxx')) from dual), 1) > 0)
-order by n.BEZEICHNUNG asc;
-
-
--- code to test in sql commands -- contains -- oracle text -- query
-
-
-SELECT pck_ri_vorschrift_oracle_text_pkg.convert_text_query('Kommaddi -Tharun') FROM dual;
-
-
-SELECT VORSCHRIFTID, VORSCHRIFT_NUMMER, VORSCHRIFT_BEZEICHNUNG_DEUTSCH
-FROM T_VORSCHRIFT_SYNTHETIC
-WHERE CONTAINS(VORSCHRIFT_NUMMER, pck_ri_vorschrift_oracle_text_pkg.convert_text_query('"tarun"')) > 0;
-
-
--- code to drop text preferences in oracle Text
-
-
-BEGIN
-    -- Attempt to drop the datastore preference
-    BEGIN
-        CTX_DDL.DROP_PREFERENCE('RI_VORSCHRIFT_DS_PREF_NORM');
-    EXCEPTION
-        WHEN OTHERS THEN
-            IF SQLCODE = -20000 THEN
-                NULL; -- Ignore if the preference does not exist
-            ELSE
-                RAISE; -- Re-raise other unexpected errors
-            END IF;
-    END;
-    
-    -- Attempt to drop the lexer preference
-    BEGIN
-        CTX_DDL.DROP_PREFERENCE('RI_VORSCHRIFT_LX_PREF_NORM');
-    EXCEPTION
-        WHEN OTHERS THEN
-            IF SQLCODE = -20000 THEN
-                NULL; -- Ignore if the preference does not exist
-            ELSE
-                RAISE; -- Re-raise other unexpected errors
-            END IF;
-    END;
-    
-    -- Attempt to drop the section group
-    BEGIN
-        CTX_DDL.DROP_SECTION_GROUP('RI_VORSCHRIFT_SG_PREF_NORM');
-    EXCEPTION
-        WHEN OTHERS THEN
-            IF SQLCODE = -20000 THEN
-                NULL; -- Ignore if the section group does not exist
-            ELSE
-                RAISE; -- Re-raise other unexpected errors
-            END IF;
-    END;
-END;
-```
-
-
-
-# ORACLE TEXT MULTIPLE TABLES AND MULTIPLE INDEXES FROM MULTIPLE TABLES USING MATERIALIZED VIEW
-
-
-
-
-### INITIAL CODE 
-
-```sql
-drop table customers
-
-drop table addresses
-
-
-CREATE TABLE customers (
-     customer_id NUMBER,
-     first_name VARCHAR2(15),
-     last_name VARCHAR2(15),
-     CONSTRAINT customers_pk PRIMARY KEY (customer_id)
-   );
-
-
-
-
-CREATE TABLE addresses (
-     customer_id NUMBER,
-     street VARCHAR2(15),
-     city VARCHAR2(50),
-     state VARCHAR2(50),
-     CONSTRAINT addresses_fk FOREIGN KEY (customer_id)
-     REFERENCES customers (customer_id)
-   );
-
-
-
-INSERT INTO customers VALUES (1, 'Tharun', 'Smith');
-
-INSERT INTO customers VALUES (2, 'Bob', 'Jones');
-
-INSERT INTO customers VALUES (3, 'Kommaddi', 'williams');
-
-INSERT INTO addresses VALUES (1, 'Dominik', 'REDWOOD SHORES', 'CA');
-
-INSERT INTO addresses VALUES (2, 'Smith St.', 'Kommaddi Tharun', 'CA');
-
-INSERT INTO addresses VALUES (3, 'Redwood St.', 'RIVERSIDE', 'CA');
-
-
-/*
-CREATE VIEW customer_addresses AS
-SELECT
-    c.first_name,
-    c.last_name,
-    a.street,
-    a.city,
-    a.state
-FROM
-    customers c
-JOIN
-    addresses a ON c.customer_id = a.customer_id;
-*/
-
-/*
-CREATE MATERIALIZED VIEW customer_addresses AS
-  SELECT
-    c.first_name,
-    c.last_name,
-    a.street,
-    a.city,
-    a.state,
-    CAST (NULL AS VARCHAR2(1)) AS dummy
-   FROM
-   customers c, addresses a
-   WHERE c.customer_id = a.customer_id;
-
-*/
-
-
-CREATE MATERIALIZED VIEW customer_addresses
-BUILD IMMEDIATE
-REFRESH ON DEMAND
-AS
-SELECT
-  c.first_name,
-  c.last_name,
-  a.street,
-  a.city,
-  a.state,
-  CAST(NULL AS VARCHAR2(1)) AS dummy
-FROM
-  customers c
-JOIN
-  addresses a ON c.customer_id = a.customer_id;
-
-
-
-BEGIN
-  DBMS_SCHEDULER.CREATE_JOB (
-    job_name        => 'refresh_customer_addresses_mv',
-    job_type        => 'PLSQL_BLOCK',
-    job_action      => 'BEGIN DBMS_MVIEW.REFRESH(''customer_addresses'',''C''); END;',
-    start_date      => SYSTIMESTAMP,
-    repeat_interval => 'FREQ=MINUTELY; INTERVAL=5', -- Runs every 5 minutes
-    enabled         => TRUE
-  );
-END;
-/
-
-
-
-INSERT INTO customers VALUES (4, 'Thomas', 'Tschernich');
-
-INSERT INTO addresses VALUES (4, 'Schrobenhausen', 'EMANO', 'DE');
-```
-
-
-
-
-# SPECIFICATION
-
-```sql
-create or replace package pck_ri_vorschrift_oracle_text_pkg authid current_user is 
- 
-    function text_is_available return boolean; 
- 
-    procedure create_text_preferences;
-    procedure create_text_preferences_1;
-    procedure create_text_preferences_norm;
-    procedure create_text_preferences_mv; 
- 
-    procedure drop_text_preferences;
-    procedure drop_text_preferences_1;
-    procedure drop_text_preferences_norm;
-    procedure drop_text_preferences_mv; 
- 
-    procedure create_text_index;
-    procedure create_text_index_1;
-    procedure create_text_index_norm;
-    procedure create_text_index_mv; 
-
-    procedure drop_text_index;
-    procedure drop_text_index_1;
-    procedure drop_text_index_norm;
-    procedure drop_text_index_mv;
- 
-    procedure init_oracle_text; 
- 
-    function convert_text_query( p_enduser_query  in varchar2 ) return varchar2; 
- 
-end pck_ri_vorschrift_oracle_text_pkg;
-/
-
-```
-
-
--- BODY
-```sql
-create or replace package body pck_ri_vorschrift_oracle_text_pkg is 
-    procedure execute_sql( 
-        p_sql         in varchar2,  
-        p_throw_error in boolean default true 
-    ) is 
-    begin 
-        execute immediate p_sql; 
-    exception 
-        when others then  
-            if p_throw_error then raise; end if; 
-    end execute_sql; 
-    
-    function text_is_available return boolean  
-    is 
-        l_dummy number; 
-    begin 
-        select 1 into l_dummy  
-          from sys.all_objects 
-         where owner       = 'CTXSYS'  
-           and object_name = 'CTX_DDL'  
-           and rownum      = 1; 
-        return true; 
-    exception  
-        when NO_DATA_FOUND then return false; 
-    end text_is_available; 
-
-    procedure init_oracle_text is 
-    begin 
-        if text_is_available then 
-            create_text_preferences; 
-            create_text_index; 
-        end if; 
-    end init_oracle_text; 
-    
-    procedure drop_text_index is  
-    begin 
-        execute_sql( q'#drop index RI_VORSCHRIFT_TEXT_FTX force#' ); 
-    end drop_text_index;
-
-
-    procedure drop_text_index_1 is  
-    begin 
-        execute_sql( q'#drop index RI_VORSCHRIFT_TEXT_FTX_1 force#' ); 
-    end drop_text_index_1;
-
-    procedure drop_text_index_norm is  
-    begin 
-        execute_sql( q'#drop index RI_VORSCHRIFT_TEXT_FTX_NORM force#' ); 
-    end drop_text_index_norm;
-
-    procedure drop_text_index_mv is  
-    begin 
-        execute_sql( q'#drop index RI_VORSCHRIFT_TEXT_FTX_MV force#' ); 
-    end drop_text_index_mv; 
-
-
-    procedure drop_text_preferences is 
-    begin 
-        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_LX_PREF'); end;#', false );  
-        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_DS_PREF'); end;#', false );  
-        execute_sql( q'#begin ctx_ddl.drop_section_group( 'RI_VORSCHRIFT_SG_PREF'); end;#', false );  
-    end drop_text_preferences;
-
-    procedure drop_text_preferences_1 is 
-    begin 
-        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_LX_PREF_1'); end;#', false );  
-        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_DS_PREF_1'); end;#', false );  
-        execute_sql( q'#begin ctx_ddl.drop_section_group( 'RI_VORSCHRIFT_SG_PREF_1'); end;#', false );  
-    end drop_text_preferences_1;
-
-    procedure drop_text_preferences_norm is 
-    begin 
-        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_LX_PREF'); end;#', false );  
-        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_DS_PREF'); end;#', false );  
-        execute_sql( q'#begin ctx_ddl.drop_section_group( 'RI_VORSCHRIFT_SG_PREF'); end;#', false );  
-    end drop_text_preferences_norm;
-
-
-    procedure drop_text_preferences_mv is 
-    begin 
-        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_LX_PREF_MV'); end;#', false );  
-        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_DS_PREF_MV'); end;#', false );  
-        execute_sql( q'#begin ctx_ddl.drop_section_group( 'RI_VORSCHRIFT_SG_PREF_MV'); end;#', false );  
-    end drop_text_preferences_mv;
-    
-
-    procedure create_text_preferences is 
-    begin 
-        -- Datastore Preference: Index the VORSCHRIFT_NUMMER and the VORSCHRIFT_BEZEICHNUNG_DEUTSCH columns 
-        execute_sql(q'#  
-        begin 
-            ctx_ddl.create_preference( 
-                preference_name  => 'RI_VORSCHRIFT_DS_PREF', 
-                object_name      => 'MULTI_COLUMN_DATASTORE' 
-            ); 
-         
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_DS_PREF', 
-                attribute_name   => 'COLUMNS', 
-                attribute_value  => 'VORSCHRIFT_NUMMER,VORSCHRIFT_BEZEICHNUNG_DEUTSCH' 
-            ); 
-         
-            ctx_ddl.create_section_group( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF', 
-                group_type       => 'XML_SECTION_GROUP' 
-            ); 
-         
-            ctx_ddl.add_field_section( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF', 
-                section_name     => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
-                tag              => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
-                visible          => true 
-            ); 
-         
-            ctx_ddl.add_field_section( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF', 
-                section_name     => 'VORSCHRIFT_NUMMER', 
-                tag              => 'VORSCHRIFT_NUMMER', 
-                visible          => true 
-            ); 
-         
-            ctx_ddl.create_preference( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
-                object_name      => 'BASIC_LEXER' 
-            ); 
-         
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
-                attribute_name   => 'MIXED_CASE', 
-                attribute_value  => 'NO' 
-            ); 
-         
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
-                attribute_name   => 'BASE_LETTER', 
-                attribute_value  => 'YES' 
-            ); 
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
-                attribute_name   => 'BASE_LETTER_TYPE', 
-                attribute_value  => 'GENERIC' 
-            ); 
-        end;#' 
-        );  
-    end create_text_preferences;
-
-
-
-
-procedure create_text_preferences_1 is 
-    begin 
-        -- Datastore Preference: Index the VORSCHRIFT_NUMMER and the VORSCHRIFT_BEZEICHNUNG_DEUTSCH columns 
-        execute_sql(q'#  
-        begin 
-            ctx_ddl.create_preference( 
-                preference_name  => 'RI_VORSCHRIFT_DS_PREF_1', 
-                object_name      => 'MULTI_COLUMN_DATASTORE' 
-            ); 
-         
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_DS_PREF_1', 
-                attribute_name   => 'COLUMNS', 
-                attribute_value  => 'VORSCHRIFT_NUMMER,VORSCHRIFT_BEZEICHNUNG_DEUTSCH' 
-            ); 
-         
-            ctx_ddl.create_section_group( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF_1', 
-                group_type       => 'XML_SECTION_GROUP' 
-            ); 
-         
-            ctx_ddl.add_field_section( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF_1', 
-                section_name     => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
-                tag              => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
-                visible          => true 
-            ); 
-         
-            ctx_ddl.add_field_section( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF_1', 
-                section_name     => 'VORSCHRIFT_NUMMER', 
-                tag              => 'VORSCHRIFT_NUMMER', 
-                visible          => true 
-            ); 
-         
-            ctx_ddl.create_preference( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
-                object_name      => 'BASIC_LEXER' 
-            ); 
-         
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
-                attribute_name   => 'MIXED_CASE', 
-                attribute_value  => 'NO' 
-            ); 
-         
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
-                attribute_name   => 'BASE_LETTER', 
-                attribute_value  => 'YES' 
-            ); 
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
-                attribute_name   => 'BASE_LETTER_TYPE', 
-                attribute_value  => 'GENERIC' 
-            ); 
-        end;#' 
-        );  
-    end create_text_preferences_1;
-
-
-
-
-
-
- procedure create_text_preferences_norm is 
-    begin
-
-     execute_sql(q'#  
-        begin  
-            ctx_ddl.create_preference( 
-                preference_name  => 'RI_VORSCHRIFT_DS_PREF_NORM', 
-                object_name      => 'MULTI_COLUMN_DATASTORE' 
-            ); 
-
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_DS_PREF_NORM', 
-                attribute_name   => 'COLUMNS', 
-                attribute_value  => 'BEZEICHNUNG'
-            ); 
-
-            ctx_ddl.create_section_group( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF_NORM', 
-                group_type       => 'XML_SECTION_GROUP' 
-            ); 
-
-            ctx_ddl.add_field_section( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF_NORM', 
-                section_name     => 'BEZEICHNUNG', 
-                tag              => 'BEZEICHNUNG', 
-                visible          => true 
-            ); 
-
-            ctx_ddl.create_preference( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
-                object_name      => 'BASIC_LEXER' 
-            ); 
-
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
-                attribute_name   => 'MIXED_CASE', 
-                attribute_value  => 'NO' 
-            ); 
-
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
-                attribute_name   => 'BASE_LETTER', 
-                attribute_value  => 'YES' 
-            ); 
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
-                attribute_name   => 'BASE_LETTER_TYPE', 
-                attribute_value  => 'GENERIC' 
-            ); 
-    end;#' 
-        );  
-    end create_text_preferences_norm;
-
-    
-procedure create_text_preferences_mv is 
-    begin 
-        -- Datastore Preference: Index the VORSCHRIFT_NUMMER and the VORSCHRIFT_BEZEICHNUNG_DEUTSCH columns 
-        execute_sql(q'#  
-        begin 
-            ctx_ddl.create_preference( 
-                preference_name  => 'RI_VORSCHRIFT_DS_PREF_MV', 
-                object_name      => 'MULTI_COLUMN_DATASTORE' 
-            ); 
-         
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_DS_PREF_MV', 
-                attribute_name   => 'COLUMNS', 
-                attribute_value  => 'FIRST_NAME,LAST_NAME,STREET,CITY'
-            ); 
-         
-            ctx_ddl.create_section_group( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF_MV', 
-                group_type       => 'XML_SECTION_GROUP' 
-            ); 
-         
-            ctx_ddl.add_field_section( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF_MV', 
-                section_name     => 'CITY', 
-                tag              => 'CITY', 
-                visible          => true 
-            ); 
-         
-            ctx_ddl.add_field_section( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF_MV', 
-                section_name     => 'STREET', 
-                tag              => 'STREET', 
-                visible          => true 
-            );
-
-            ctx_ddl.add_field_section( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF_MV', 
-                section_name     => 'LAST_NAME', 
-                tag              => 'LAST_NAME', 
-                visible          => true 
-            ); 
-
-
-            ctx_ddl.add_field_section( 
-                group_name       => 'RI_VORSCHRIFT_SG_PREF_MV', 
-                section_name     => 'FIRST_NAME', 
-                tag              => 'FIRST_NAME', 
-                visible          => true 
-            ); 
-         
-            ctx_ddl.create_preference( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_MV', 
-                object_name      => 'BASIC_LEXER' 
-            ); 
-         
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_MV', 
-                attribute_name   => 'MIXED_CASE', 
-                attribute_value  => 'NO' 
-            ); 
-         
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_MV', 
-                attribute_name   => 'BASE_LETTER', 
-                attribute_value  => 'YES' 
-            ); 
-            ctx_ddl.set_attribute( 
-                preference_name  => 'RI_VORSCHRIFT_LX_PREF_MV', 
-                attribute_name   => 'BASE_LETTER_TYPE', 
-                attribute_value  => 'GENERIC' 
-            ); 
-        end;#' 
-        );  
-    end create_text_preferences_mv;
-
-
-
-
-
-
-    procedure create_text_index is 
-    begin 
-        execute immediate  
-q'#create index ri_vorschrift_text_ftx on T_VORSCHRIFT_SYNTHETIC (VORSCHRIFT_NUMMER) 
-   indextype is ctxsys.context parameters ( 'section group  RI_VORSCHRIFT_SG_PREF 
-                                             datastore      RI_VORSCHRIFT_DS_PREF 
-                                             lexer          RI_VORSCHRIFT_LX_PREF 
-                                             stoplist       ctxsys.empty_stoplist 
-                                             memory         10M 
-                                             sync           (on commit)')#'; 
-    end create_text_index;
-
-
-
-    procedure create_text_index_1 is 
-    begin 
-        execute immediate  
-q'#create index ri_vorschrift_text_ftx_1 on T_VORSCHRIFT_SYNTHETIC_1 (VORSCHRIFT_NUMMER) 
-   indextype is ctxsys.context parameters ( 'section group  RI_VORSCHRIFT_SG_PREF_1
-                                             datastore      RI_VORSCHRIFT_DS_PREF_1
-                                             lexer          RI_VORSCHRIFT_LX_PREF_1
-                                             stoplist       ctxsys.empty_stoplist 
-                                             memory         10M 
-                                             sync           (on commit)')#'; 
-    end create_text_index_1;
-
-
-
-
-
-    procedure create_text_index_norm is
-    begin 
-            execute immediate  
-    q'#create index ri_vorschrift_text_ftx_norm on T_norm (BEZEICHNUNG) 
-       indextype is ctxsys.context parameters ( 'section group  RI_VORSCHRIFT_SG_PREF_NORM 
-                                                 datastore      RI_VORSCHRIFT_DS_PREF_NORM 
-                                                 lexer          RI_VORSCHRIFT_LX_PREF_NORM 
-                                                 stoplist       ctxsys.empty_stoplist 
-                                                 memory         10M 
-                                                 sync           (on commit)')#'; 
-    end create_text_index_norm;
-
-
-    procedure create_text_index_mv is
-    begin 
-            execute immediate  
-    q'#create index ri_vorschrift_text_ftx_mv on customer_addresses (dummy) 
-       indextype is ctxsys.context parameters ( 'section group  RI_VORSCHRIFT_SG_PREF_MV
-                                                 datastore      RI_VORSCHRIFT_DS_PREF_MV 
-                                                 lexer          RI_VORSCHRIFT_LX_PREF_MV 
-                                                 stoplist       ctxsys.empty_stoplist 
-                                                 memory         10M 
-                                                 sync           (on commit)')#'; 
-    end create_text_index_mv;
-
-
-
-
-function convert_text_query( p_enduser_query in varchar2 ) return varchar2  
-is  
-    l_tokens       apex_t_varchar2 := apex_t_varchar2();
-    c_xml constant varchar2(32767) := '<query><textquery><progression>' || 
-                                        '<seq>#NORMAL#</seq>' || 
-                                        '<seq>#FUZZY#</seq>' || 
-                                      '</progression></textquery></query>'; 
-    l_textquery    varchar2(32767);
-    --------------------------------------------------------------------------------
-    procedure tokenize
-    is
-        c_len constant pls_integer := length( p_enduser_query );
-        l_pos pls_integer := 1;
-        l_char varchar2( 1 char );
-        l_quoted boolean := false;
-        l_token  varchar2(32767);
-    begin
-        <<char_reader_loop>>
-        while l_pos <= c_len loop
-            l_char := substr( p_enduser_query, l_pos, 1 );
-            if l_char = '"' then
-                if substr( p_enduser_query, l_pos + 1) = '"' then
-                     l_token := l_token || l_char;
-                     l_pos := l_pos + 2;
-                     continue char_reader_loop;
-                end if;
-                l_token := trim( both from l_token );
-                if l_token is not null then
-                    if l_quoted then
-                        apex_string.push( l_tokens, l_token );
-                    else
-                        l_tokens := l_tokens multiset union apex_string.split( l_token, ' ' );
-                    end if;
-                    l_token := '';
-                end if;
-                l_quoted := not l_quoted;
-            else
-                l_token := l_token || l_char;
-            end if;
-            l_pos := l_pos + 1;
-        end loop char_reader_loop;
-        l_token := trim( both from l_token );
-        if l_token is not null then
-            l_tokens := l_tokens multiset union (apex_string.split( l_token, ' ' ));
-        end if;
-    end tokenize;
-    --------------------------------------------------------------------------------
-    function generate_query( 
-            p_feature in varchar2) 
-            return varchar2 is 
-        l_query       varchar2(32767); 
-        l_clean_token varchar2(32767); 
-        l_not         boolean;
-    begin 
-        for i in 1..l_tokens.count loop 
-            l_clean_token := lower( regexp_replace( l_tokens( i ), '[<>{}/()*%&!$?.:,;\+#]', '' ) ); 
-            l_not         := false;
-            if ltrim( rtrim( l_clean_token ) ) is not null then 
-                l_not := l_clean_token like '-%' AND l_clean_token NOT like '-';
-                if l_query is not null and not l_not then
-                    l_query := l_query || ' and '; 
-                end if; 
-                if l_not then
-                    l_query := l_query || 'NOT ';
-                    l_clean_token := substr( l_clean_token, 2 );
-                end if;
-                if p_feature = 'FUZZY' then
-                    if l_clean_token like '%"%' then
-                        l_query := l_query || 'FUZZY("' || trim(both '"' from l_clean_token) || '", 50, 500) ';
-                    else
-                        l_query := l_query || 'FUZZY({' || l_clean_token || '}, 50, 500) ';
-                    end if;
-                else
-                    if l_clean_token like '%"%' then
-                        l_query := l_query || '"' || trim(both '"' from l_clean_token) || '"';
-                    else
-                        l_query := l_query || '{' || l_clean_token || '}';
-                    end if;
-                end if;
-            end if; 
-        end loop; 
-        return ltrim( rtrim( l_query ));  
-    end generate_query; 
-begin 
-    if substr( p_enduser_query, 1, 8 ) = 'ORATEXT:' then 
-        return substr( p_enduser_query, 9 ); 
-    else  
-        l_textquery := c_xml; 
-        
-        if substr(p_enduser_query, 1, 1) = '"' and substr(p_enduser_query, -1) = '"' then
-    l_textquery := replace( l_textquery, '#NORMAL#', '"' || trim(both '"' from p_enduser_query) || '"' );
-    l_textquery := replace( l_textquery, '#FUZZY#', 'FUZZY("' || trim(both '"' from p_enduser_query) || '", 50, 500)' );
-else
-    tokenize;
-    l_textquery := replace( l_textquery, '#NORMAL#', generate_query( 'NORMAL' ) );
-    l_textquery := replace( l_textquery, '#FUZZY#', generate_query( 'FUZZY' ) );
-end if;
-        
-        apex_debug.info( '#### Oracle TEXT Query is: %s', l_textquery);
-        return l_textquery; 
-    end if; 
-end convert_text_query;
-end pck_ri_vorschrift_oracle_text_pkg;
-/
-
-```
-
-
-
-
-
-
-
-
-
-
-#  html and css for the alignment
-
-### html to show while doing oracle text introduction
-
-```sql
-<p>This page shows how Oracle Text can be used within an Interactive Report to perform full-text search using linguistic features.</p>
-<p>In this example, Oracle Text features are available to search the <b>VORSCHRIFT_NUMMER</b> and <b>VORSCHRIFT_BEZEICHNUNG_DEUTSCH</b> columns with the Interactive Report.</p>
-<p>Few Test Cases which will work using Oracle Text</p>
-<ul>
-    <p style="color: #bb0a31;">Oracle Text <b>FUZZY</b> search on <b>VORSCHRIFT_NUMMER</b> column</p>
-    <li><b>Thms</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> Tschernich Thomas</strong></li>
-    <li><b>Domnk</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> Braunbeck Dominik</strong></li>
-    <li><b>UN R</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER -  <strong> UN-R</strong></li>
-    <li><b>GB T</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER -  <strong> GB/T and other records which match this</strong></li>
-    <li><b>UN R 119 01 Suplmnt 2</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> UN-R 119/01 Supplement 2</strong></li>
-    <li><b>119 00</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> UN-R 119/00 Supplement 4 and other records which match this</strong></li>
-    <li><b>Brsbeläge</b><span class="align-colon">:</span> VORSCHRIFT_BEZEICHNUNG_DEUTSCH - <strong> Bremsbeläge für Automobile</strong></li>
-    <br>
-
-    <p style="color: #bb0a31;">Oracle Text <b>FUZZY</b> search on <b>VORSCHRIFT_NUMMER</b>, <b>VORSCHRIFT_BEZEICHNUNG_DEUTSCH</b> columns</p>
-    <li><b>GB Bremsbeläge</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong>GB 5763-2008</strong> ; VORSCHRIFT_BEZEICHNUNG_DEUTSCH - <strong> Bremsbeläge für Automobile</strong> &nbsp;&nbsp;&nbsp; <i> Normal record with two columns data </i> </li>
-    <br>
-
-    <p style="color: #bb0a31;">I have two records in data base for <b>VORSCHRIFT_NUMMER</b> column<br></p>
-    <ol> 
-    <li>Tschernich Thomas</li>
-    <li>Tschernich is a software developer</li>
-    </ol>
-
-    <p style="color: #bb0a31;">Oracle Text <b>MINUS</b> search on <b>VORSCHRIFT_NUMMER</b> column</li></p>
-
-    <li><b>Tschernich -Thomas</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> Tschernich is a software developer</strong> &nbsp;&nbsp;&nbsp; <i> Minus</i> </li>
-    <!-- <li><b>emano -audi</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> emano</strong> &nbsp;&nbsp;&nbsp; <i> Minus</i> </li> -->
-    <br>
-
-    <p style="color: #bb0a31;">Oracle Text <b>EXACT PHRASE</b> search on <b>VORSCHRIFT_NUMMER</b> column</p>
-
-    <li><b>Tschernich developer</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> Tschernich is a software developer</strong> &nbsp;&nbsp;&nbsp; <i> Normal record without using exact phrase </i> </li>
-    <li><b>"Tschernich developer"</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> No Record Found</strong> &nbsp;&nbsp;&nbsp; <i> Exact Phrase</i> </li>
-    <li><b>"software developer"</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> Tschernich is a software developer</strong> &nbsp;&nbsp;&nbsp; <i> Exact Phrase</i> </li>
-    <li><b>"Tschernich tomas"</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> No Record Found </strong> &nbsp;&nbsp;&nbsp; <i> Exact Phrase</i> </li>
-    <li><b>"Tschernich Thomas"</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> Tschernich Thomas </strong> &nbsp;&nbsp;&nbsp; <i> Exact Phrase</i> </li>
-
-</ul>
-
-```
-#  inline css for that html 
-```sql
-.align-colon:before {
-    content: '';
-    display: inline-block;
-    width: 1px;
-}
-ul {
-    list-style-type: disc;
-}
-li b {
-    display: inline-block;
-    width: 180px;
-}
-```
-
 
 # Underline . Icon will show instead of link in interactive Report but when we click on icon it will redirect to link in new tab. for that we need to write that code in sql report using case statement
 
@@ -22781,6 +21150,1649 @@ END PCK_RI_VALIDATION;
 
 ## PCK RI VORSCHRIFT ORACLE TEXT PKG
 
+
+
+
+# Complete Oracle Text package in dynamic and also in lov ( list of value) 
+
+
+## LINKS 
+
+- [`https://stackoverflow.com/questions/19476447/oracle-text-search-on-multiple-tables-and-joins`](https://stackoverflow.com/questions/19476447/oracle-text-search-on-multiple-tables-and-joins "Visit Link")
+
+- [`https://forums.oracle.com/ords/apexds/post/building-index-from-multiple-tables-for-text-search-0964`](https://forums.oracle.com/ords/apexds/post/building-index-from-multiple-tables-for-text-search-0964 "Visit Link")
+
+- [`https://www.orafaq.com/forum/t/204625/`](https://www.orafaq.com/forum/t/204625/ "Visit Link")
+
+- [`https://asktom.oracle.com/ords/f?p=100%3A11%3A0%3A%3A%3A%3AP11_QUESTION_ID%3A9455353124561`](https://asktom.oracle.com/ords/f?p=100%3A11%3A0%3A%3A%3A%3AP11_QUESTION_ID%3A9455353124561 "Visit Link")
+
+- [`https://forums.oracle.com/ords/apexds/post/create-a-text-index-on-multiple-tables-3390`](https://forums.oracle.com/ords/apexds/post/create-a-text-index-on-multiple-tables-3390 "Visit Link")
+
+
+
+
+
+
+### Specification dynamic 
+
+```sql
+create or replace package pck_ri_vorschrift_oracle_text_pkg authid current_user is 
+    -- Checks if Oracle Text is available
+    function text_is_available return boolean; 
+    -- Procedures for creating and managing text preferences
+    procedure create_text_preferences(
+        p_pref_name         in varchar2, 
+        p_object_name       in varchar2, 
+        p_columns           in varchar2, 
+        p_section_group     in varchar2, 
+        p_tag               in varchar2, 
+        p_lexer_name        in varchar2, 
+        p_mixed_case        in varchar2, 
+        p_base_letter       in varchar2, 
+        p_base_letter_type  in varchar2
+    );
+    -- Procedures for dropping text preferences
+    procedure drop_text_preferences(p_pref_name in varchar2);
+    -- Procedures for creating text indexes
+    procedure create_text_index(
+        p_index_name    in varchar2, 
+        p_table_name    in varchar2, 
+        p_column_name   in varchar2, 
+        p_sg_pref       in varchar2, 
+        p_ds_pref       in varchar2, 
+        p_lx_pref       in varchar2
+    );
+    -- Procedures for dropping text indexes
+    procedure drop_text_index(p_index_name in varchar2);
+    -- Initialization procedure to set up Oracle Text for specified tables
+    --procedure init_oracle_text; 
+    -- Function to convert end-user queries into Oracle Text queries
+    function convert_text_query(p_enduser_query in varchar2) return varchar2;
+    
+end pck_ri_vorschrift_oracle_text_pkg;
+```
+
+### BODY
+
+```sql
+create or replace package body pck_ri_vorschrift_oracle_text_pkg is
+    procedure execute_sql(p_sql in varchar2, p_throw_error in boolean default true) is 
+    begin 
+        execute immediate p_sql; 
+    exception 
+        when others then  
+            if p_throw_error then 
+                raise; 
+            end if;
+    end execute_sql; 
+    function text_is_available return boolean is 
+        l_dummy number; 
+    begin 
+        select 1 into l_dummy from sys.all_objects 
+         where owner = 'CTXSYS' and object_name = 'CTX_DDL' and rownum = 1; 
+        return true; 
+    exception  
+        when NO_DATA_FOUND then 
+            return false; 
+    end text_is_available; 
+    procedure create_text_preferences(p_pref_name in varchar2, p_object_name in varchar2, p_columns in varchar2, p_section_group in varchar2, p_tag in varchar2, p_lexer_name in varchar2, p_mixed_case in varchar2, p_base_letter in varchar2, p_base_letter_type in varchar2) is
+    begin 
+        execute_sql('begin ' ||
+                    'ctx_ddl.create_preference(''' || p_pref_name || ''', ''' || p_object_name || '''); ' ||
+                    'ctx_ddl.set_attribute(''' || p_pref_name || ''', ''COLUMNS'', ''' || p_columns || '''); ' ||
+                    'ctx_ddl.create_section_group(''' || p_section_group || ''', ''XML_SECTION_GROUP''); ' ||
+                    'ctx_ddl.add_field_section(''' || p_section_group || ''', ''' || p_tag || ''', ''' || p_tag || ''', true); ' ||
+                    'ctx_ddl.create_preference(''' || p_lexer_name || ''', ''BASIC_LEXER''); ' ||
+                    'ctx_ddl.set_attribute(''' || p_lexer_name || ''', ''MIXED_CASE'', ''' || p_mixed_case || '''); ' ||
+                    'ctx_ddl.set_attribute(''' || p_lexer_name || ''', ''BASE_LETTER'', ''' || p_base_letter || '''); ' ||
+                    'ctx_ddl.set_attribute(''' || p_lexer_name || ''', ''BASE_LETTER_TYPE'', ''' || p_base_letter_type || '''); ' ||
+                    'end;');
+    end create_text_preferences;
+    procedure drop_text_preferences(p_pref_name in varchar2) is 
+    begin 
+        execute_sql('begin ctx_ddl.drop_preference(''' || p_pref_name || '''); end;', false);
+    end drop_text_preferences;
+    procedure create_text_index(p_index_name in varchar2, p_table_name in varchar2, p_column_name in varchar2, p_sg_pref in varchar2, p_ds_pref in varchar2, p_lx_pref in varchar2) is 
+    begin 
+        execute_sql('create index ' || p_index_name || ' on ' || p_table_name || '(' || p_column_name || ') ' ||
+                    'indextype is ctxsys.context parameters (''section group ' || p_sg_pref || ' datastore ' || p_ds_pref || ' lexer ' || p_lx_pref || ' stoplist ctxsys.empty_stoplist memory 10M sync (on commit)'')');
+    end create_text_index;
+    procedure drop_text_index(p_index_name in varchar2) is 
+    begin 
+        execute_sql('drop index ' || p_index_name || ' force');
+    end drop_text_index;
+    
+ -- commented
+    /*procedure init_oracle_text is 
+    begin 
+        if text_is_available then 
+            -- Specific setup for T_VORSCHRIFT_SYNTHETIC
+            create_text_preferences('RI_VORSCHRIFT_DS_PREF', 'MULTI_COLUMN_DATASTORE', 'VORSCHRIFT_NUMMER,VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 'RI_VORSCHRIFT_SG_PREF', 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 'RI_VORSCHRIFT_LX_PREF', 'NO', 'YES', 'GENERIC');
+            create_text_index('RI_VORSCHRIFT_TEXT_FTX', 'T_VORSCHRIFT_SYNTHETIC', 'VORSCHRIFT_NUMMER', 'RI_VORSCHRIFT_SG_PREF', 'RI_VORSCHRIFT_DS_PREF', 'RI_VORSCHRIFT_LX_PREF');
+            -- Specific setup for T_VORSCHRIFT_SYNTHETIC_1
+            create_text_preferences('RI_VORSCHRIFT_DS_PREF_1', 'MULTI_COLUMN_DATASTORE', 'VORSCHRIFT_NUMMER,VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 'RI_VORSCHRIFT_SG_PREF_1', 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 'RI_VORSCHRIFT_LX_PREF_1', 'NO', 'YES', 'GENERIC');
+            create_text_index('RI_VORSCHRIFT_TEXT_FTX_1', 'T_VORSCHRIFT_SYNTHETIC_1', 'VORSCHRIFT_NUMMER', 'RI_VORSCHRIFT_SG_PREF_1', 'RI_VORSCHRIFT_DS_PREF_1', 'RI_VORSCHRIFT_LX_PREF_1');
+            -- Specific setup for T_NORM
+            create_text_preferences('RI_VORSCHRIFT_DS_PREF_NORM', 'MULTI_COLUMN_DATASTORE', 'BEZEICHNUNG', 'RI_VORSCHRIFT_SG_PREF_NORM', 'BEZEICHNUNG', 'RI_VORSCHRIFT_LX_PREF_NORM', 'NO', 'YES', 'GENERIC');
+            create_text_index('RI_VORSCHRIFT_TEXT_FTX_NORM', 'T_NORM', 'BEZEICHNUNG', 'RI_VORSCHRIFT_SG_PREF_NORM', 'RI_VORSCHRIFT_DS_PREF_NORM', 'RI_VORSCHRIFT_LX_PREF_NORM');
+        end if; 
+    end init_oracle_text; */
+    function convert_text_query( p_enduser_query in varchar2 ) return varchar2  
+is  
+    l_tokens       apex_t_varchar2 := apex_t_varchar2();
+    c_xml constant varchar2(32767) := '<query><textquery><progression>' || 
+                                        '<seq>#NORMAL#</seq>' || 
+                                        '<seq>#FUZZY#</seq>' || 
+                                      '</progression></textquery></query>'; 
+    l_textquery    varchar2(32767);
+    --------------------------------------------------------------------------------
+    procedure tokenize
+    is
+        c_len constant pls_integer := length( p_enduser_query );
+        l_pos pls_integer := 1;
+        l_char varchar2( 1 char );
+        l_quoted boolean := false;
+        l_token  varchar2(32767);
+    begin
+        <<char_reader_loop>>
+        while l_pos <= c_len loop
+            l_char := substr( p_enduser_query, l_pos, 1 );
+            if l_char = '"' then
+                if substr( p_enduser_query, l_pos + 1) = '"' then
+                     l_token := l_token || l_char;
+                     l_pos := l_pos + 2;
+                     continue char_reader_loop;
+                end if;
+                l_token := trim( both from l_token );
+                if l_token is not null then
+                    if l_quoted then
+                        apex_string.push( l_tokens, l_token );
+                    else
+                        l_tokens := l_tokens multiset union apex_string.split( l_token, ' ' );
+                    end if;
+                    l_token := '';
+                end if;
+                l_quoted := not l_quoted;
+            else
+                l_token := l_token || l_char;
+            end if;
+            l_pos := l_pos + 1;
+        end loop char_reader_loop;
+        l_token := trim( both from l_token );
+        if l_token is not null then
+            l_tokens := l_tokens multiset union (apex_string.split( l_token, ' ' ));
+        end if;
+    end tokenize;
+    --------------------------------------------------------------------------------
+    function generate_query( 
+            p_feature in varchar2) 
+            return varchar2 is 
+        l_query       varchar2(32767); 
+        l_clean_token varchar2(32767); 
+        l_not         boolean;
+    begin 
+        for i in 1..l_tokens.count loop 
+            l_clean_token := lower( regexp_replace( l_tokens( i ), '[<>{}/()*%&!$?.:,;\+#]', '' ) ); 
+            l_not         := false;
+            if ltrim( rtrim( l_clean_token ) ) is not null then 
+                l_not := l_clean_token like '-%' AND l_clean_token NOT like '-';
+                if l_query is not null and not l_not then
+                    l_query := l_query || ' and '; 
+                end if; 
+                if l_not then
+                    l_query := l_query || 'NOT ';
+                    l_clean_token := substr( l_clean_token, 2 );
+                end if;
+                if p_feature = 'FUZZY' then
+                    if l_clean_token like '%"%' then
+                        l_query := l_query || 'FUZZY("' || trim(both '"' from l_clean_token) || '", 50, 500) ';
+                    else
+                        l_query := l_query || 'FUZZY({' || l_clean_token || '}, 50, 500) ';
+                    end if;
+                else
+                    if l_clean_token like '%"%' then
+                        l_query := l_query || '"' || trim(both '"' from l_clean_token) || '"';
+                    else
+                        l_query := l_query || '{' || l_clean_token || '}';
+                    end if;
+                end if;
+            end if; 
+        end loop; 
+        return ltrim( rtrim( l_query ));  
+    end generate_query; 
+begin 
+    if substr( p_enduser_query, 1, 8 ) = 'ORATEXT:' then 
+        return substr( p_enduser_query, 9 ); 
+    else  
+        l_textquery := c_xml; 
+        
+        if substr(p_enduser_query, 1, 1) = '"' and substr(p_enduser_query, -1) = '"' then
+    l_textquery := replace( l_textquery, '#NORMAL#', '"' || trim(both '"' from p_enduser_query) || '"' );
+    l_textquery := replace( l_textquery, '#FUZZY#', 'FUZZY("' || trim(both '"' from p_enduser_query) || '", 50, 500)' );
+else
+    tokenize;
+    l_textquery := replace( l_textquery, '#NORMAL#', generate_query( 'NORMAL' ) );
+    l_textquery := replace( l_textquery, '#FUZZY#', generate_query( 'FUZZY' ) );
+end if;
+        
+        apex_debug.info( '#### Oracle TEXT Query is: %s', l_textquery);
+        return l_textquery; 
+    end if; 
+end convert_text_query;
+end pck_ri_vorschrift_oracle_text_pkg;
+```
+
+# lov (list of value ) oracle text
+
+```sql
+with cte_la as (
+    select 
+        normid,
+        nvl(listagg(trim(la.b_nummer), ', ') within group (order by la.b_nummer), null) as laender_nummer,
+        nvl(listagg(trim(la.LAND), ', ') within group (order by la.LAND), null) as laender_name
+    from t_norm_ref_land nrl
+    left outer join t_land la on nrl.landid = la.landid
+    group by normid
+)
+select 
+    n.normid, 
+    n.bezeichnung as BEZEICHNUNG,
+    :APEX$F1 as search_string,
+    cte_la.laender_nummer as B_NUMMER,
+    cte_la.laender_name as LAND
+from T_NORM n
+left outer join cte_la on cte_la.normid = n.normid
+where n.normid not in (1016) 
+  and (:APEX$F1 is null or contains(n.BEZEICHNUNG, (select PCK_RI_VORSCHRIFT_ORACLE_TEXT_PKG.convert_text_query(nvl(:APEX$F1, 'xxx')) from dual), 1) > 0)
+order by n.BEZEICHNUNG asc;
+```
+
+
+# Complete Oracle Text package in static 
+
+### Specification
+```sql
+create or replace package pck_ri_vorschrift_oracle_text_pkg authid current_user is 
+ 
+    function text_is_available return boolean; 
+ 
+    procedure create_text_preferences;
+    procedure create_text_preferences_1;
+    procedure create_text_preferences_norm; 
+ 
+    procedure drop_text_preferences;
+    procedure drop_text_preferences_1;
+    procedure drop_text_preferences_norm; 
+ 
+    procedure create_text_index;
+    procedure create_text_index_1;
+    procedure create_text_index_norm; 
+ 
+    procedure drop_text_index;
+    procedure drop_text_index_1;
+    procedure drop_text_index_norm; 
+ 
+    procedure init_oracle_text; 
+ 
+    function convert_text_query( p_enduser_query  in varchar2 ) return varchar2; 
+ 
+end pck_ri_vorschrift_oracle_text_pkg;
+```
+
+# BODY
+```sql
+create or replace package body pck_ri_vorschrift_oracle_text_pkg is 
+    procedure execute_sql( 
+        p_sql         in varchar2,  
+        p_throw_error in boolean default true 
+    ) is 
+    begin 
+        execute immediate p_sql; 
+    exception 
+        when others then  
+            if p_throw_error then raise; end if; 
+    end execute_sql; 
+    
+    function text_is_available return boolean  
+    is 
+        l_dummy number; 
+    begin 
+        select 1 into l_dummy  
+          from sys.all_objects 
+         where owner       = 'CTXSYS'  
+           and object_name = 'CTX_DDL'  
+           and rownum      = 1; 
+        return true; 
+    exception  
+        when NO_DATA_FOUND then return false; 
+    end text_is_available; 
+
+    procedure init_oracle_text is 
+    begin 
+        if text_is_available then 
+            create_text_preferences; 
+            create_text_index; 
+        end if; 
+    end init_oracle_text; 
+    
+    procedure drop_text_index is  
+    begin 
+        execute_sql( q'#drop index RI_VORSCHRIFT_TEXT_FTX force#' ); 
+    end drop_text_index;
+
+
+    procedure drop_text_index_1 is  
+    begin 
+        execute_sql( q'#drop index RI_VORSCHRIFT_TEXT_FTX_1 force#' ); 
+    end drop_text_index_1;
+
+    procedure drop_text_index_norm is  
+    begin 
+        execute_sql( q'#drop index RI_VORSCHRIFT_TEXT_FTX_NORM force#' ); 
+    end drop_text_index_norm; 
+
+
+    procedure drop_text_preferences is 
+    begin 
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_LX_PREF'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_DS_PREF'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_section_group( 'RI_VORSCHRIFT_SG_PREF'); end;#', false );  
+    end drop_text_preferences;
+
+    procedure drop_text_preferences_1 is 
+    begin 
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_LX_PREF_1'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_DS_PREF_1'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_section_group( 'RI_VORSCHRIFT_SG_PREF_1'); end;#', false );  
+    end drop_text_preferences_1;
+
+    procedure drop_text_preferences_norm is 
+    begin 
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_LX_PREF'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_DS_PREF'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_section_group( 'RI_VORSCHRIFT_SG_PREF'); end;#', false );  
+    end drop_text_preferences_norm;
+    
+    procedure create_text_preferences is 
+    begin 
+        -- Datastore Preference: Index the VORSCHRIFT_NUMMER and the VORSCHRIFT_BEZEICHNUNG_DEUTSCH columns 
+        execute_sql(q'#  
+        begin 
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF', 
+                object_name      => 'MULTI_COLUMN_DATASTORE' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF', 
+                attribute_name   => 'COLUMNS', 
+                attribute_value  => 'VORSCHRIFT_NUMMER,VORSCHRIFT_BEZEICHNUNG_DEUTSCH' 
+            ); 
+         
+            ctx_ddl.create_section_group( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF', 
+                group_type       => 'XML_SECTION_GROUP' 
+            ); 
+         
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF', 
+                section_name     => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
+                tag              => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
+                visible          => true 
+            ); 
+         
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF', 
+                section_name     => 'VORSCHRIFT_NUMMER', 
+                tag              => 'VORSCHRIFT_NUMMER', 
+                visible          => true 
+            ); 
+         
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
+                object_name      => 'BASIC_LEXER' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
+                attribute_name   => 'MIXED_CASE', 
+                attribute_value  => 'NO' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
+                attribute_name   => 'BASE_LETTER', 
+                attribute_value  => 'YES' 
+            ); 
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
+                attribute_name   => 'BASE_LETTER_TYPE', 
+                attribute_value  => 'GENERIC' 
+            ); 
+        end;#' 
+        );  
+    end create_text_preferences;
+
+
+
+
+procedure create_text_preferences_1 is 
+    begin 
+        -- Datastore Preference: Index the VORSCHRIFT_NUMMER and the VORSCHRIFT_BEZEICHNUNG_DEUTSCH columns 
+        execute_sql(q'#  
+        begin 
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF_1', 
+                object_name      => 'MULTI_COLUMN_DATASTORE' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF_1', 
+                attribute_name   => 'COLUMNS', 
+                attribute_value  => 'VORSCHRIFT_NUMMER,VORSCHRIFT_BEZEICHNUNG_DEUTSCH' 
+            ); 
+         
+            ctx_ddl.create_section_group( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF_1', 
+                group_type       => 'XML_SECTION_GROUP' 
+            ); 
+         
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF_1', 
+                section_name     => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
+                tag              => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
+                visible          => true 
+            ); 
+         
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF_1', 
+                section_name     => 'VORSCHRIFT_NUMMER', 
+                tag              => 'VORSCHRIFT_NUMMER', 
+                visible          => true 
+            ); 
+         
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
+                object_name      => 'BASIC_LEXER' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
+                attribute_name   => 'MIXED_CASE', 
+                attribute_value  => 'NO' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
+                attribute_name   => 'BASE_LETTER', 
+                attribute_value  => 'YES' 
+            ); 
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
+                attribute_name   => 'BASE_LETTER_TYPE', 
+                attribute_value  => 'GENERIC' 
+            ); 
+        end;#' 
+        );  
+    end create_text_preferences_1;
+
+
+
+
+
+
+ procedure create_text_preferences_norm is 
+    begin
+
+     execute_sql(q'#  
+        begin  
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF_NORM', 
+                object_name      => 'MULTI_COLUMN_DATASTORE' 
+            ); 
+
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF_NORM', 
+                attribute_name   => 'COLUMNS', 
+                attribute_value  => 'BEZEICHNUNG'
+            ); 
+
+            ctx_ddl.create_section_group( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF_NORM', 
+                group_type       => 'XML_SECTION_GROUP' 
+            ); 
+
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF_NORM', 
+                section_name     => 'BEZEICHNUNG', 
+                tag              => 'BEZEICHNUNG', 
+                visible          => true 
+            ); 
+
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
+                object_name      => 'BASIC_LEXER' 
+            ); 
+
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
+                attribute_name   => 'MIXED_CASE', 
+                attribute_value  => 'NO' 
+            ); 
+
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
+                attribute_name   => 'BASE_LETTER', 
+                attribute_value  => 'YES' 
+            ); 
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
+                attribute_name   => 'BASE_LETTER_TYPE', 
+                attribute_value  => 'GENERIC' 
+            ); 
+    end;#' 
+        );  
+    end create_text_preferences_norm;
+
+
+    procedure create_text_index is 
+    begin 
+        execute immediate  
+q'#create index ri_vorschrift_text_ftx on T_VORSCHRIFT_SYNTHETIC (VORSCHRIFT_NUMMER) 
+   indextype is ctxsys.context parameters ( 'section group  RI_VORSCHRIFT_SG_PREF 
+                                             datastore      RI_VORSCHRIFT_DS_PREF 
+                                             lexer          RI_VORSCHRIFT_LX_PREF 
+                                             stoplist       ctxsys.empty_stoplist 
+                                             memory         10M 
+                                             sync           (on commit)')#'; 
+    end create_text_index;
+
+
+
+    procedure create_text_index_1 is 
+    begin 
+        execute immediate  
+q'#create index ri_vorschrift_text_ftx_1 on T_VORSCHRIFT_SYNTHETIC_1 (VORSCHRIFT_NUMMER) 
+   indextype is ctxsys.context parameters ( 'section group  RI_VORSCHRIFT_SG_PREF_1
+                                             datastore      RI_VORSCHRIFT_DS_PREF_1
+                                             lexer          RI_VORSCHRIFT_LX_PREF_1
+                                             stoplist       ctxsys.empty_stoplist 
+                                             memory         10M 
+                                             sync           (on commit)')#'; 
+    end create_text_index_1;
+
+
+
+
+
+procedure create_text_index_norm is
+begin 
+        execute immediate  
+q'#create index ri_vorschrift_text_ftx_norm on T_norm (BEZEICHNUNG) 
+   indextype is ctxsys.context parameters ( 'section group  RI_VORSCHRIFT_SG_PREF_NORM 
+                                             datastore      RI_VORSCHRIFT_DS_PREF_NORM 
+                                             lexer          RI_VORSCHRIFT_LX_PREF_NORM 
+                                             stoplist       ctxsys.empty_stoplist 
+                                             memory         10M 
+                                             sync           (on commit)')#'; 
+    end create_text_index_norm;
+
+
+/*
+
+-- minus not working correctly in lov ( list of value ) also for this convert text query function
+
+ function convert_text_query( p_enduser_query in varchar2 ) return varchar2  
+is  
+    l_tokens       apex_t_varchar2 := apex_t_varchar2();
+
+    c_xml constant varchar2(32767) := '<query><textquery><progression>' || 
+                                        '<seq>#NORMAL#</seq>' || 
+                                        '<seq>#FUZZY#</seq>' || 
+                                      '</progression></textquery></query>'; 
+    l_textquery    varchar2(32767);
+
+    --------------------------------------------------------------------------------
+    procedure tokenize
+    is
+        c_len constant pls_integer := length( p_enduser_query );
+        l_pos pls_integer := 1;
+        l_char varchar2( 1 char );
+        l_quoted boolean := false;
+        l_token  varchar2(32767);
+    begin
+        <<char_reader_loop>>
+        while l_pos <= c_len loop
+            l_char := substr( p_enduser_query, l_pos, 1 );
+            if l_char = '"' then
+                if substr( p_enduser_query, l_pos + 1) = '"' then
+                     l_token := l_token || l_char;
+                     l_pos := l_pos + 2;
+                     continue char_reader_loop;
+                end if;
+                l_token := trim( both from l_token );
+                if l_token is not null then
+                    if l_quoted then
+                        apex_string.push( l_tokens, l_token );
+                    else
+                        l_tokens := l_tokens multiset union apex_string.split( l_token, ' ' );
+                    end if;
+                    l_token := '';
+                end if;
+
+                l_quoted := not l_quoted;
+            else
+                l_token := l_token || l_char;
+            end if;
+            l_pos := l_pos + 1;
+        end loop char_reader_loop;
+
+        l_token := trim( both from l_token );
+        if l_token is not null then
+            l_tokens := l_tokens multiset union (apex_string.split( l_token, ' ' ));
+        end if;
+    end tokenize;
+    --------------------------------------------------------------------------------
+    function generate_query( 
+            p_feature in varchar2) 
+            return varchar2 is 
+        l_query       varchar2(32767); 
+        l_clean_token varchar2(32767); 
+        l_not         boolean;
+    begin 
+        for i in 1..l_tokens.count loop 
+            l_clean_token := lower( regexp_replace( l_tokens( i ), '[<>{}/()*%&!$?.:,;\+#]', '' ) ); 
+            l_not         := false;
+            if ltrim( rtrim( l_clean_token ) ) is not null then 
+
+                l_not := l_clean_token like '-%';
+
+                if l_query is not null and not l_not then
+                    l_query := l_query || ' and '; 
+                end if; 
+
+                if l_not then
+                    l_query := l_query || 'NOT ';
+                    l_clean_token := substr( l_clean_token, 2 );
+                end if;
+
+                if p_feature = 'FUZZY' then
+                    if l_clean_token like '%"%' then
+                        l_query := l_query || 'FUZZY("' || trim(both '"' from l_clean_token) || '", 50, 500) ';
+                    else
+                        l_query := l_query || 'FUZZY({' || l_clean_token || '}, 50, 500) ';
+                    end if;
+                else
+                    if l_clean_token like '%"%' then
+                        l_query := l_query || '"' || trim(both '"' from l_clean_token) || '"';
+                    else
+                        l_query := l_query || '{' || l_clean_token || '}';
+                    end if;
+                end if;
+
+            end if; 
+        end loop; 
+        return ltrim( rtrim( l_query ));  
+    end generate_query; 
+begin 
+    if substr( p_enduser_query, 1, 8 ) = 'ORATEXT:' then 
+        return substr( p_enduser_query, 9 ); 
+    else  
+        l_textquery := c_xml; 
+
+        
+        if substr(p_enduser_query, 1, 1) = '"' and substr(p_enduser_query, -1) = '"' then
+    l_textquery := replace( l_textquery, '#NORMAL#', '"' || trim(both '"' from p_enduser_query) || '"' );
+    l_textquery := replace( l_textquery, '#FUZZY#', 'FUZZY("' || trim(both '"' from p_enduser_query) || '", 50, 500)' );
+else
+    tokenize;
+    l_textquery := replace( l_textquery, '#NORMAL#', generate_query( 'NORMAL' ) );
+    l_textquery := replace( l_textquery, '#FUZZY#', generate_query( 'FUZZY' ) );
+end if;
+        
+        apex_debug.info( '#### Oracle TEXT Query is: %s', l_textquery);
+        return l_textquery; 
+    end if; 
+end convert_text_query;
+*/
+```
+
+
+### minus working correctly in lov ( list of value ) also for this convert text query function
+```sql
+function convert_text_query( p_enduser_query in varchar2 ) return varchar2  
+is  
+    l_tokens       apex_t_varchar2 := apex_t_varchar2();
+    c_xml constant varchar2(32767) := '<query><textquery><progression>' || 
+                                        '<seq>#NORMAL#</seq>' || 
+                                        '<seq>#FUZZY#</seq>' || 
+                                      '</progression></textquery></query>'; 
+    l_textquery    varchar2(32767);
+    --------------------------------------------------------------------------------
+    procedure tokenize
+    is
+        c_len constant pls_integer := length( p_enduser_query );
+        l_pos pls_integer := 1;
+        l_char varchar2( 1 char );
+        l_quoted boolean := false;
+        l_token  varchar2(32767);
+    begin
+        <<char_reader_loop>>
+        while l_pos <= c_len loop
+            l_char := substr( p_enduser_query, l_pos, 1 );
+            if l_char = '"' then
+                if substr( p_enduser_query, l_pos + 1) = '"' then
+                     l_token := l_token || l_char;
+                     l_pos := l_pos + 2;
+                     continue char_reader_loop;
+                end if;
+                l_token := trim( both from l_token );
+                if l_token is not null then
+                    if l_quoted then
+                        apex_string.push( l_tokens, l_token );
+                    else
+                        l_tokens := l_tokens multiset union apex_string.split( l_token, ' ' );
+                    end if;
+                    l_token := '';
+                end if;
+                l_quoted := not l_quoted;
+            else
+                l_token := l_token || l_char;
+            end if;
+            l_pos := l_pos + 1;
+        end loop char_reader_loop;
+        l_token := trim( both from l_token );
+        if l_token is not null then
+            l_tokens := l_tokens multiset union (apex_string.split( l_token, ' ' ));
+        end if;
+    end tokenize;
+    --------------------------------------------------------------------------------
+    function generate_query( 
+            p_feature in varchar2) 
+            return varchar2 is 
+        l_query       varchar2(32767); 
+        l_clean_token varchar2(32767); 
+        l_not         boolean;
+    begin 
+        for i in 1..l_tokens.count loop 
+            l_clean_token := lower( regexp_replace( l_tokens( i ), '[<>{}/()*%&!$?.:,;\+#]', '' ) ); 
+            l_not         := false;
+            if ltrim( rtrim( l_clean_token ) ) is not null then 
+                l_not := l_clean_token like '-%' AND l_clean_token NOT like '-';
+                if l_query is not null and not l_not then
+                    l_query := l_query || ' and '; 
+                end if; 
+                if l_not then
+                    l_query := l_query || 'NOT ';
+                    l_clean_token := substr( l_clean_token, 2 );
+                end if;
+                if p_feature = 'FUZZY' then
+                    if l_clean_token like '%"%' then
+                        l_query := l_query || 'FUZZY("' || trim(both '"' from l_clean_token) || '", 50, 500) ';
+                    else
+                        l_query := l_query || 'FUZZY({' || l_clean_token || '}, 50, 500) ';
+                    end if;
+                else
+                    if l_clean_token like '%"%' then
+                        l_query := l_query || '"' || trim(both '"' from l_clean_token) || '"';
+                    else
+                        l_query := l_query || '{' || l_clean_token || '}';
+                    end if;
+                end if;
+            end if; 
+        end loop; 
+        return ltrim( rtrim( l_query ));  
+    end generate_query; 
+begin 
+    if substr( p_enduser_query, 1, 8 ) = 'ORATEXT:' then 
+        return substr( p_enduser_query, 9 ); 
+    else  
+        l_textquery := c_xml; 
+        
+        if substr(p_enduser_query, 1, 1) = '"' and substr(p_enduser_query, -1) = '"' then
+    l_textquery := replace( l_textquery, '#NORMAL#', '"' || trim(both '"' from p_enduser_query) || '"' );
+    l_textquery := replace( l_textquery, '#FUZZY#', 'FUZZY("' || trim(both '"' from p_enduser_query) || '", 50, 500)' );
+else
+    tokenize;
+    l_textquery := replace( l_textquery, '#NORMAL#', generate_query( 'NORMAL' ) );
+    l_textquery := replace( l_textquery, '#FUZZY#', generate_query( 'FUZZY' ) );
+end if;
+        
+        apex_debug.info( '#### Oracle TEXT Query is: %s', l_textquery);
+        return l_textquery; 
+    end if; 
+end convert_text_query;
+end pck_ri_vorschrift_oracle_text_pkg;
+
+
+-- lov (list of value ) oracle text
+
+
+with cte_la as (
+    select 
+        normid,
+        nvl(listagg(trim(la.b_nummer), ', ') within group (order by la.b_nummer), null) as laender_nummer,
+        nvl(listagg(trim(la.LAND), ', ') within group (order by la.LAND), null) as laender_name
+    from t_norm_ref_land nrl
+    left outer join t_land la on nrl.landid = la.landid
+    group by normid
+)
+select 
+    n.normid, 
+    n.bezeichnung as BEZEICHNUNG,
+    :APEX$F1 as search_string,
+    cte_la.laender_nummer as B_NUMMER,
+    cte_la.laender_name as LAND
+from T_NORM n
+left outer join cte_la on cte_la.normid = n.normid
+where n.normid not in (1016) 
+  and (:APEX$F1 is null or contains(n.BEZEICHNUNG, (select PCK_RI_VORSCHRIFT_ORACLE_TEXT_PKG.convert_text_query(nvl(:APEX$F1, 'xxx')) from dual), 1) > 0)
+order by n.BEZEICHNUNG asc;
+
+
+-- code to test in sql commands -- contains -- oracle text -- query
+
+
+SELECT pck_ri_vorschrift_oracle_text_pkg.convert_text_query('Kommaddi -Tharun') FROM dual;
+
+
+SELECT VORSCHRIFTID, VORSCHRIFT_NUMMER, VORSCHRIFT_BEZEICHNUNG_DEUTSCH
+FROM T_VORSCHRIFT_SYNTHETIC
+WHERE CONTAINS(VORSCHRIFT_NUMMER, pck_ri_vorschrift_oracle_text_pkg.convert_text_query('"tarun"')) > 0;
+
+
+-- code to drop text preferences in oracle Text
+
+
+BEGIN
+    -- Attempt to drop the datastore preference
+    BEGIN
+        CTX_DDL.DROP_PREFERENCE('RI_VORSCHRIFT_DS_PREF_NORM');
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE = -20000 THEN
+                NULL; -- Ignore if the preference does not exist
+            ELSE
+                RAISE; -- Re-raise other unexpected errors
+            END IF;
+    END;
+    
+    -- Attempt to drop the lexer preference
+    BEGIN
+        CTX_DDL.DROP_PREFERENCE('RI_VORSCHRIFT_LX_PREF_NORM');
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE = -20000 THEN
+                NULL; -- Ignore if the preference does not exist
+            ELSE
+                RAISE; -- Re-raise other unexpected errors
+            END IF;
+    END;
+    
+    -- Attempt to drop the section group
+    BEGIN
+        CTX_DDL.DROP_SECTION_GROUP('RI_VORSCHRIFT_SG_PREF_NORM');
+    EXCEPTION
+        WHEN OTHERS THEN
+            IF SQLCODE = -20000 THEN
+                NULL; -- Ignore if the section group does not exist
+            ELSE
+                RAISE; -- Re-raise other unexpected errors
+            END IF;
+    END;
+END;
+```
+
+
+
+# ORACLE TEXT MULTIPLE TABLES AND MULTIPLE INDEXES FROM MULTIPLE TABLES USING MATERIALIZED VIEW
+
+
+
+
+### INITIAL CODE 
+
+```sql
+drop table customers
+
+drop table addresses
+
+
+CREATE TABLE customers (
+     customer_id NUMBER,
+     first_name VARCHAR2(15),
+     last_name VARCHAR2(15),
+     CONSTRAINT customers_pk PRIMARY KEY (customer_id)
+   );
+
+
+
+
+CREATE TABLE addresses (
+     customer_id NUMBER,
+     street VARCHAR2(15),
+     city VARCHAR2(50),
+     state VARCHAR2(50),
+     CONSTRAINT addresses_fk FOREIGN KEY (customer_id)
+     REFERENCES customers (customer_id)
+   );
+
+
+
+INSERT INTO customers VALUES (1, 'Tharun', 'Smith');
+
+INSERT INTO customers VALUES (2, 'Bob', 'Jones');
+
+INSERT INTO customers VALUES (3, 'Kommaddi', 'williams');
+
+INSERT INTO addresses VALUES (1, 'Dominik', 'REDWOOD SHORES', 'CA');
+
+INSERT INTO addresses VALUES (2, 'Smith St.', 'Kommaddi Tharun', 'CA');
+
+INSERT INTO addresses VALUES (3, 'Redwood St.', 'RIVERSIDE', 'CA');
+
+
+/*
+CREATE VIEW customer_addresses AS
+SELECT
+    c.first_name,
+    c.last_name,
+    a.street,
+    a.city,
+    a.state
+FROM
+    customers c
+JOIN
+    addresses a ON c.customer_id = a.customer_id;
+*/
+
+/*
+CREATE MATERIALIZED VIEW customer_addresses AS
+  SELECT
+    c.first_name,
+    c.last_name,
+    a.street,
+    a.city,
+    a.state,
+    CAST (NULL AS VARCHAR2(1)) AS dummy
+   FROM
+   customers c, addresses a
+   WHERE c.customer_id = a.customer_id;
+
+*/
+
+
+CREATE MATERIALIZED VIEW customer_addresses
+BUILD IMMEDIATE
+REFRESH ON DEMAND
+AS
+SELECT
+  c.first_name,
+  c.last_name,
+  a.street,
+  a.city,
+  a.state,
+  CAST(NULL AS VARCHAR2(1)) AS dummy
+FROM
+  customers c
+JOIN
+  addresses a ON c.customer_id = a.customer_id;
+
+
+
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name        => 'refresh_customer_addresses_mv',
+    job_type        => 'PLSQL_BLOCK',
+    job_action      => 'BEGIN DBMS_MVIEW.REFRESH(''customer_addresses'',''C''); END;',
+    start_date      => SYSTIMESTAMP,
+    repeat_interval => 'FREQ=MINUTELY; INTERVAL=5', -- Runs every 5 minutes
+    enabled         => TRUE
+  );
+END;
+/
+
+
+
+INSERT INTO customers VALUES (4, 'Thomas', 'Tschernich');
+
+INSERT INTO addresses VALUES (4, 'Schrobenhausen', 'EMANO', 'DE');
+```
+
+
+
+
+# SPECIFICATION
+
+```sql
+create or replace package pck_ri_vorschrift_oracle_text_pkg authid current_user is 
+ 
+    function text_is_available return boolean; 
+ 
+    procedure create_text_preferences;
+    procedure create_text_preferences_1;
+    procedure create_text_preferences_norm;
+    procedure create_text_preferences_mv; 
+ 
+    procedure drop_text_preferences;
+    procedure drop_text_preferences_1;
+    procedure drop_text_preferences_norm;
+    procedure drop_text_preferences_mv; 
+ 
+    procedure create_text_index;
+    procedure create_text_index_1;
+    procedure create_text_index_norm;
+    procedure create_text_index_mv; 
+
+    procedure drop_text_index;
+    procedure drop_text_index_1;
+    procedure drop_text_index_norm;
+    procedure drop_text_index_mv;
+ 
+    procedure init_oracle_text; 
+ 
+    function convert_text_query( p_enduser_query  in varchar2 ) return varchar2; 
+ 
+end pck_ri_vorschrift_oracle_text_pkg;
+/
+
+```
+
+
+-- BODY
+```sql
+create or replace package body pck_ri_vorschrift_oracle_text_pkg is 
+    procedure execute_sql( 
+        p_sql         in varchar2,  
+        p_throw_error in boolean default true 
+    ) is 
+    begin 
+        execute immediate p_sql; 
+    exception 
+        when others then  
+            if p_throw_error then raise; end if; 
+    end execute_sql; 
+    
+    function text_is_available return boolean  
+    is 
+        l_dummy number; 
+    begin 
+        select 1 into l_dummy  
+          from sys.all_objects 
+         where owner       = 'CTXSYS'  
+           and object_name = 'CTX_DDL'  
+           and rownum      = 1; 
+        return true; 
+    exception  
+        when NO_DATA_FOUND then return false; 
+    end text_is_available; 
+
+    procedure init_oracle_text is 
+    begin 
+        if text_is_available then 
+            create_text_preferences; 
+            create_text_index; 
+        end if; 
+    end init_oracle_text; 
+    
+    procedure drop_text_index is  
+    begin 
+        execute_sql( q'#drop index RI_VORSCHRIFT_TEXT_FTX force#' ); 
+    end drop_text_index;
+
+
+    procedure drop_text_index_1 is  
+    begin 
+        execute_sql( q'#drop index RI_VORSCHRIFT_TEXT_FTX_1 force#' ); 
+    end drop_text_index_1;
+
+    procedure drop_text_index_norm is  
+    begin 
+        execute_sql( q'#drop index RI_VORSCHRIFT_TEXT_FTX_NORM force#' ); 
+    end drop_text_index_norm;
+
+    procedure drop_text_index_mv is  
+    begin 
+        execute_sql( q'#drop index RI_VORSCHRIFT_TEXT_FTX_MV force#' ); 
+    end drop_text_index_mv; 
+
+
+    procedure drop_text_preferences is 
+    begin 
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_LX_PREF'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_DS_PREF'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_section_group( 'RI_VORSCHRIFT_SG_PREF'); end;#', false );  
+    end drop_text_preferences;
+
+    procedure drop_text_preferences_1 is 
+    begin 
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_LX_PREF_1'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_DS_PREF_1'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_section_group( 'RI_VORSCHRIFT_SG_PREF_1'); end;#', false );  
+    end drop_text_preferences_1;
+
+    procedure drop_text_preferences_norm is 
+    begin 
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_LX_PREF'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_DS_PREF'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_section_group( 'RI_VORSCHRIFT_SG_PREF'); end;#', false );  
+    end drop_text_preferences_norm;
+
+
+    procedure drop_text_preferences_mv is 
+    begin 
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_LX_PREF_MV'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_preference( 'RI_VORSCHRIFT_DS_PREF_MV'); end;#', false );  
+        execute_sql( q'#begin ctx_ddl.drop_section_group( 'RI_VORSCHRIFT_SG_PREF_MV'); end;#', false );  
+    end drop_text_preferences_mv;
+    
+
+    procedure create_text_preferences is 
+    begin 
+        -- Datastore Preference: Index the VORSCHRIFT_NUMMER and the VORSCHRIFT_BEZEICHNUNG_DEUTSCH columns 
+        execute_sql(q'#  
+        begin 
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF', 
+                object_name      => 'MULTI_COLUMN_DATASTORE' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF', 
+                attribute_name   => 'COLUMNS', 
+                attribute_value  => 'VORSCHRIFT_NUMMER,VORSCHRIFT_BEZEICHNUNG_DEUTSCH' 
+            ); 
+         
+            ctx_ddl.create_section_group( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF', 
+                group_type       => 'XML_SECTION_GROUP' 
+            ); 
+         
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF', 
+                section_name     => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
+                tag              => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
+                visible          => true 
+            ); 
+         
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF', 
+                section_name     => 'VORSCHRIFT_NUMMER', 
+                tag              => 'VORSCHRIFT_NUMMER', 
+                visible          => true 
+            ); 
+         
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
+                object_name      => 'BASIC_LEXER' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
+                attribute_name   => 'MIXED_CASE', 
+                attribute_value  => 'NO' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
+                attribute_name   => 'BASE_LETTER', 
+                attribute_value  => 'YES' 
+            ); 
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF', 
+                attribute_name   => 'BASE_LETTER_TYPE', 
+                attribute_value  => 'GENERIC' 
+            ); 
+        end;#' 
+        );  
+    end create_text_preferences;
+
+
+
+
+procedure create_text_preferences_1 is 
+    begin 
+        -- Datastore Preference: Index the VORSCHRIFT_NUMMER and the VORSCHRIFT_BEZEICHNUNG_DEUTSCH columns 
+        execute_sql(q'#  
+        begin 
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF_1', 
+                object_name      => 'MULTI_COLUMN_DATASTORE' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF_1', 
+                attribute_name   => 'COLUMNS', 
+                attribute_value  => 'VORSCHRIFT_NUMMER,VORSCHRIFT_BEZEICHNUNG_DEUTSCH' 
+            ); 
+         
+            ctx_ddl.create_section_group( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF_1', 
+                group_type       => 'XML_SECTION_GROUP' 
+            ); 
+         
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF_1', 
+                section_name     => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
+                tag              => 'VORSCHRIFT_BEZEICHNUNG_DEUTSCH', 
+                visible          => true 
+            ); 
+         
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF_1', 
+                section_name     => 'VORSCHRIFT_NUMMER', 
+                tag              => 'VORSCHRIFT_NUMMER', 
+                visible          => true 
+            ); 
+         
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
+                object_name      => 'BASIC_LEXER' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
+                attribute_name   => 'MIXED_CASE', 
+                attribute_value  => 'NO' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
+                attribute_name   => 'BASE_LETTER', 
+                attribute_value  => 'YES' 
+            ); 
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_1', 
+                attribute_name   => 'BASE_LETTER_TYPE', 
+                attribute_value  => 'GENERIC' 
+            ); 
+        end;#' 
+        );  
+    end create_text_preferences_1;
+
+
+
+
+
+
+ procedure create_text_preferences_norm is 
+    begin
+
+     execute_sql(q'#  
+        begin  
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF_NORM', 
+                object_name      => 'MULTI_COLUMN_DATASTORE' 
+            ); 
+
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF_NORM', 
+                attribute_name   => 'COLUMNS', 
+                attribute_value  => 'BEZEICHNUNG'
+            ); 
+
+            ctx_ddl.create_section_group( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF_NORM', 
+                group_type       => 'XML_SECTION_GROUP' 
+            ); 
+
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF_NORM', 
+                section_name     => 'BEZEICHNUNG', 
+                tag              => 'BEZEICHNUNG', 
+                visible          => true 
+            ); 
+
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
+                object_name      => 'BASIC_LEXER' 
+            ); 
+
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
+                attribute_name   => 'MIXED_CASE', 
+                attribute_value  => 'NO' 
+            ); 
+
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
+                attribute_name   => 'BASE_LETTER', 
+                attribute_value  => 'YES' 
+            ); 
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_NORM', 
+                attribute_name   => 'BASE_LETTER_TYPE', 
+                attribute_value  => 'GENERIC' 
+            ); 
+    end;#' 
+        );  
+    end create_text_preferences_norm;
+
+    
+procedure create_text_preferences_mv is 
+    begin 
+        -- Datastore Preference: Index the VORSCHRIFT_NUMMER and the VORSCHRIFT_BEZEICHNUNG_DEUTSCH columns 
+        execute_sql(q'#  
+        begin 
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF_MV', 
+                object_name      => 'MULTI_COLUMN_DATASTORE' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_DS_PREF_MV', 
+                attribute_name   => 'COLUMNS', 
+                attribute_value  => 'FIRST_NAME,LAST_NAME,STREET,CITY'
+            ); 
+         
+            ctx_ddl.create_section_group( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF_MV', 
+                group_type       => 'XML_SECTION_GROUP' 
+            ); 
+         
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF_MV', 
+                section_name     => 'CITY', 
+                tag              => 'CITY', 
+                visible          => true 
+            ); 
+         
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF_MV', 
+                section_name     => 'STREET', 
+                tag              => 'STREET', 
+                visible          => true 
+            );
+
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF_MV', 
+                section_name     => 'LAST_NAME', 
+                tag              => 'LAST_NAME', 
+                visible          => true 
+            ); 
+
+
+            ctx_ddl.add_field_section( 
+                group_name       => 'RI_VORSCHRIFT_SG_PREF_MV', 
+                section_name     => 'FIRST_NAME', 
+                tag              => 'FIRST_NAME', 
+                visible          => true 
+            ); 
+         
+            ctx_ddl.create_preference( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_MV', 
+                object_name      => 'BASIC_LEXER' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_MV', 
+                attribute_name   => 'MIXED_CASE', 
+                attribute_value  => 'NO' 
+            ); 
+         
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_MV', 
+                attribute_name   => 'BASE_LETTER', 
+                attribute_value  => 'YES' 
+            ); 
+            ctx_ddl.set_attribute( 
+                preference_name  => 'RI_VORSCHRIFT_LX_PREF_MV', 
+                attribute_name   => 'BASE_LETTER_TYPE', 
+                attribute_value  => 'GENERIC' 
+            ); 
+        end;#' 
+        );  
+    end create_text_preferences_mv;
+
+
+
+
+
+
+    procedure create_text_index is 
+    begin 
+        execute immediate  
+q'#create index ri_vorschrift_text_ftx on T_VORSCHRIFT_SYNTHETIC (VORSCHRIFT_NUMMER) 
+   indextype is ctxsys.context parameters ( 'section group  RI_VORSCHRIFT_SG_PREF 
+                                             datastore      RI_VORSCHRIFT_DS_PREF 
+                                             lexer          RI_VORSCHRIFT_LX_PREF 
+                                             stoplist       ctxsys.empty_stoplist 
+                                             memory         10M 
+                                             sync           (on commit)')#'; 
+    end create_text_index;
+
+
+
+    procedure create_text_index_1 is 
+    begin 
+        execute immediate  
+q'#create index ri_vorschrift_text_ftx_1 on T_VORSCHRIFT_SYNTHETIC_1 (VORSCHRIFT_NUMMER) 
+   indextype is ctxsys.context parameters ( 'section group  RI_VORSCHRIFT_SG_PREF_1
+                                             datastore      RI_VORSCHRIFT_DS_PREF_1
+                                             lexer          RI_VORSCHRIFT_LX_PREF_1
+                                             stoplist       ctxsys.empty_stoplist 
+                                             memory         10M 
+                                             sync           (on commit)')#'; 
+    end create_text_index_1;
+
+
+
+
+
+    procedure create_text_index_norm is
+    begin 
+            execute immediate  
+    q'#create index ri_vorschrift_text_ftx_norm on T_norm (BEZEICHNUNG) 
+       indextype is ctxsys.context parameters ( 'section group  RI_VORSCHRIFT_SG_PREF_NORM 
+                                                 datastore      RI_VORSCHRIFT_DS_PREF_NORM 
+                                                 lexer          RI_VORSCHRIFT_LX_PREF_NORM 
+                                                 stoplist       ctxsys.empty_stoplist 
+                                                 memory         10M 
+                                                 sync           (on commit)')#'; 
+    end create_text_index_norm;
+
+
+    procedure create_text_index_mv is
+    begin 
+            execute immediate  
+    q'#create index ri_vorschrift_text_ftx_mv on customer_addresses (dummy) 
+       indextype is ctxsys.context parameters ( 'section group  RI_VORSCHRIFT_SG_PREF_MV
+                                                 datastore      RI_VORSCHRIFT_DS_PREF_MV 
+                                                 lexer          RI_VORSCHRIFT_LX_PREF_MV 
+                                                 stoplist       ctxsys.empty_stoplist 
+                                                 memory         10M 
+                                                 sync           (on commit)')#'; 
+    end create_text_index_mv;
+
+
+
+
+function convert_text_query( p_enduser_query in varchar2 ) return varchar2  
+is  
+    l_tokens       apex_t_varchar2 := apex_t_varchar2();
+    c_xml constant varchar2(32767) := '<query><textquery><progression>' || 
+                                        '<seq>#NORMAL#</seq>' || 
+                                        '<seq>#FUZZY#</seq>' || 
+                                      '</progression></textquery></query>'; 
+    l_textquery    varchar2(32767);
+    --------------------------------------------------------------------------------
+    procedure tokenize
+    is
+        c_len constant pls_integer := length( p_enduser_query );
+        l_pos pls_integer := 1;
+        l_char varchar2( 1 char );
+        l_quoted boolean := false;
+        l_token  varchar2(32767);
+    begin
+        <<char_reader_loop>>
+        while l_pos <= c_len loop
+            l_char := substr( p_enduser_query, l_pos, 1 );
+            if l_char = '"' then
+                if substr( p_enduser_query, l_pos + 1) = '"' then
+                     l_token := l_token || l_char;
+                     l_pos := l_pos + 2;
+                     continue char_reader_loop;
+                end if;
+                l_token := trim( both from l_token );
+                if l_token is not null then
+                    if l_quoted then
+                        apex_string.push( l_tokens, l_token );
+                    else
+                        l_tokens := l_tokens multiset union apex_string.split( l_token, ' ' );
+                    end if;
+                    l_token := '';
+                end if;
+                l_quoted := not l_quoted;
+            else
+                l_token := l_token || l_char;
+            end if;
+            l_pos := l_pos + 1;
+        end loop char_reader_loop;
+        l_token := trim( both from l_token );
+        if l_token is not null then
+            l_tokens := l_tokens multiset union (apex_string.split( l_token, ' ' ));
+        end if;
+    end tokenize;
+    --------------------------------------------------------------------------------
+    function generate_query( 
+            p_feature in varchar2) 
+            return varchar2 is 
+        l_query       varchar2(32767); 
+        l_clean_token varchar2(32767); 
+        l_not         boolean;
+    begin 
+        for i in 1..l_tokens.count loop 
+            l_clean_token := lower( regexp_replace( l_tokens( i ), '[<>{}/()*%&!$?.:,;\+#]', '' ) ); 
+            l_not         := false;
+            if ltrim( rtrim( l_clean_token ) ) is not null then 
+                l_not := l_clean_token like '-%' AND l_clean_token NOT like '-';
+                if l_query is not null and not l_not then
+                    l_query := l_query || ' and '; 
+                end if; 
+                if l_not then
+                    l_query := l_query || 'NOT ';
+                    l_clean_token := substr( l_clean_token, 2 );
+                end if;
+                if p_feature = 'FUZZY' then
+                    if l_clean_token like '%"%' then
+                        l_query := l_query || 'FUZZY("' || trim(both '"' from l_clean_token) || '", 50, 500) ';
+                    else
+                        l_query := l_query || 'FUZZY({' || l_clean_token || '}, 50, 500) ';
+                    end if;
+                else
+                    if l_clean_token like '%"%' then
+                        l_query := l_query || '"' || trim(both '"' from l_clean_token) || '"';
+                    else
+                        l_query := l_query || '{' || l_clean_token || '}';
+                    end if;
+                end if;
+            end if; 
+        end loop; 
+        return ltrim( rtrim( l_query ));  
+    end generate_query; 
+begin 
+    if substr( p_enduser_query, 1, 8 ) = 'ORATEXT:' then 
+        return substr( p_enduser_query, 9 ); 
+    else  
+        l_textquery := c_xml; 
+        
+        if substr(p_enduser_query, 1, 1) = '"' and substr(p_enduser_query, -1) = '"' then
+    l_textquery := replace( l_textquery, '#NORMAL#', '"' || trim(both '"' from p_enduser_query) || '"' );
+    l_textquery := replace( l_textquery, '#FUZZY#', 'FUZZY("' || trim(both '"' from p_enduser_query) || '", 50, 500)' );
+else
+    tokenize;
+    l_textquery := replace( l_textquery, '#NORMAL#', generate_query( 'NORMAL' ) );
+    l_textquery := replace( l_textquery, '#FUZZY#', generate_query( 'FUZZY' ) );
+end if;
+        
+        apex_debug.info( '#### Oracle TEXT Query is: %s', l_textquery);
+        return l_textquery; 
+    end if; 
+end convert_text_query;
+end pck_ri_vorschrift_oracle_text_pkg;
+/
+
+```
+
+
+
+
+
+
+
+
+
+
+#  html and css for the alignment
+
+### html to show while doing oracle text introduction
+
+```sql
+<p>This page shows how Oracle Text can be used within an Interactive Report to perform full-text search using linguistic features.</p>
+<p>In this example, Oracle Text features are available to search the <b>VORSCHRIFT_NUMMER</b> and <b>VORSCHRIFT_BEZEICHNUNG_DEUTSCH</b> columns with the Interactive Report.</p>
+<p>Few Test Cases which will work using Oracle Text</p>
+<ul>
+    <p style="color: #bb0a31;">Oracle Text <b>FUZZY</b> search on <b>VORSCHRIFT_NUMMER</b> column</p>
+    <li><b>Thms</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> Tschernich Thomas</strong></li>
+    <li><b>Domnk</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> Braunbeck Dominik</strong></li>
+    <li><b>UN R</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER -  <strong> UN-R</strong></li>
+    <li><b>GB T</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER -  <strong> GB/T and other records which match this</strong></li>
+    <li><b>UN R 119 01 Suplmnt 2</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> UN-R 119/01 Supplement 2</strong></li>
+    <li><b>119 00</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> UN-R 119/00 Supplement 4 and other records which match this</strong></li>
+    <li><b>Brsbeläge</b><span class="align-colon">:</span> VORSCHRIFT_BEZEICHNUNG_DEUTSCH - <strong> Bremsbeläge für Automobile</strong></li>
+    <br>
+
+    <p style="color: #bb0a31;">Oracle Text <b>FUZZY</b> search on <b>VORSCHRIFT_NUMMER</b>, <b>VORSCHRIFT_BEZEICHNUNG_DEUTSCH</b> columns</p>
+    <li><b>GB Bremsbeläge</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong>GB 5763-2008</strong> ; VORSCHRIFT_BEZEICHNUNG_DEUTSCH - <strong> Bremsbeläge für Automobile</strong> &nbsp;&nbsp;&nbsp; <i> Normal record with two columns data </i> </li>
+    <br>
+
+    <p style="color: #bb0a31;">I have two records in data base for <b>VORSCHRIFT_NUMMER</b> column<br></p>
+    <ol> 
+    <li>Tschernich Thomas</li>
+    <li>Tschernich is a software developer</li>
+    </ol>
+
+    <p style="color: #bb0a31;">Oracle Text <b>MINUS</b> search on <b>VORSCHRIFT_NUMMER</b> column</li></p>
+
+    <li><b>Tschernich -Thomas</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> Tschernich is a software developer</strong> &nbsp;&nbsp;&nbsp; <i> Minus</i> </li>
+    <!-- <li><b>emano -audi</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> emano</strong> &nbsp;&nbsp;&nbsp; <i> Minus</i> </li> -->
+    <br>
+
+    <p style="color: #bb0a31;">Oracle Text <b>EXACT PHRASE</b> search on <b>VORSCHRIFT_NUMMER</b> column</p>
+
+    <li><b>Tschernich developer</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> Tschernich is a software developer</strong> &nbsp;&nbsp;&nbsp; <i> Normal record without using exact phrase </i> </li>
+    <li><b>"Tschernich developer"</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> No Record Found</strong> &nbsp;&nbsp;&nbsp; <i> Exact Phrase</i> </li>
+    <li><b>"software developer"</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> Tschernich is a software developer</strong> &nbsp;&nbsp;&nbsp; <i> Exact Phrase</i> </li>
+    <li><b>"Tschernich tomas"</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> No Record Found </strong> &nbsp;&nbsp;&nbsp; <i> Exact Phrase</i> </li>
+    <li><b>"Tschernich Thomas"</b><span class="align-colon">:</span> VORSCHRIFT_NUMMER - <strong> Tschernich Thomas </strong> &nbsp;&nbsp;&nbsp; <i> Exact Phrase</i> </li>
+
+</ul>
+
+```
+#  inline css for that html 
+```sql
+.align-colon:before {
+    content: '';
+    display: inline-block;
+    width: 1px;
+}
+ul {
+    list-style-type: disc;
+}
+li b {
+    display: inline-block;
+    width: 180px;
+}
+```
+
+
+
+
+
+
+
+
+
 ### SPECIFICATION
 
 ```sql
@@ -29940,6 +29952,11 @@ END;
 
 ## COMPLETE MATERIALIZED VIEW PROCESS FROM SCRATCH TO END FOR EXISTING QUERY
 
+
+
+[`Link to ORACLE APEX - MATERIALIZED VIEW`](https://youtu.be/cC0AK7yRebo)
+
+
 ### SQL QUERY
 
 ```sql```
@@ -30649,7 +30666,7 @@ END;
 
 # COMPLETE CUSTOM CSV OR EXCEL OR ANY OTHER FORMAT USING APEX_DATA_EXPORT PROCESS FROM SCRATCH TO END
 
-[`Link to Google Drive Folder - APEX_DATA_EXPORT`](https://drive.google.com/drive/folders/1N1eVL5elDE15zTliB0CGPTGtGd6TBuaX)
+[`Link to Google Drive Folder - APEX_DATA_EXPORT`](https://youtu.be/sDI3h2j1WB0)
 
 
 ### SQL QUERY
@@ -30795,3 +30812,101 @@ END;
 
 ```
 
+
+
+
+# HOW TO CHANGE MODAL DIALOG PAGE LABEL NAME DYNAMICALLY IN ORACLE APEX - USING JAVA SCRIPT
+
+
+[`Link to Google Drive Folder - APEX_DATA_EXPORT`](https://youtu.be/KV6uRU0Fk3w)
+
+```JavaScript
+
+-- Function and Global Variable Declaration
+
+var htmldb_delete_message='"Möchten SIe die Verknüpfung löschen?"';
+
+function show_notification(Msg){
+    apex.message.showPageSuccess(Msg);
+    $('#t_Alert_Success').attr('style','background-color: #b0c4de;');
+    $('.t-Alert-title').attr('style','color: black;font-weight: bold;');
+    $('#t_Alert_Success div div.t-Alert-icon span').removeClass('t-Icon').addClass('fa fa-info-circle-o');
+}
+
+function fMakeRed() {
+    $('option:contains("(red)")').addClass("red").each(function() {
+        $(this).html($(this).html().replace("(red)",""));
+    });
+}
+
+
+function regiontitle(){
+var type; 
+type = apex.item( "P45_AMENDMENTID" ).getValue();
+if (type == '20' ){
+apex.util.getTopApex().jQuery(".ui-dialog-content").dialog("option", "title", "Amendment Zuordnung")
+}else{
+apex.util.getTopApex().jQuery(".ui-dialog-content").dialog("option", "title", "Verknüpfungen Zuordnung")
+} 
+}
+
+
+-- Execute when Page Loads
+
+fMakeRed()
+regiontitle()
+
+```
+
+
+
+# ORACLE APEX PL/SQL DYNAMIC ACTION FUNCTION BODY - DYNAMIC COLUMNS
+
+
+[`Link to Google Drive Folder - APEX_DATA_EXPORT`](https://youtu.be/KV6uRU0Fk3w)
+
+
+```SQL
+DECLARE
+  sqlqry clob;
+  lVorschriftID number := :P25_VORSCHRIFTID;
+  lColList clob;
+BEGIN
+
+    SELECT LISTAGG('''' || EINSATZDATUM_TYP || ''' AS "' || EINSATZDATUM_TYP || '"', ', ') WITHIN GROUP (ORDER BY EINSATZDATUM_TYP) into lColList
+    FROM (
+      SELECT DISTINCT EINSATZDATUM_TYP
+      FROM V_THEMA_BAUM vtb
+      JOIN T_VORSCHRIFT_REF_THEMA_REF_EINSATZDATUM_TYP tvrtret ON vtb.THEMAID = tvrtret.THEMAID
+      JOIN T_EINSATZDATUM_TYP tet ON tvrtret.EINSATZDATUM_TYPID = tet.EINSATZDATUM_TYPID
+      WHERE tvrtret.VORSCHRIFTID = lVorschriftID and tvrtret.einsatzdatum_typid != 1031
+    );
+
+    sqlqry := 'SELECT *
+     FROM (
+       WITH cte_thema AS (
+         SELECT --tvrtret.VORSCHRIFTID,
+                --vtb.THEMA_SORTORDER,
+                vtb.NUMMER AS "Nummer",
+                vtb.BEZEICHNUNG AS "Thema",
+                tvrtret.EINSATZDATUM,
+                tet.EINSATZDATUM_TYP,
+                extract(year from tvrtret.MODELJAHR) as "Modelljahr" --,
+                --tvrtret.KOMMENTAR,
+                --tvrtret.LETZTE_AENDERUNG_DATUM
+         FROM V_THEMA_BAUM vtb
+         JOIN T_VORSCHRIFT_REF_THEMA_REF_EINSATZDATUM_TYP tvrtret ON vtb.THEMAID = tvrtret.THEMAID
+         JOIN T_EINSATZDATUM_TYP tet ON tvrtret.EINSATZDATUM_TYPID = tet.EINSATZDATUM_TYPID
+         WHERE tvrtret.VORSCHRIFTID = ' || lVorschriftID || ' and tvrtret.einsatzdatum_typid != 1031
+       )
+       SELECT *
+       FROM cte_thema
+     )
+     PIVOT (MAX(EINSATZDATUM) FOR EINSATZDATUM_TYP IN (' || lColList || '))';
+
+
+  RETURN sqlqry;
+END;
+
+
+```
