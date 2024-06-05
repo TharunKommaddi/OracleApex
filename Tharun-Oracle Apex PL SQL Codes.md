@@ -29238,8 +29238,9 @@ WHERE TABLE_NAME = 'T_THEMA' AND COLUMN_NAME = 'BETA_FLAG';
 
 # COMPLETE MATERIALIZED VIEW PROCESS FROM SCRATCH TO END
 
-[`Link to Google Drive Folder - Materialized View`](https://drive.google.com/drive/folders/1N1eVL5elDE15zTliB0CGPTGtGd6TBuaX)
+[`Link to Youtube - Materialized View`](https://youtu.be/cC0AK7yRebo)
 
+[`Link to Google Drive - Materialized View`](https://youtu.be/cC0AK7yRebo)
 
 ## COMPLETE MATERIALIZED VIEW PROCESS FROM SCRATCH TO END FOR NEW
 
@@ -29954,7 +29955,9 @@ END;
 
 
 
-[`Link to ORACLE APEX - MATERIALIZED VIEW`](https://youtu.be/cC0AK7yRebo)
+[`Link to Youtube - Materialized View`](https://youtu.be/cC0AK7yRebo)
+
+[`Link to Google Drive - Materialized View`](https://youtu.be/cC0AK7yRebo)
 
 
 ### SQL QUERY
@@ -30666,7 +30669,10 @@ END;
 
 # COMPLETE CUSTOM CSV OR EXCEL OR ANY OTHER FORMAT USING APEX_DATA_EXPORT PROCESS FROM SCRATCH TO END
 
-[`Link to Google Drive Folder - APEX_DATA_EXPORT`](https://youtu.be/sDI3h2j1WB0)
+[`Link to Youtube - APEX_DATA_EXPORT`](https://youtu.be/sDI3h2j1WB0)
+
+
+[`Link to Google Drive - APEX_DATA_EXPORT`](https://youtu.be/sDI3h2j1WB0)
 
 
 ### SQL QUERY
@@ -30818,7 +30824,10 @@ END;
 # HOW TO CHANGE MODAL DIALOG PAGE LABEL NAME DYNAMICALLY IN ORACLE APEX - USING JAVA SCRIPT
 
 
-[`Link to Google Drive Folder - APEX_DATA_EXPORT`](https://youtu.be/KV6uRU0Fk3w)
+[`Link to Youtube - How to change the modal dialog page label name dynamically in oracle apex using java script`](https://youtu.be/KV6uRU0Fk3w)
+
+
+[`Link to Google Drive - How to change the modal dialog page label name dynamically in oracle apex using java script`](https://youtu.be/KV6uRU0Fk3w)
 
 ```JavaScript
 
@@ -30863,7 +30872,9 @@ regiontitle()
 # ORACLE APEX PL/SQL DYNAMIC ACTION FUNCTION BODY - DYNAMIC COLUMNS
 
 
-[`Link to Google Drive Folder - APEX_DATA_EXPORT`](https://youtu.be/KV6uRU0Fk3w)
+[`Link to Youtube - Oracle APEX PL/SQL dynamic Action Function Body - Dynamic Columns`](https://youtu.be/u4zVZHU7b2o)
+
+[`Link to Google Drive - Oracle APEX PL/SQL dynamic Action Function Body - Dynamic Columns`](https://youtu.be/u4zVZHU7b2o)
 
 
 ```SQL
