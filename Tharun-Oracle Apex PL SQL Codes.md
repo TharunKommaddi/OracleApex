@@ -29540,6 +29540,8 @@ OUTER APPLY (
 ) equi
 /
 
+
+
 ```
 
 ### CREATE VIEW FROM SQL QUERY
@@ -30864,7 +30866,7 @@ regiontitle()
 [`Link to Google Drive Folder - APEX_DATA_EXPORT`](https://youtu.be/KV6uRU0Fk3w)
 
 
-```plsql
+```SQL
 DECLARE
   sqlqry clob;
   lVorschriftID number := :P25_VORSCHRIFTID;
@@ -30905,5 +30907,6 @@ BEGIN
 
   RETURN sqlqry;
 END;
-```
 
+
+```
