@@ -31191,6 +31191,7 @@ Vorschriften nummer     Dokumenten datum   Dokumententyp   Titel kurz   Titel la
 
 ### QUERY WITH UNPIVOT
 
+```
 WITH pivoted_data AS (
     SELECT *
     FROM (
@@ -31256,7 +31257,7 @@ UNPIVOT (
                 "Einsatzdaten" AS 13,
                 "Verknüpfungen" AS 14)
 );
-
+```
 
 
 ### OUTPUT WITH UNPIVOT:
