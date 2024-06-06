@@ -30921,3 +30921,361 @@ END;
 
 
 ```
+
+
+# COMPLETE TUTORIAL FOR THE LISTAGG VS XMLAGG
+
+
+`
+### Syntax for LISTAGG without Overflow Truncate:
+
+```sql
+SELECT LISTAGG(column_name, delimiter) WITHIN GROUP (ORDER BY order_column) AS concatenated_string
+FROM table_name;
+```
+
+### Syntax for LISTAGG with Overflow Truncate:
+
+```sql
+SELECT LISTAGG(column_name, delimiter) WITHIN GROUP (ORDER BY order_column) ON OVERFLOW TRUNCATE AS concatenated_string
+FROM table_name;
+
+### Syntax for XMLAGG:
+
+```sql
+SELECT rtrim(xmlagg(xmlelement(e, column_name || delimiter)).extract('//text()'), delimiter) AS concatenated_string
+FROM table_name;
+```
+
+### Sample Data and Code:
+
+
+```sql
+-- Sample data
+CREATE TABLE products (
+    product_name VARCHAR(50)
+);
+
+INSERT INTO products (product_name) VALUES
+('Laptop'),
+('Smartphone'),
+('Tablet'),
+('Camera'),
+('Headphones'),
+('Television'),
+('Printer');
+```
+
+
+
+### Example using LISTAGG without Overflow Truncate:
+
+```sql
+-- Using LISTAGG without Overflow Truncate
+SELECT LISTAGG(product_name, ', ') WITHIN GROUP (ORDER BY product_name) AS concatenated_products
+FROM products;
+```
+
+
+### Output for LISTAGG without Overflow Truncate:
+
+
+### Sample Data:
+
+```
+Product Name
+------------
+Laptop
+Smartphone
+Tablet
+Camera
+Headphones
+Television
+Printer
+```
+
+```plaintext
+concatenated_products
+------------------------------------
+Laptop, Smartphone, Tablet, Camera, Headphones, Television, Printer
+```
+
+
+### Example using LISTAGG with Overflow Truncate:
+
+```sql
+-- Using LISTAGG with Overflow Truncate
+SELECT LISTAGG(product_name, ', ') WITHIN GROUP (ORDER BY product_name) ON OVERFLOW TRUNCATE AS concatenated_products
+FROM products;
+```
+
+
+
+### Output for LISTAGG with Overflow Truncate:
+
+
+### Sample Data:
+
+```
+Product Name
+------------
+Laptop
+Smartphone
+Tablet
+Camera
+Headphones
+Television
+Printer
+```
+
+
+```plaintext
+concatenated_products
+------------------------------------
+Laptop, Smartphone, Tablet, Camera...
+```
+
+
+### Example using XMLAGG:
+
+```sql
+-- Using XMLAGG
+SELECT rtrim(xmlagg(xmlelement(e, product_name || ', ')).extract('//text()'), ', ') AS concatenated_products
+FROM products;
+```
+
+
+### Output for XMLAGG:
+
+
+### Sample Data:
+
+```
+Product Name
+------------
+Laptop
+Smartphone
+Tablet
+Camera
+Headphones
+Television
+Printer
+```
+
+```plaintext
+concatenated_products
+------------------------------------
+Laptop, Smartphone, Tablet, Camera, Headphones, Television, Printer
+```
+
+
+
+# COMPLETE TUTORIAL WITH PIVOT AND WITHOUT PIVOT
+
+
+### QUERY WITHOUT PIVOT
+
+```sql
+
+
+with cte1 as (
+    select level-1 as bindex
+    from dual
+    connect by level <= 15
+)
+select decode(bindex,
+        0,'Vorschriften nummer',
+		1,'Dokumenten datum',
+		2,'Dokumententyp',
+        3,'Titel kurz',
+		4,'Titel lang',
+		5,'Status der Vorschrift',
+        6,'Einsatzdatum Modell', 
+		7,'Vorschriftentyp', 
+		8,'Antriebsarten',
+        9,'Fahrzeug klassen',
+		10,'Länder',
+		11,'Themen',
+        12,'Inkraft datum', 
+		13,'Einsatzdaten', 
+		14, 'Verknüpfungen'
+    ) as d,
+    bindex as r
+    
+from cte1
+```
+
+### OUTPUT WITHOUT PIVOT:
+
+```plaintext
+D                                  R
+--------------------------------- ----
+Vorschriften nummer                0
+Dokumenten datum                   1
+Dokumententyp                      2
+Titel kurz                         3
+Titel lang                         4
+Status der Vorschrift              5
+Einsatzdatum Modell                6
+Vorschriftentyp                    7
+Antriebsarten                      8
+Fahrzeug klassen                   9
+Länder                             10
+Themen                             11
+Inkraft datum                      12
+Einsatzdaten                       13
+Verknüpfungen                      14
+```
+
+
+
+### QUERY WITH PIVOT
+
+```sql
+WITH cte1 AS (
+    SELECT level - 1 AS bindex
+    FROM dual
+    CONNECT BY level <= 15
+)
+SELECT *
+FROM (
+    SELECT
+        DECODE(bindex,
+            0, 'Vorschriften nummer',
+            1, 'Dokumenten datum',
+            2, 'Dokumententyp',
+            3, 'Titel kurz',
+            4, 'Titel lang',
+            5, 'Status der Vorschrift',
+            6, 'Einsatzdatum Modell',
+            7, 'Vorschriftentyp',
+            8, 'Antriebsarten',
+            9, 'Fahrzeug klassen',
+            10, 'Länder',
+            11, 'Themen',
+            12, 'Inkraft datum',
+            13, 'Einsatzdaten',
+            14, 'Verknüpfungen'
+        ) AS d,
+        bindex AS r
+    FROM cte1
+)
+PIVOT (
+    MAX(d) FOR r IN (0 AS "Vorschriften nummer", 
+                     1 AS "Dokumenten datum",
+                     2 AS "Dokumententyp",
+                     3 AS "Titel kurz",
+                     4 AS "Titel lang",
+                     5 AS "Status der Vorschrift",
+                     6 AS "Einsatzdatum Modell",
+                     7 AS "Vorschriftentyp",
+                     8 AS "Antriebsarten",
+                     9 AS "Fahrzeug klassen",
+                     10 AS "Länder",
+                     11 AS "Themen",
+                     12 AS "Inkraft datum",
+                     13 AS "Einsatzdaten",
+                     14 AS "Verknüpfungen")
+);
+```
+
+### OUTPUT WITH PIVOT:
+
+```plaintext
+"Vorschriften nummer"  "Dokumenten datum" "Dokumententyp" "Titel kurz" "Titel lang" "Status der Vorschrift" "Einsatzdatum Modell" "Vorschriftentyp" "Antriebsarten" "Fahrzeug klassen" "Länder" "Themen" "Inkraft datum" "Einsatzdaten" "Verknüpfungen"
+---------------------- ------------------ --------------- ------------ ------------  ---------------------  --------------------  ------------------ --------------- -----------------  -------  ------- --------------  -------------  --------------
+Vorschriften nummer     Dokumenten datum   Dokumententyp   Titel kurz   Titel lang   Status der Vorschrift   Einsatzdatum Modell   Vorschriftentyp   Antriebsarten   Fahrzeug klassen    Länder   Themen   Inkraft datum   Einsatzdaten   Verknüpfungen
+``` 
+
+
+### QUERY WITH UNPIVOT
+
+WITH pivoted_data AS (
+    SELECT *
+    FROM (
+        SELECT
+            DECODE(bindex,
+                0, 'Vorschriften nummer',
+                1, 'Dokumenten datum',
+                2, 'Dokumententyp',
+                3, 'Titel kurz',
+                4, 'Titel lang',
+                5, 'Status der Vorschrift',
+                6, 'Einsatzdatum Modell',
+                7, 'Vorschriftentyp',
+                8, 'Antriebsarten',
+                9, 'Fahrzeug klassen',
+                10, 'Länder',
+                11, 'Themen',
+                12, 'Inkraft datum',
+                13, 'Einsatzdaten',
+                14, 'Verknüpfungen'
+            ) AS d,
+            bindex AS r
+        FROM (
+            SELECT level - 1 AS bindex
+            FROM dual
+            CONNECT BY level <= 15
+        )
+    )
+    PIVOT (
+        MAX(d) FOR r IN (0 AS "Vorschriften nummer", 
+                         1 AS "Dokumenten datum",
+                         2 AS "Dokumententyp",
+                         3 AS "Titel kurz",
+                         4 AS "Titel lang",
+                         5 AS "Status der Vorschrift",
+                         6 AS "Einsatzdatum Modell",
+                         7 AS "Vorschriftentyp",
+                         8 AS "Antriebsarten",
+                         9 AS "Fahrzeug klassen",
+                         10 AS "Länder",
+                         11 AS "Themen",
+                         12 AS "Inkraft datum",
+                         13 AS "Einsatzdaten",
+                         14 AS "Verknüpfungen")
+    )
+)
+SELECT unpivoted.*
+FROM pivoted_data
+UNPIVOT (
+    d FOR r IN ("Vorschriften nummer" AS 0, 
+                "Dokumenten datum" AS 1,
+                "Dokumententyp" AS 2,
+                "Titel kurz" AS 3,
+                "Titel lang" AS 4,
+                "Status der Vorschrift" AS 5,
+                "Einsatzdatum Modell" AS 6,
+                "Vorschriftentyp" AS 7,
+                "Antriebsarten" AS 8,
+                "Fahrzeug klassen" AS 9,
+                "Länder" AS 10,
+                "Themen" AS 11,
+                "Inkraft datum" AS 12,
+                "Einsatzdaten" AS 13,
+                "Verknüpfungen" AS 14)
+);
+
+
+
+### OUTPUT WITH UNPIVOT:
+
+```sql
+D                                  R
+--------------------------------- ----
+Vorschriften nummer                0
+Dokumenten datum                   1
+Dokumententyp                      2
+Titel kurz                         3
+Titel lang                         4
+Status der Vorschrift              5
+Einsatzdatum Modell                6
+Vorschriftentyp                    7
+Antriebsarten                      8
+Fahrzeug klassen                   9
+Länder                             10
+Themen                             11
+Inkraft datum                      12
+Einsatzdaten                       13
+Verknüpfungen                      14
+```
