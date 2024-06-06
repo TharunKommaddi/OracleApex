@@ -30951,6 +30951,7 @@ FROM table_name;
 
 
 ```sql
+
 -- Sample data
 CREATE TABLE products (
     product_name VARCHAR(50)
@@ -30994,7 +30995,7 @@ Television
 Printer
 ```
 
-```plaintext
+```sql
 concatenated_products
 ------------------------------------
 Laptop, Smartphone, Tablet, Camera, Headphones, Television, Printer
@@ -31029,7 +31030,7 @@ Printer
 ```
 
 
-```plaintext
+```sql
 concatenated_products
 ------------------------------------
 Laptop, Smartphone, Tablet, Camera...
@@ -31062,7 +31063,7 @@ Television
 Printer
 ```
 
-```plaintext
+```sql
 concatenated_products
 ------------------------------------
 Laptop, Smartphone, Tablet, Camera, Headphones, Television, Printer
@@ -31107,7 +31108,7 @@ from cte1
 
 ### OUTPUT WITHOUT PIVOT:
 
-```plaintext
+```sql
 D                                  R
 --------------------------------- ----
 Vorschriften nummer                0
@@ -31181,7 +31182,7 @@ PIVOT (
 
 ### OUTPUT WITH PIVOT:
 
-```plaintext
+```sql
 "Vorschriften nummer"  "Dokumenten datum" "Dokumententyp" "Titel kurz" "Titel lang" "Status der Vorschrift" "Einsatzdatum Modell" "Vorschriftentyp" "Antriebsarten" "Fahrzeug klassen" "Länder" "Themen" "Inkraft datum" "Einsatzdaten" "Verknüpfungen"
 ---------------------- ------------------ --------------- ------------ ------------  ---------------------  --------------------  ------------------ --------------- -----------------  -------  ------- --------------  -------------  --------------
 Vorschriften nummer     Dokumenten datum   Dokumententyp   Titel kurz   Titel lang   Status der Vorschrift   Einsatzdatum Modell   Vorschriftentyp   Antriebsarten   Fahrzeug klassen    Länder   Themen   Inkraft datum   Einsatzdaten   Verknüpfungen
