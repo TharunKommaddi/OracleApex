@@ -31281,3 +31281,718 @@ Inkraft datum                      12
 Einsatzdaten                       13
 Verknüpfungen                      14
 ```
+
+
+# GENERATE APEX URL
+
+```sql
+SELECT apex_page.get_url(
+    p_application => 'REGINDEX',
+    p_page => 2110,
+    p_items => 'P2110_VORSCHRIFTID',
+    p_values => 2563
+) 
+FROM dual;
+```
+
+# LIST APEX APPLICATIONS OR APPLICATION NAME OR APPLICATION ID
+
+```sql
+SELECT
+    workspace,
+    application_id,
+    application_name
+FROM
+    apex_applications
+ORDER BY
+    application_id;
+```
+
+# CURRENT SCHEMA NAME
+
+```sql
+SELECT sys_context('USERENV', 'CURRENT_SCHEMA') AS current_schema 
+FROM dual;
+```
+
+
+# TO VIEW COMMENTS FOR THE COLUMNS IN ORACLE, ALL_COL_COMMENTS OR USER_COL_COMMENTS
+
+```sql
+SELECT COLUMN_NAME, COMMENTS
+FROM USER_COL_COMMENTS
+WHERE TABLE_NAME = 'T_DS';
+```
+
+
+# CODE TO KEEP COLORS ICONS ADDING MORE THEN TWO ICONS STACK ICONS IN INTERACTVIE GRID ALONG WITH ICON NAME AN ICON 
+
+
+```sql
+CASE 
+	WHEN t.marker = 10 THEN 
+		'<span><i class="fa fa-minus" style="color: black;"></i>&nbsp;&nbsp;</span>' 
+	WHEN t.marker = 20 THEN 
+		'<span><i class="fa fa-info-circle-o" style="color: blue;"></i>&nbsp;&nbsp;</span>' 
+	WHEN t.marker = 30 THEN 
+		'<span><i class="fa fa-flag-swallowtail" style="color: orange;"></i>&nbsp;&nbsp;' || 'Wichtig' || '</span>' 
+	WHEN t.marker = 40 THEN 
+		'<span><i class="fa fa-thumbs-up" style="color: green;"></i>&nbsp;&nbsp;' || 'Erledigt' || '</span>' 
+	WHEN t.marker = 50 THEN 
+		'<span><i class="fa fa-exclamation-triangle" style="color: red;"></i>&nbsp;&nbsp;' || 'Kritisch' || '</span>' 
+	WHEN t.marker = 60 THEN 
+		'<span><i class="fa fa-square-o fam-ellipsis-h fam-is-warning" style="color: black;"></i>&nbsp;&nbsp;' || 'To-Do' || '</span>' 
+
+END AS MARKER
+	   
+```
+
+# ORACLE SQL STATEMENTS
+
+1. **List all tables for a user:**
+   ```sql
+   SELECT table_name FROM user_tables;
+   ```
+
+2. **List all columns for a specific table:**
+   ```sql
+   SELECT column_name, data_type, data_length 
+   FROM user_tab_columns 
+   WHERE table_name = 'YOUR_TABLE_NAME';
+   ```
+
+3. **Get column comments for a specific table:**
+   ```sql
+   SELECT column_name, comments 
+   FROM user_col_comments 
+   WHERE table_name = 'YOUR_TABLE_NAME';
+   ```
+
+4. **List all constraints for a specific table:**
+   ```sql
+   SELECT constraint_name, constraint_type 
+   FROM user_constraints 
+   WHERE table_name = 'YOUR_TABLE_NAME';
+   ```
+
+5. **List all indexes for a specific table:**
+   ```sql
+   SELECT index_name 
+   FROM user_indexes 
+   WHERE table_name = 'YOUR_TABLE_NAME';
+   ```
+
+6. **Get table comments for a specific table:**
+   ```sql
+   SELECT table_name, comments 
+   FROM user_tab_comments 
+   WHERE table_name = 'YOUR_TABLE_NAME';
+   ```
+
+7. **List all sequences for a user:**
+   ```sql
+   SELECT sequence_name 
+   FROM user_sequences;
+   ```
+
+8. **List all triggers for a specific table:**
+   ```sql
+   SELECT trigger_name 
+   FROM user_triggers 
+   WHERE table_name = 'YOUR_TABLE_NAME';
+   ```
+
+9. **List all views for a user:**
+   ```sql
+   SELECT view_name 
+   FROM user_views;
+   ```
+
+10. **List all synonyms for a user:**
+    ```sql
+    SELECT synonym_name, table_owner, table_name 
+    FROM user_synonyms;
+    ```
+
+# ORACLE SQL STATEMENTS TO WORK WITH MATERIALIZED VIEWS:
+
+## Oracle SQL Statements for Materialized Views
+
+1. **List all materialized views for a user:**
+   ```sql
+   SELECT mview_name FROM user_mviews;
+   ```
+
+2. **Get details of a specific materialized view:**
+   ```sql
+   SELECT mview_name, query, refresh_method, refresh_mode, build_mode
+   FROM user_mviews
+   WHERE mview_name = 'YOUR_MVIEW_NAME';
+   ```
+
+3. **Get columns of a specific materialized view:**
+   ```sql
+   SELECT column_name, data_type, data_length 
+   FROM user_tab_columns 
+   WHERE table_name = 'YOUR_MVIEW_NAME';
+   ```
+
+4. **Get comments for columns of a specific materialized view:**
+   ```sql
+   SELECT column_name, comments 
+   FROM user_col_comments 
+   WHERE table_name = 'YOUR_MVIEW_NAME';
+   ```
+
+5. **Get materialized view logs for a specific base table:**
+   ```sql
+   SELECT log_table, master 
+   FROM user_mview_logs 
+   WHERE master = 'YOUR_TABLE_NAME';
+   ```
+
+6. **Get details of materialized view logs:**
+   ```sql
+   SELECT log_table, rowids, primary_key, sequence, dmltype, commit_scn
+   FROM user_mview_logs;
+   ```
+   
+# ORACLE SQL STATEMENTS FOR QUERYING VARIOUS SCHEMA ELEMENTS, INCLUDING FUNCTIONS, PROCEDURES, PACKAGES, AND MORE:
+
+## Oracle SQL Statements for Various Schema Elements
+
+1. **List all functions for a user:**
+   ```sql
+   SELECT object_name 
+   FROM user_objects 
+   WHERE object_type = 'FUNCTION';
+   ```
+
+2. **List all procedures for a user:**
+   ```sql
+   SELECT object_name 
+   FROM user_objects 
+   WHERE object_type = 'PROCEDURE';
+   ```
+
+3. **List all packages for a user:**
+   ```sql
+   SELECT object_name 
+   FROM user_objects 
+   WHERE object_type = 'PACKAGE';
+   ```
+
+4. **List all package bodies for a user:**
+   ```sql
+   SELECT object_name 
+   FROM user_objects 
+   WHERE object_type = 'PACKAGE BODY';
+   ```
+
+5. **List all types for a user:**
+   ```sql
+   SELECT type_name 
+   FROM user_types;
+   ```
+
+6. **List all object types for a user:**
+   ```sql
+   SELECT object_type, count(*) 
+   FROM user_objects 
+   GROUP BY object_type;
+   ```
+
+7. **Get details of a specific function:**
+   ```sql
+   SELECT text 
+   FROM user_source 
+   WHERE name = 'YOUR_FUNCTION_NAME' AND type = 'FUNCTION' 
+   ORDER BY line;
+   ```
+
+8. **Get details of a specific procedure:**
+   ```sql
+   SELECT text 
+   FROM user_source 
+   WHERE name = 'YOUR_PROCEDURE_NAME' AND type = 'PROCEDURE' 
+   ORDER BY line;
+   ```
+
+9. **Get details of a specific package:**
+   ```sql
+   SELECT text 
+   FROM user_source 
+   WHERE name = 'YOUR_PACKAGE_NAME' AND type = 'PACKAGE' 
+   ORDER BY line;
+   ```
+
+10. **Get details of a specific package body:**
+    ```sql
+    SELECT text 
+    FROM user_source 
+    WHERE name = 'YOUR_PACKAGE_NAME' AND type = 'PACKAGE BODY' 
+    ORDER BY line;
+    ```
+
+11. **List all synonyms and their referenced objects:**
+    ```sql
+    SELECT synonym_name, table_owner, table_name 
+    FROM user_synonyms;
+    ```
+
+12. **List all database links for a user:**
+    ```sql
+    SELECT db_link 
+    FROM user_db_links;
+    ```
+
+13. **List all triggers for a user:**
+    ```sql
+    SELECT trigger_name 
+    FROM user_triggers;
+    ```
+
+14. **List all views and their definitions:**
+    ```sql
+    SELECT view_name, text 
+    FROM user_views;
+    ```
+
+15. **List all sequences and their current values:**
+    ```sql
+    SELECT sequence_name, last_number 
+    FROM user_sequences;
+    ```
+
+16. **Get details of a specific type:**
+    ```sql
+    SELECT type_name, typecode, attributes 
+    FROM user_types 
+    WHERE type_name = 'YOUR_TYPE_NAME';
+	
+	
+
+
+
+# SQL QUERIES TO FIND ALL TYPES OF KEYS (PRIMARY KEYS, FOREIGN KEYS, UNIQUE KEYS) FOR A SPECIFIC TABLE IN ORACLE:
+
+## Find All Keys for a Specific Table
+
+1. **Find all primary keys for a specific table:**
+   ```sql
+   SELECT uc.constraint_name, ucc.column_name
+   FROM user_constraints uc
+   JOIN user_cons_columns ucc ON uc.constraint_name = ucc.constraint_name
+   WHERE uc.constraint_type = 'P'
+     AND uc.table_name = 'YOUR_TABLE_NAME'
+   ORDER BY ucc.position;
+   ```
+
+2. **Find all foreign keys for a specific table:**
+   ```sql
+   SELECT uc.constraint_name, ucc.column_name, uc.r_constraint_name, u.table_name AS referenced_table, ucc.position
+   FROM user_constraints uc
+   JOIN user_cons_columns ucc ON uc.constraint_name = ucc.constraint_name
+   JOIN user_constraints u ON uc.r_constraint_name = u.constraint_name
+   WHERE uc.constraint_type = 'R'
+     AND uc.table_name = 'YOUR_TABLE_NAME'
+   ORDER BY ucc.position;
+   ```
+
+3. **Find all unique keys for a specific table:**
+   ```sql
+   SELECT uc.constraint_name, ucc.column_name
+   FROM user_constraints uc
+   JOIN user_cons_columns ucc ON uc.constraint_name = ucc.constraint_name
+   WHERE uc.constraint_type = 'U'
+     AND uc.table_name = 'YOUR_TABLE_NAME'
+   ORDER BY ucc.position;
+   ```
+
+4. **Find all constraints (Primary, Foreign, Unique) for a specific table:**
+   ```sql
+   SELECT uc.constraint_name, uc.constraint_type, ucc.column_name, uc.r_constraint_name, u.table_name AS referenced_table, ucc.position
+   FROM user_constraints uc
+   JOIN user_cons_columns ucc ON uc.constraint_name = ucc.constraint_name
+   LEFT JOIN user_constraints u ON uc.r_constraint_name = u.constraint_name
+   WHERE uc.table_name = 'YOUR_TABLE_NAME'
+   ORDER BY uc.constraint_type, ucc.position;
+   ```
+
+### Summary
+
+- **Primary Keys**: Use the query to find all primary keys for the specified table.
+- **Foreign Keys**: Use the query to find all foreign keys for the specified table.
+- **Unique Keys**: Use the query to find all unique keys for the specified table.
+- **All Constraints**: Use the query to find all types of constraints for the specified table.
+
+
+
+# TOOL TIP FOR A COLUMN AND INTERACTIVE GRID
+
+**Grid Report Attributes - Initialization JavaScript Function**
+
+```JavaScript
+
+function(config) {
+    // Anfang Mouseover
+    config.defaultGridViewOptions = {
+        tooltip: {
+            // when the tooltip is integrated with the grid view the content callback
+            // gets some extra helpful parameters
+            content: function(callback, model, recordMeta, colMeta, columnDef ) {
+                var text = null;
+                if (recordMeta && columnDef && columnDef.property != "APEX$ROW_SELECTOR" && columnDef.property != "APEX$ROW_ACTION" && columnDef.property != "DEL" && !$(this).hasClass( "a-GV-rowHeader" )) {
+                    switch (columnDef.property) {
+
+                            case "":
+                                text = model.getValue( recordMeta.record, "" );
+                                break;
+                            
+                            case "MARKER":
+                                fAJAXTooltip("get_historie_marker", model.getValue( recordMeta.record, "DS_ID"), columnDef.property, callback);    
+                                break;
+
+                            case "HISTOREA_PP_SPLITTUNGEN":
+                                fAJAXTooltip("get_historie_ea_pp", model.getValue( recordMeta.record, "DS_ID"), columnDef.property, callback);    
+                                break;
+
+                            // case "TEST":
+                            //     fAJAXTooltip("get_historie_marker", model.getValue( recordMeta.record, "DS_ID"), columnDef.property, callback);    
+                            //     break;
+                            
+                            default:
+                                text = model.getValue( recordMeta.record, columnDef.property );
+                                if (typeof text != "string") {
+                                    text = text.d;
+                            }
+                    }
+                }
+                return text;
+            }
+        }
+    };
+    // Ende Mouseover
+    return config;
+}
+
+
+```
+
+**Processing - Ajax Callback**
+
+
+```sql
+declare
+    lcount number;
+begin
+    select count(*) into lcount
+    from t_h_ds
+    where ds_id = apex_application.g_x01;
+
+    if lcount > 0 then
+
+        
+        htp.p('<div class="tooltipHistorie" style="max-width: inherit; background-color: white; color: black; padding: 5px;">');
+        htp.p('<table border="1" style="border-collapse: collapse; width: 100%; border: 1px solid black;">');
+        htp.p('<tr style="background-color: #f2f2f2;"><th style="border: 1px solid black; padding: 5px;">Letzte Änderung Benutzer</th><th style="border: 1px solid black; padding: 5px;">Letzte Änderung Datum</th></tr>');
+
+        for e in (
+            select ds_id,
+            /*
+            DECODE(TRIM(UPPER(h.MARKER)),
+            10, '-',
+            20, 'Info',
+            30, 'Wichtig',
+            40, 'Erledigt',
+            50, 'Kritisch',
+            60, 'To-Do',
+            h.MARKER) AS MARKER,
+            */
+            
+            nvl2(h.letzte_aenderung_benutzer_id, b.nachname || ' ' || b.vorname || ' (' || b.abteilung || ')', '-') as letzte_aenderung_benutzer,
+            nvl2(h.letzte_aenderung_datum, to_char(h.letzte_aenderung_datum, 'dd.mm.yyyy hh24:mi:ss'), '-') as letzte_aenderung_datum
+            from t_h_ds h
+            left outer join t_benutzer b on (b.benutzer_id = h.letzte_aenderung_benutzer_id)
+            where h.ds_id = apex_application.g_x01
+            order by H_DS_ID desc 
+            fetch first 1 rows only         
+        ) loop
+            htp.p('<tr><td style="border: 1px solid black; padding: 5px;">' || e.letzte_aenderung_benutzer || '</td><td style="border: 1px solid black; padding: 5px;">' || e.letzte_aenderung_datum || '</td></tr>');
+        end loop;
+
+        htp.p('</table>');
+        htp.p('</div>');
+    end if;
+end;
+
+```
+
+
+# ALL SORT OF FUNCTIONALITIES IN CODE
+
+```sql
+with cteuc as (
+    select ds_id, count(*) as docs
+    from t_ds_ref_dokument
+    group by ds_id
+), 
+
+cte_eig_g as (
+    select bre.ds_id, 
+           listagg(case when ds_ref_eigenschaft_status_id =4 and un_r = 0 then '<b>' || e.eigenschaft_kennung || '</b>'
+           when ds_ref_eigenschaft_status_id =1 and un_r = 0 then '<i>' || e.eigenschaft_kennung || '</i>' 
+           when ds_ref_eigenschaft_status_id =5 and un_r = 0 then '<s>' || e.eigenschaft_kennung || '</s>' 
+           when ds_ref_eigenschaft_status_id =4 and un_r = 1 then '<b><span style="color:green;">' || e.eigenschaft_kennung || '</span></b>'
+           when ds_ref_eigenschaft_status_id =1 and un_r = 1 then '<i><span style="color:green;">' || e.eigenschaft_kennung || '</span></i>' 
+           when ds_ref_eigenschaft_status_id =5 and un_r = 1 then '<s><span style="color:green;">' || e.eigenschaft_kennung || '</span></s>' 
+           end, chr(10) || chr(13) on overflow truncate) within group (order by e.eigenschaft_kennung) as betroffene_eigenschaften
+    from t_ds_ref_eigenschaft bre
+    join t_eigenschaft e on (e.eigenschaft_id = bre.eigenschaft_id)
+    where fachliche_verantwortung = 100
+    group by bre.ds_id
+), 
+
+cte_eig_a as (
+    select bre.ds_id, 
+            listagg(distinct case when ds_ref_eigenschaft_status_id =4 and un_r = 0 then '<b>' || e.eigenschaft_kennung || '</b>'
+            when ds_ref_eigenschaft_status_id =1 and un_r = 0 then '<i>' || e.eigenschaft_kennung || '</i>' 
+            when ds_ref_eigenschaft_status_id =5 and un_r = 0 then '<s>' || e.eigenschaft_kennung || '</s>' 
+            when ds_ref_eigenschaft_status_id =4 and un_r = 1 then '<b><span style="color:green;">' || e.eigenschaft_kennung || '</span></b>'
+            when ds_ref_eigenschaft_status_id =1 and un_r = 1 then '<i><span style="color:green;">' || e.eigenschaft_kennung || '</span></i>' 
+            when ds_ref_eigenschaft_status_id =5 and un_r = 1 then '<s><span style="color:green;">' || e.eigenschaft_kennung || '</span></s>' 
+            end, chr(10) || chr(13) on overflow truncate) within group (order by e.eigenschaft_kennung) as betroffene_eigenschaften
+    from t_ds_ref_eigenschaft bre
+    join t_eigenschaft e on (e.eigenschaft_id = bre.eigenschaft_id)
+    where fachliche_verantwortung = 200
+    group by bre.ds_id
+), 
+
+
+cte_det as (
+select tref.ds_id,
+   listagg('ID-' || lpad(tref.terminschiene_id, 8, '0'), '; ') WITHIN GROUP (ORDER BY tref.terminschiene_id) as id_6s
+from t_ds_ref_terminschiene tref
+group by tref.ds_id 
+), 
+
+cte_trax as (
+select d.ds_id, 
+--listagg(distinct tref.t_id, '; ') WITHIN GROUP (ORDER BY tref.trax_id) as id_6s,
+listagg(distinct lpad(tref.trax_id, 8, '0') || nvl2(ts.fahrzeuge,' (' || ts.fahrzeuge || ')', null), '; ' ON OVERFLOW TRUNCATE) WITHIN GROUP (ORDER BY tref.trax_id) as trax_ids
+from t_ds d
+left outer join t_ds_ref_trax_daten tref on (d.ds_id = tref.ds_id)
+left outer join t_trax_daten ts on (ts.trax_id = tref.trax_id)
+group by d.ds_id  
+), 
+
+cte_det_id_1 as (
+select distinct cte_det.ds_id, 
+cte_det.id_6s
+from cte_det 
+where id_6s is not null
+union all
+select distinct tref.ds_id, 
+tref.t_id
+from t_ds_ref_trax_daten tref
+where t_id is not null
+), cte_det_id as (
+select distinct ds_id, listagg(distinct id_6s, ', ') within group (order by id_6s) as id_6s
+from cte_det_id_1
+group by ds_id
+
+),
+
+cte_jira as (
+select distinct ds_id,
+listagg('<a target="_blank" href="' || 'https://cicd.cloud.audi/jira/browse/' || t2.column_value || '">' || '<span style="color:blue;"><u>' || t2.column_value || '</u></span></a>', ' ; ') within group (order by jira_link) as jira_link
+from t_ds d
+cross join table(apex_string.split(d.jira_link, ';')) t2
+group by ds_id
+)
+
+select  
+        t.ds_id,
+        1 as bewertung_historie,
+        case when t.typ = 0 then t.bak_bewertung_id else t.bak_ael_bewertung_id end as bewertung_id_alt,
+        case when t.typ = 0 then ' '
+        when t.typ = 1 and t.ds_id not in
+        (select distinct ds_id from t_ds_ref_eigenschaft where ds_ref_eigenschaft_status_id = 4 and ds_id is not null) then
+        '<a href="javascript:confirmDelete(' || t.ds_id || ',''P2000_DELETE'',''Wollen Sie diesen Umfang wirklich löschen?'');"><span aria-hidden="true" alt="Umfang löschen" title="Umfang löschen" class="fa fa-trash-o" style="font-size:18px" /></a>' 
+        else ' ' end as del,
+        '<a id="doc_lib" href="' || APEX_UTIL.PREPARE_URL(p_url => 'f?p=' || :APP_ID || ':210:'|| :APP_SESSION ||'::NO:210:P210_AUFRUF_SEITE,P210_UMFANGID,P210_BEWERTUNG_ID:' || :APP_PAGE_ID || ',' || t.ds_id || ',' || t.ds_id) || '" class="icon-block"><i class="t-Icon fa fa-' || case when nvl(cteuc.docs, 0) = 0 then 'folder-open-o' else 'folder-o' end || '"></i></a>' as Doku,
+        kpb.pkz as PKZ_TMA,
+        kpb.kpb as Projektbezeichnung,
+        case when nvl2(t.sop_jahrkw, substr(t.sop_jahrkw,1,4) || '/' || substr(t.sop_jahrkw,5,2),null)= '9999/99' 
+            then null 
+            else nvl2(t.sop_jahrkw, substr(t.sop_jahrkw,1,4) || '/' || substr(t.sop_jahrkw,5,2),null) 
+            end SOP,
+
+        case when length(CARMAH_UTIL.fLinkAVON(eapp.ea_pp)) in (7, 8) then 'ea_pp_link' else 'ea_pp_no_link' end class_ea_pp,
+        CARMAH_UTIL.fLinkAVON(eapp.ea_pp) AVON_Nummer,
+        eapp.ea_pp as EA_PP,
+        t.EA_PP_SPLITTUNGEN as EA_PP_Splittungen,
+        to_char(t.etf_soll_sop,'iyyy/iw') as soll_sop_avon,
+        avon_status as Status_AVON,
+        to_char(termin_falko, 'iyyy/iw') as termin_falko,
+        ltue_laender as LTUE_Laender_FALKO,
+        t.typ as quelle,
+        psts.pseudoterminschluessel as pseudoterminschluessel,
+        cte_jira.jira_link,
+        t.bezeichnung,
+        t.tppa_soll,
+
+        CASE 
+            WHEN t.marker = 10 THEN 
+                '<span><i class="fa fa-minus" style="color: black;"></i></span>' 
+            WHEN t.marker = 20 THEN 
+                '<span><i class="fa fa-info-circle-o" style="color: blue;"></i></span>' 
+            WHEN t.marker = 30 THEN 
+                '<span><i class="fa fa-flag-swallowtail" style="color: orange;"></i></span>' 
+            WHEN t.marker = 40 THEN 
+                '<span><i class="fa fa-thumbs-up" style="color: green;"></i></span>' 
+            WHEN t.marker = 50 THEN 
+                '<span><i class="fa fa-exclamation-triangle" style="color: red;"></i></span>' 
+            WHEN t.marker = 60 THEN 
+                '<span><i class="fa fa-square-o fam-ellipsis-h fam-is-warning" style="color: black;"></i></span>' 
+
+
+       END AS MARKER,
+
+
+        t.ET_C_PROJEKTSTEUERUNG as ET_C_Projektsteuerung, --ET_C_PS_KOMMENTAR
+        bs.bewertung_status || case when status_wiederholung = 20 then ' (Wiederholung)' end as ETF_Status, --bewertung_status_id
+        fsetc.freigabe_status_text_lang as Freigabe_Status_ET_C, -- freigabe_status_et_c2_id
+        f.paket_nr as Paket_Nr,
+        f.TRACKINGID as Paket_Split,
+        f.freigabepaket as Freigabepaket, --bewertungsstatus_et_c2
+        t.kommentar as Kommentare, --kommentar_neu
+        vdsf.funktionstyp as Funktionstyp,
+        t.umsetzungsstatus_homologationsauftrag_id as umsetzungsstatus_homologationsauftrag,
+        cte_eig_g.betroffene_eigenschaften as Betroffene_Eigenschaft_ET_G, --betroffene_baugruppe_et_g
+        cte_eig_a.betroffene_eigenschaften as Betroffene_Eigenschaft_ET_A, --betroffene_baugruppe_et_a
+        system42_status as system42_status, --system42_status_id, --case when s42.system42_status = '(leer)' then null else system42_status end as system42_status_id,
+        t.system42_kommentar as system42_Kommentar,
+        cte_trax.trax_ids as trax_ids,
+        t.laendercluster as TraX_Laendercluster,
+        case when status_idex = 0 
+                then 'nicht notwendig' 
+            when status_idex = 1 
+                then 'in Doku abgelegt' 
+            when status_idex = 2 
+                then 'notwendig' 
+            end as status_idex,
+        t.hf_soll as hf_soll, -- termin_hf_soll, -- u.termin_hf_soll,
+        t.hf_ist as hf_vsi, -- termin_hf_ist, --u.termin_hf_ist,
+        t.et_soll as et_soll, -- termin_et_soll, --u.termin_et_soll,
+        t.et_ist as et_vsi, -- termin_et_ist, --u.termin_et_ist,
+        ctem.betroffene_maerkte as betroffene_maerkte_et_g, -- betroffene_maerkte,
+        t.bewertung_edl as bewertung_edl_et_g,
+        ctem_eta.betroffene_maerkte as betroffene_maerkte_et_a,
+        t.bewertung_edl_et_a as bewertung_edl_et_a,
+        t.maerkte,
+        
+        DECODE(TRIM(UPPER(t.STATUS_TAILORING)),
+            '10', 'LEER', 
+            '20', 'ZU ÜBERPRÜFEN (SOP)', 
+            '30', 'IN KLÄRUNG', 
+            '40', 'ET-G & ET-A KEIN TAILORING MÖGLICH', 
+            '50', 'ET-A KEIN TAILORING MÖGLICH', 
+            '60', 'ET-G KEIN TAILORING MÖGLICH', 
+            '70', 'TAILORING DURCHGEFÜHRT', t.STATUS_TAILORING) as STATUS_TAILORING,
+
+        t.ET_G_AUFTRAGSTEUERUNG as ET_C_Freigabesteuerung, -- ET_G_AS_KOMMENTAR, -- et_g_auftragsteuerung,
+        p3.TICKET_NR as P3_Tickets,
+
+
+        DECODE(TRIM(UPPER(p3.P3_STATUS)),
+            '10', 'OFFEN', 
+            '20', 'KEIN P3-TICKET', 
+            '30', 'ET MÖGLICH',p3.P3_STATUS) as P3_STATUS,
+
+        p3.KOMMENTAR as P3_KOMMENTAR,
+        t.ET_A_PLANUNG as ET_A_Planung_P3P, --ET_A_PL_KOMMENTAR,
+        e.einsatzzwecke as Betroffene_BL_Homologation,
+        vsr.cluu_id as CLUU_Antrags_ID,
+        bf.basis_freigabepaket as Baseline_Freigabe_Paket,
+        bf.termin_soll_baseline as soll_baseline
+        
+
+from t_ds t
+left outer join t_auftragsstatus_et_a aseta on (aseta.auftragsstatus_et_a_id = t.auftragsstatus_et_a_id)
+left outer join t_auftragsstatus_et_g asetg on (asetg.auftragsstatus_et_g_id = t.auftragsstatus_et_g_id)
+left outer join t_bewertungsstatus_et_a bseta on (bseta.bewertungsstatus_et_a_id = t.bewertungsstatus_et_a_id)
+left outer join t_bewertungsstatus_et_g bsetgneu on (bsetgneu.bewertungsstatus_et_g_id = t.bewertungsstatus_et_g_id)
+left outer join t_ea_pp eapp on (eapp.ea_pp_id = t.ea_pp_id)
+left outer join t_freigabe_status_et_c2 fsetc on (fsetc.freigabe_status_et_c2_id = t.freigabe_status_et_c2_id)
+left outer join t_kpb kpb on (kpb.kpb_id = t.kpb_id)
+left outer join t_modelljahr mj on (mj.modelljahr_id = t.modelljahr)
+left outer join t_bewertung_status bs on (bs.bewertung_status_id = t.bewertung_status_id)
+left outer join t_pseudoterminschluessel psts on (psts.pseudoterminschluessel_id = t.pseudoterminschluessel_id)
+-- Kommentare
+--left outer join mv_kommentar_neu cte2 -- oder mv_kommentar_neu ?
+--on (cte2.bewertung_id = t.bak_bewertung_id)
+-- Benutzer
+left outer join t_benutzer ben on (ben.benutzer_id = t.letzte_aenderung_benutzer_id)
+-- Import
+left outer join t_import_etf etf on (etf.import_etf_id = t.letzter_import)
+-- Marktstatus
+left outer join v_betroffene_maerkte ctem on (ctem.ds_id = t.ds_id)
+left outer join v_betroffene_maerkte_et_a ctem_eta on (ctem_eta.ds_id = t.ds_id)
+-- ET-x Status HF
+left outer join t_status_hf_et_g shfetg on (shfetg.status_hf_et_g_id = t.status_hf_et_g_id_alt)
+left outer join t_status_hf_et_g shfetgneu on (shfetgneu.status_hf_et_g_id = t.status_hf_et_g_id)
+left outer join t_status_hf_et_a shfeta on (shfeta.status_hf_et_a_id = t.status_hf_et_a_id)
+-- Termin ET
+-- left outer join cte_gen on (cte_gen.ds_id = t.ds_id)
+-- Dokumente
+left outer join cteuc on (cteuc.ds_id = t.ds_id)
+-- left outer join cte_doc on (cte_doc.ds_id = t.ds_id)
+-- Betroffene Eigenschaften
+left outer join cte_eig_g on (cte_eig_g.ds_id = t.ds_id)
+left outer join cte_eig_a on (cte_eig_a.ds_id = t.ds_id)
+-- Daten aus TRAX
+left outer join cte_trax on (cte_trax.ds_id = t.ds_id)
+-- Daten aus DET
+left outer join cte_det_id on (cte_det_id.ds_id = t.ds_id)
+-- ET-G Dokumenten-ID
+left outer join v_maerkte_et_g_dokumente v_etg_dokumente on (v_etg_dokumente.ds_id = t.ds_id)
+left outer join v_maerkte_et_a_dokumente v_eta_dokumente on (v_eta_dokumente.ds_id = t.ds_id)
+left outer join t_ea_pp_ref_fachteam eareffach on (eapp.ea_pp_id = eareffach.ea_pp_id)
+left outer join cte_jira on (t.ds_id = cte_jira.ds_id)
+left outer join t_freigabepaket f on (f.freigabepaket_id = t.freigabepaket_id)
+left outer join t_system42_status s42 on (s42.system42_status_id = t.system42_status_id)
+left outer join t_umsetzungsstatus_homologationsauftrag u on (u.umsetzungsstatus_homologationsauftrag_id = t.umsetzungsstatus_homologationsauftrag_id)
+left outer join mv_falko_anzeige on (mv_falko_anzeige.ds_id = t.ds_id)
+left outer join t_basis_freigabepaket bf on (bf.basis_freigabepaket_id = t.basis_freigabepaket_id)
+left outer join v_software_relevanz_einsatzzwecke vsr on (vsr.ds_id = t.ds_id)
+left outer join t_einsatzzwecke e on (e.einsatzzwecke_id = t.einsatzzwecke_id)
+left outer join v_ds_funktionstypen vdsf on (vdsf.ds_id = t.ds_id)
+left outer join T_DS_REF_P3P_TICKET dsp3p on (dsp3p.DS_ID = t.ds_id)
+left outer join T_P3P_TICKET p3 on (p3.P3P_TICKET_ID = dsp3p.P3P_TICKET_ID)
+
+where ((:P5005_ENTFALLENE_DATENSAETZE = 1) or (nvl(t.bewertung_status_id, 0) in (0, 10, 30) and :P5005_ENTFALLENE_DATENSAETZE = 0))
+and ((:P5005_DATENSAETZE_ET_ERTEILT = 1) or (nvl(t.freigabe_status_et_c2_id, 0) in (0, 1, 3, 4) and :P5005_DATENSAETZE_ET_ERTEILT = 0))
+and ((:P5005_DATENSAETZE_HF_ERTEILT = 1) or (nvl(t.freigabe_status_et_c2_id, 0) in (0, 2, 3, 4) and :P5005_DATENSAETZE_HF_ERTEILT = 0))
+and t.typ = nvl(:P5005_QUELLE, t.typ)
+
+```
+
+
+
+# ALL SORT OF FUNCTIONALITIES IN ITEM LABELS IN PAGE DESIGNER UNDER ITEM TYPE 
+
+```sql
+<b><u><nobr>Spalten-Kategorien Anzeigen</nobr></u></b> (<span class="checkbox alle" onclick="$s('P5005_SPALTEN_KATEGORIEN_ANZEIGEN','1:2:3:4:5:6:7:8:9')">alle</span> | <span class="checkbox keine" onclick="$s('P5005_SPALTEN_KATEGORIEN_ANZEIGEN','')">keine</span>)  <style>     .checkbox:hover {         cursor: pointer;     } </style>
+```
+
+
+# FUNCTIONALITIES IN PAGE DESIGNER
+
+```sql
+Link
+	Target
+	Link Text
+		<span aria-hidden="true" class="fa fa-history" />
+	Link Attributes
+```
