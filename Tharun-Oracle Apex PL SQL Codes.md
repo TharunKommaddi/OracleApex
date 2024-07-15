@@ -34408,7 +34408,9 @@ to_char(tdecf.ERSTELL_DATUM, 'DD.MM.YYYY - HH24:MI:SS')
 
 # COMPLETE CODES RELATED TO INTERACTIVE GRIDS
 
-## TOOL TIP
+## TOOL TIP 
+
+**Youtube:**``
 
 ### Approach 1
 
@@ -34559,6 +34561,200 @@ div.tooltipHistorie div {
 
     -- Output CSS and HTML
     -- htp.p(v_css);
+    htp.p(v_html);
+END;
+
+```
+
+3. **Report - Attributes - Initialization JavaScript Function**
+
+```sql
+
+function(config) {
+    // Anfang Mouseover
+    config.defaultGridViewOptions = {
+        tooltip: {
+            // when the tooltip is integrated with the grid view the content callback
+            // gets some extra helpful parameters
+            content: function(callback, model, recordMeta, colMeta, columnDef ) {
+                var text = null;
+                if (recordMeta && columnDef && columnDef.property != "APEX$ROW_SELECTOR" && columnDef.property != "APEX$ROW_ACTION" && columnDef.property != "DEL" && !$(this).hasClass( "a-GV-rowHeader" )) {
+                    switch (columnDef.property) {
+
+                            case "":
+                                text = model.getValue( recordMeta.record, "" );
+                                break;
+                            
+                            case "MARKER":
+                                fAJAXTooltip("get_historie_marker", model.getValue( recordMeta.record, "DS_ID"), columnDef.property, callback);    
+                                break;
+
+                            case "EA_PP_SPLITTUNGEN1":
+                                fAJAXTooltip("get_historie_ea_pp_splittungen", model.getValue( recordMeta.record, "DS_ID"), columnDef.property, callback);    
+                                break;
+                            
+
+                            case "ET_C_PROJEKTSTEUERUNG":
+                                fAJAXTooltip("get_historie_et_c_projektsteuerung", model.getValue( recordMeta.record, "DS_ID"), columnDef.property, callback);    
+                                break;
+
+
+                            case "ET_C_FREIGABESTEUERUNG":
+                                fAJAXTooltip("get_historie_et_c_freigabetsteuerung", model.getValue( recordMeta.record, "DS_ID"), columnDef.property, callback);    
+                                break;
+
+
+
+                            // case "TEST":
+                            //     fAJAXTooltip("get_historie_marker", model.getValue( recordMeta.record, "DS_ID"), columnDef.property, callback);    
+                            //     break;
+                            
+                            default:
+                                text = model.getValue( recordMeta.record, columnDef.property );
+                                if (typeof text != "string") {
+                                    text = text.d;
+                            }
+                    }
+                }
+                return text;
+            }
+        }
+    };
+    // Ende Mouseover
+    return config;
+}
+
+```
+
+
+
+### Approach 2
+
+1. **Inline CSS - no need if you keep this code inside ajax call back**
+
+```sql
+/*Beginn - Historie Tooltip*/
+
+.a-GV-tooltip.ui-tooltip {
+    max-width: inherit;
+    overflow: initial;  
+    background-color: white;
+    padding: 1px;
+}
+
+div.tooltipHistorie {
+    margin: 0px;
+    padding: 1px;
+}
+div.tooltipHistorie div {
+    margin: 5px;
+}
+.tooltipHistorie table {
+    background-color: grey;
+    margin: 5px;
+    border-collapse: collapse;
+    border: 1px solid black;
+}
+.tooltipHistorie td, .tooltipHistorie th {
+    background-color: white;
+    padding: 4px;
+    white-space: pre-wrap;
+    border: 1px solid black;
+    
+}
+
+.tooltipHistorie th {
+    background-color: #f2f2f2;
+}
+
+
+/*Ende - Historie Tooltip*/
+```
+
+2. **AJAX call back process - i written css isndie this, so no need inline css**
+
+```sql
+
+DECLARE
+    v_data_exists BOOLEAN := FALSE;
+    v_sop VARCHAR2(10);
+    v_html CLOB;
+    v_css CLOB;
+BEGIN
+    -- Check if data exists and fetch SOP in a single query
+    BEGIN
+        SELECT 
+            CASE 
+               WHEN NVL2(t.sop_jahrkw, SUBSTR(t.sop_jahrkw, 1, 4) || '/' || SUBSTR(t.sop_jahrkw, 5, 2), NULL) = '9999/99' 
+               THEN NULL 
+               ELSE NVL2(t.sop_jahrkw, SUBSTR(t.sop_jahrkw, 1, 4) || '/' || SUBSTR(t.sop_jahrkw, 5, 2), NULL) 
+            END AS SOP 
+        INTO v_sop
+        FROM t_ds t
+        WHERE t.ds_id = apex_application.g_x01
+        FETCH FIRST ROW ONLY;
+
+        v_data_exists := v_sop IS NOT NULL;
+    EXCEPTION
+        WHEN NO_DATA_FOUND THEN
+            v_data_exists := FALSE;
+    END;
+
+    -- Define CSS
+    v_css := q'[
+        <style>
+            .a-GV-tooltip.ui-tooltip {
+                max-width: inherit;
+                overflow: initial;  
+                background-color: white;
+                padding: 1px;
+            }
+
+            div.tooltipHistorie {
+                margin: 0px;
+                padding: 1px;
+                color:black;
+            }
+            div.tooltipHistorie div {
+                margin: 5px;
+            }
+            .tooltipHistorie table {
+                background-color: grey;
+                margin: 5px;
+                border-collapse: collapse;
+                border: 1px solid black;
+            }
+            .tooltipHistorie td, .tooltipHistorie th {
+                background-color: white;
+                padding: 4px;
+                white-space: pre-wrap;
+                color: black;
+                border: 1px solid black;
+            }
+
+            .tooltipHistorie th {
+                background-color: #f2f2f2;
+            }
+            
+            
+        </style>
+    ]';
+
+    -- Generate HTML content
+    IF v_data_exists THEN
+        v_html := '<div class="tooltipHistorie">';
+        v_html := v_html || '<table>' ||
+                             '<tr><th>SOP</th></tr>' ||
+                             '<tr><td>' || v_sop || '</td></tr>' ||
+                             '</table>';
+    ELSE
+        v_html := '<div class="tooltipHistorie"><p>Keine Daten gefunden</p></div>';
+    END IF;
+
+    v_html := v_html || '</div>';
+
+    -- Output CSS and HTML
+    htp.p(v_css);
     htp.p(v_html);
 END;
 
