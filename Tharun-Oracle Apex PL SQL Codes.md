@@ -34410,9 +34410,9 @@ to_char(tdecf.ERSTELL_DATUM, 'DD.MM.YYYY - HH24:MI:SS')
 
 ## TOOLTIP
 
-`APPROACH 1`
+### Approach 1
 
-1. *Inline CSS*
+1. **Inline CSS**
 
 ```sql
 /*Beginn - Historie Tooltip*/
@@ -34453,7 +34453,7 @@ div.tooltipHistorie div {
 /*Ende - Historie Tooltip*/
 ```
 
-2. *AJAX call back process*
+2. **AJAX call back process**
 
 ```sql
 
@@ -34564,7 +34564,7 @@ END;
 
 ```
 
-3. *Report - Attributes - Initialization JavaScript Function*
+3. **Report - Attributes - Initialization JavaScript Function**
 
 ```sql
 
