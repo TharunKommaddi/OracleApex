@@ -31728,6 +31728,43 @@ end;
 
 ```
 
+**Inline css for page**
+
+```css
+/*Historie Tooltip*/
+
+.a-GV-tooltip.ui-tooltip {
+    max-width: inherit;
+    overflow: initial;  
+    background-color: grey;
+    padding: 5px;
+}
+
+div.tooltipHistorie {
+    margin: 0px;
+    padding: 4px;
+}
+div.tooltipHistorie div {
+    margin: 5px;
+}
+.tooltipHistorie table {
+    background-color: grey;
+    margin: 5px;
+}
+.tooltipHistorie td, .tooltipHistorie th {
+    background-color: white;
+    padding: 4px;
+    white-space: pre-wrap;
+    
+}
+
+
+.tooltipHistorie th {
+    background-color: #f2f2f2;
+}
+
+
+```
 
 # ALL SORT OF FUNCTIONALITIES IN CODE
 
@@ -31996,3 +32033,2597 @@ Link
 		<span aria-hidden="true" class="fa fa-history" />
 	Link Attributes
 ```
+
+
+# EXECUTE WHEN PAGE LOADS IN PAGE 
+
+
+```JavaScript
+//$('div#ig_bew').parent().toggleClass("col-10 col-12");
+
+$('button#b_mfb_eigenschaften').detach().insertBefore('button[data-action="reset-report"]');
+$('button#b_mfb_dokumenten').detach().insertBefore('button[data-action="reset-report"]');
+$('button#b_mfb_dokumenten_et_a').detach().insertBefore('button[data-action="reset-report"]');
+$('button#b_vorschlag').detach().insertBefore('button[data-action="reset-report"]');
+$('button#b_vorschlag_et_a').detach().insertBefore('button[data-action="reset-report"]');
+$('button#b_falko').detach().insertBefore('button[data-action="reset-report"]'); 
+$('button#b_falko_et_a').detach().insertBefore('button[data-action="reset-report"]');
+$('button#b_neuer_Umfang').detach().insertBefore('button[data-action="reset-report"]');
+
+$('button#b_bewertungsassistent').detach().insertAfter('#notes_heading');
+$('button#b_dokumentation').detach().insertAfter('button#b_bewertungsassistent');
+$('button#b_save_profile').detach().insertAfter('button#b_dokumentation');
+$('button#b_manage_profile').detach().insertAfter('button#b_save_profile');
+$('button#b_startprofile').detach().insertAfter('button#b_manage_profile');
+$('button#b_profile').detach().insertAfter('button#b_manage_profile');
+/*$('#P100_SEARCH_COLUMN_CONTAINER').detach().insertBefore('button#b_save_profile');*/
+
+
+/* Für Horizontalen Scrollbalken (09.09.19) */
+$(window).on("apexwindowresized", resizeMainContent);
+$('button.t-Button--hideShow').on("click", resizeMainContent);
+resizeMainContent();
+ 
+// Bugfix für APEX 18.1
+$( "#ig_bew" ).on( "interactivegridreportsettingschange interactivegridreportchange", function( event, data ) {
+    apex.region("ig_bew").widget().interactiveGrid("resize");
+    checkFilterFreigabepaket ("BEWERTUNGSSTATUS_ET_C2");
+    hideAuxColumns();
+    if (data.view === "grid" && data.created) { 
+        $("#ig_bew_ig_grid_vc").grid("hideColumn", "FREIGABESTATUSID");
+    }
+} );
+$("#ig_bew").on("interactivegridviewchange", function(event, data) {  
+    if (data.view === "grid" && data.created) { 
+        $("#ig_bew_ig_grid_vc").grid("hideColumn", "FREIGABESTATUSID");
+    }  
+}); 
+checkFilterFreigabepaket ("BEWERTUNGSSTATUS_ET_C2");
+hideAuxColumns();
+$("#ig_bew_ig_grid_vc").grid("hideColumn", "FREIGABESTATUSID");
+
+
+if ($v('P100_GESCHAEFTSBEREICH') != 100) {
+    $('button.m-land').addClass("hide_region");
+}
+
+if ($v('P100_ROLLE_HUB_MEXICO') != 0) {
+$('.t-Icon.fa.fa-edit').addClass("hide_region");
+}
+
+/*
+ * Aufruf des modalen Dialogs für die Zuordnung von Eigenschaften
+ */
+$(function() {
+    var isIE = /*@cc_on!@*/false || !!document.documentMode;
+    var fachliche_verantwortung;
+if ($v('P100_ROLLE_HUB_MEXICO') != 1) {
+    if (isIE) {
+        $(window.document).delegate("td.c_md_oeffnen", "dblclick", function(event, data) {
+            var model = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid").model,
+                id = $(this).closest('tr').attr('data-id'),
+                record = model.getRecord(id),
+                quelle = model.getValue(record, "QUELLE");
+            if (Object.values($(this)[0].classList).indexOf('c_betr_eig_et_g') > -1) {
+               fachliche_verantwortung = '100';
+            }
+            else if (Object.values($(this)[0].classList).indexOf('c_betr_eig_et_a') > -1) {
+               fachliche_verantwortung = '200';
+            }
+            else {
+               fachliche_verantwortung = '';
+            }
+            apex.server.process(
+                'prepare_url_eigenschaften',
+                {
+                    x01: fachliche_verantwortung,
+                    x02: quelle,
+                    pageItems: "#P100_SELECTED_IDS"
+                }, 
+                {
+                    success: function (pData)
+                    {           
+                        apex.navigation.redirect(pData);
+                    },
+                    dataType: "text"                     
+                }
+            );
+        });
+    }
+    else {
+        $('body').on("dblclick", "td.c_md_oeffnen", function(event, data) {
+            var model = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid").model,
+                id = $(this).closest('tr').attr('data-id'),
+                record = model.getRecord(id),
+                quelle = model.getValue(record, "QUELLE");
+            if (Object.values($(this)[0].classList).indexOf('c_betr_eig_et_g') > -1) {
+               fachliche_verantwortung = '100';
+            }
+            else if (Object.values($(this)[0].classList).indexOf('c_betr_eig_et_a') > -1) {
+               fachliche_verantwortung = '200';
+            }
+            else {
+               fachliche_verantwortung = '';
+            }
+            apex.server.process(
+                'prepare_url_eigenschaften',
+                {
+                    x01: fachliche_verantwortung,
+                    x02: quelle,
+                    pageItems: "#P100_SELECTED_IDS"
+                }, 
+                {
+                    success: function (pData)
+                    {           
+                        apex.navigation.redirect(pData);
+                    },
+                    dataType: "text"                     
+                }
+            );
+        });
+    }
+}
+});
+
+/* Für Hilfe-Icons */
+var target = $('#ig_bew')[0];   // Ziel-Container
+var observer = new MutationObserver(function( mutations ) {
+    addHelpButtons();                   // Aufruf der obigen Funktion
+});
+var config = {
+    childList: true,
+    subtree: true                       // Erforderlich, da die Tabellenzellen einige Ebenen unter dem Element mit der Static ID sind
+};
+observer.observe(target, config);       // Installieren des Observers
+addHelpButtons();                       // Zur Erstausführung beim initialen Laden der Seite
+
+apex.region("ig_bew").widget().interactiveGrid("setSelectedRecords", []);
+
+/* Für Zeilenmenü (Burger-Menü) */
+$(function() {
+    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+        model = view.model,
+        rowActionMenuObj$ = apex.region("ig_bew").widget().interactiveGrid("getViews").grid.rowActionMenu$;
+    rowActionMenuObj$.menu({
+        beforeOpen: function(event, ui) {
+            var //lRow$ = view.view$.find('.is-active').closest('tr'),
+                lRow$ = view.view$.find('.is-hover').closest('tr'),
+                record = view.getContextRecord(lRow$)[0],
+                recordId = model.getValue(record, "FREIGABEPAKET_ID"),
+                freigabepaket_aktuell = model.getValue(record, "BEWERTUNGSSTATUS_ET_C2"),
+                umsetzungsstatus_homologationsauftrag = model.getValue(record, "UMSETZUNGSSTATUS_HOMOLOGATIONSAUFTRAG_TEXT"),
+                linkFreigabepaketItem = rowActionMenuObj$.menu("find", "link_freigabepaket"),
+                linkETFreigabeItem = rowActionMenuObj$.menu("find", "Link ET-Freigabe"),
+                linkHFFreigabeItem = rowActionMenuObj$.menu("find", "Link HF-Freigabe"),
+                linkFreigabePaketnameItem = rowActionMenuObj$.menu("find", "Freigabepaketname kopieren"),
+                dsidfalkoanzeige = model.getValue(record, "DS_ID_FALKO_ANZEIGE"),
+                einsatzzwecke = view.model.getValue(record, "EINSATZZWECKE"),
+                linkWorklisteItem = rowActionMenuObj$.menu("find", "Öffnen WL-Aufträge zum EA/PP"),
+                linkWorklisteEinsatzzweckeItem = rowActionMenuObj$.menu("find", "Öffnen WL-Aufträge zum Einsatzzwecke"),
+                linkFALKOItem = rowActionMenuObj$.menu("find", "Öffnen FALKO Daten Anzeige");
+            
+            if (freigabepaket_aktuell == '') {
+                linkFreigabepaketItem.disabled = true;
+                linkFreigabepaketItem.label = "Link Freigabepaket (kein Paket)";
+            }
+            else {
+                linkFreigabepaketItem.disabled = false;
+                linkFreigabepaketItem.label = "Link Freigabepaket";
+            }
+            
+            if (freigabepaket_aktuell == '') {
+                linkETFreigabeItem.disabled = true;
+                linkETFreigabeItem.label = "Öffnen in ET-Freigabe (kein Paket)";
+            }
+            else {
+                linkETFreigabeItem.disabled = false;
+                linkETFreigabeItem.label = "Öffnen in ET-Freigabe";
+            }
+            
+            if (freigabepaket_aktuell == '') {
+                linkHFFreigabeItem.disabled = true;
+                linkHFFreigabeItem.label = "Öffnen in HF-Freigabe (kein Paket)";
+            }
+            else {
+                linkHFFreigabeItem.disabled = false;
+                linkHFFreigabeItem.label = "Öffnen in HF-Freigabe";
+            }
+            
+            if (freigabepaket_aktuell == '') {
+                linkFreigabePaketnameItem.disabled = true;
+                linkFreigabePaketnameItem.label = "Freigabepaketname kopieren (kein Paket)";
+            }
+            else {
+                linkFreigabePaketnameItem.disabled = false;
+                linkFreigabePaketnameItem.label = "Freigabepaketname kopieren";
+            }
+            
+            if (umsetzungsstatus_homologationsauftrag == 'in Workliste (in Bearbeitung Audi)' || umsetzungsstatus_homologationsauftrag == 'Behördendurchlauf gestartet' || umsetzungsstatus_homologationsauftrag == 'typgenehmigt') {
+                linkWorklisteItem.disabled = false;
+                linkWorklisteItem.label = "Öffnen WL-Aufträge zum EA/PP";
+            }
+            else {
+                linkWorklisteItem.disabled = true;
+                linkWorklisteItem.label = "Öffnen WL-Aufträge zum EA/PP (kein Eintrag in der Workliste)";
+            }
+            
+             if (dsidfalkoanzeige == '') {
+                linkFALKOItem.disabled = true;
+                linkFALKOItem.label = "Öffnen FALKO Daten Anzeige (keine Daten)";
+            }
+            else {
+                linkFALKOItem.disabled = false;
+                linkFALKOItem.label = "Öffnen FALKO Daten Anzeige";
+            }
+
+            if (einsatzzwecke != '' && (umsetzungsstatus_homologationsauftrag == 'in Workliste (in Bearbeitung Audi)' || umsetzungsstatus_homologationsauftrag == 'Behördendurchlauf gestartet' || umsetzungsstatus_homologationsauftrag == 'typgenehmigt')) {
+                linkWorklisteEinsatzzweckeItem.disabled = false; 
+                linkWorklisteEinsatzzweckeItem.label = "Öffnen WL-Aufträge zum Einsatzzweck";
+            }
+            else {
+                linkWorklisteEinsatzzweckeItem.disabled = true;
+                linkWorklisteEinsatzzweckeItem.label = "Öffnen WL-Aufträge zum Einsatzzweck (kein Eintrag in der Workliste)";
+            }
+        }
+    });
+    rowActionMenuObj$.menu("option")
+        .items.push(
+            {
+                id: "link_freigabepaket",
+                type: "action",
+                hide: ($v('P100_ROLLE_HUB_MEXICO') != "0"),
+                label: "Link Freigabepaket",
+                iconType: "fa",
+                icon: "fa-chain",
+                action: function(menu, element) {
+                    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+                        model = view.model,
+                        record = view.getContextRecord( element )[0],
+                        freigabepaket = view.model.getValue(record, "BEWERTUNGSSTATUS_ET_C2"),
+                        freigabepaketId = view.model.getValue(record, "FREIGABEPAKET_ID");    
+                    copyStringToClipboard($v('P100_HOST_URL') + "f?p=&APP_ID.:100:::NO::P100_FREIGABEPAKET_ID,P100_FREIGABEPAKET:" + freigabepaketId + ","+ freigabepaket);
+                    apex.message.showPageSuccess( "Der Link für das ausgewählte Freigabepaket wurde in die Zwischenablage kopiert." );
+                }
+            },  
+            {
+                 type:"separator"
+             },
+            {
+                id: "Link ET-Freigabe",
+                type:"action",
+                hide: ($v('P100_ROLLE_HUB_MEXICO') != "0"),
+                label:"Link ET-Freigabe",
+                iconType: "fa",
+                icon: "fa-chain",
+                disabled: false,
+                action: function(menu, element) {
+                    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+                        model = view.model,
+                        record = view.getContextRecord( element )[0],
+                        freigabepaketId = view.model.getValue(record, "FREIGABEPAKET_ID");
+                        //freigabepaket = view.model.getValue(record, "BEWERTUNGSSTATUS_ET_C2");
+                    apex.server.process(
+                        'prepare_url_link_freigabapaket_et_freigabe',                           
+                        {
+                            x02: freigabepaketId
+                        }, 
+                        {
+                            success: function (pData)
+                            {           
+                                apex.navigation.redirect(pData);
+                            },
+                            dataType: "text"                     
+                        }
+                    );          
+                }
+    
+                },
+                {
+                    type:"separator"
+                },
+
+               { 
+                id: "Link HF-Freigabe",
+                type:"action",
+                hide: ($v('P100_ROLLE_HUB_MEXICO') != "0"),
+                label:"Link HF-Freigabe",
+                iconType: "fa",
+                icon: "fa-chain",
+                disabled: false,
+                action: function(menu, element) {
+                    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+                        model = view.model,
+                        record = view.getContextRecord( element )[0],
+                        freigabepaketId = view.model.getValue(record, "FREIGABEPAKET_ID");
+                        //freigabepaket = view.model.getValue(record, "BEWERTUNGSSTATUS_ET_C2");
+                    apex.server.process(
+                        'prepare_url_link_freigabapaket_hf_freigabe',                           
+                        {
+                            x02: freigabepaketId
+                        }, 
+                        {
+                            success: function (pData)
+                            {           
+                                apex.navigation.redirect(pData);
+                            },
+                            dataType: "text"                     
+                        }
+                        
+                        
+                    );
+                }
+            },
+        
+            {
+                type:"separator"
+            },
+        
+            {
+                id: "Freigabepaketname kopieren",
+                type: "action",
+                hide: ($v('P100_ROLLE_HUB_MEXICO') != "0"),
+                label: "Freigabepaketname kopieren",
+                iconType: "fa",
+                icon: "fa-copy",
+                action: function(menu, element) {
+                    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+                        model = view.model,
+                        record = view.getContextRecord( element )[0],
+                        btoa_freigabepaket = view.model.getValue(record, "BEWERTUNGSSTATUS_ET_C2");
+                    copyStringToClipboard(btoa_freigabepaket);
+                    apex.message.showPageSuccess( "Der Freigabepaketname wurde in die Zwischenablage kopiert." );
+               }
+             },    
+                {
+                    type:"separator"
+                },
+
+               { 
+                id: "Öffnen FALKO Daten Anzeige",
+                type:"action",
+                label:"Öffnen FALKO Daten Anzeige",
+                iconType: "fa",
+                icon: "fa-chain",
+                disabled: false,
+                action: function(menu, element) {
+                    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+                        model = view.model,
+                        record = view.getContextRecord( element )[0],
+                        dsid = view.model.getValue(record, "DS_ID");
+                       var url = "f?p=&APP_ID.:41:&APP_SESSION.:::41:P41_DS_ID:P_DS";   
+                       url = url.replace('P_DS', dsid);                   
+                       apex.navigation.redirect (url); 
+                }
+            },
+        
+             {
+                    type:"separator"
+                },
+
+               { 
+                id: "Öffnen Historie Märkte/Systeme",
+                type:"action",
+                label:"Öffnen Historie Märkte/Systeme",
+                iconType: "fa",
+                icon: "fa-history",
+                disabled: false,
+                action: function(menu, element) {
+                    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+                        model = view.model,
+                        record = view.getContextRecord( element )[0],
+                        dsid = view.model.getValue(record, "DS_ID"),
+                        spaltenanzeige = $v("P100_SPALTEN_ANZEIGE");
+                       var url = "f?p=&APP_ID.:112:&APP_SESSION.:::112:P112_DS_ID,P112_SPALTEN_ANZEIGE:P_DS,P_SPALTEN_ANZEIGE";   
+                       url = url.replace('P_DS', dsid);  
+                       url = url.replace('P_SPALTEN_ANZEIGE', spaltenanzeige);
+                       apex.navigation.redirect (url); 
+                }
+            },
+        
+                {
+                    type:"separator"
+                },
+
+               { 
+                id: "Öffnen WL-Aufträge zum EA/PP",
+                type:"action",
+                label:"Öffnen WL-Aufträge zum EA/PP",
+                iconType: "fa",
+                icon: "fa-chain",
+                disabled: false,
+                action: function(menu, element) {
+                    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+                        model = view.model,
+                        record = view.getContextRecord( element )[0],
+                        dsid = view.model.getValue(record, "DS_ID"),
+                        eapp = view.model.getValue(record, "EA_PP");
+                        //freigabepaket = view.model.getValue(record, "BEWERTUNGSSTATUS_ET_C2");
+                    apex.server.process(
+                        'prepare_url_link_workliste',                           
+                        {
+                            x01: dsid,
+                            x02: eapp
+                        }, 
+                        {
+                            success: function (pData)
+                            {           
+                                apex.navigation.redirect(pData);
+                            },
+                            dataType: "text"                     
+                         }
+                        
+                        
+                    );
+                }
+            
+                },
+
+                {
+                        type:"separator"
+                    },
+
+                { 
+                    id: "Öffnen WL-Aufträge zum Einsatzzwecke",
+                    type:"action",
+                    label:"Öffnen WL-Aufträge zum Einsatzzwecke",
+                    iconType: "fa",
+                    icon: "fa-chain",
+                    disabled: false,
+                    action: function(menu, element) {
+                        var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+                            model = view.model,
+                            record = view.getContextRecord( element )[0],
+                            einsatzzwecke = view.model.getValue(record, "EINSATZZWECKE");
+                        apex.server.process(
+                            'prepare_url_link_workliste_einsatzzwecke',                           
+                            {
+                                x01: einsatzzwecke
+                            }, 
+                            {
+                                success: function (pData)
+                                {           
+                                    apex.navigation.redirect(pData);
+                                },
+                                dataType: "text"                     
+                            }
+                            
+                            
+                        );
+                    }
+                }
+        
+        );
+        
+        
+    })
+
+
+/* Button für Portal */
+//$("button#b_portal").detach().insertBefore('.t-Region-title#a_Collapsible1_notes_heading');
+$("button#b_portal").detach().insertBefore('.t-Region-headerItems--controls');
+
+
+/* Doppelklick der "Funktionstyp" Spalte zum Öffnen des "Funktionstypen Anzeige" Dialogs */
+$('body').on("dblclick", "td.funktionstypen_anzeigen", function(event, data) {
+    console.log(event);
+    var view = apex.region("ig_bew").call("getViews").grid; 
+    var lRow$ = view.view$.find('.is-hover').closest('tr');
+    var record = view.getContextRecord(lRow$);  
+    view.setSelectedRecords(record, true, true); // Ändere Selection auf für Bearbeitung ausgewählte Zeile
+    var selectedDSId = view.model.getValue(record[0], "DS_ID");
+    
+    apex.server.process('prepare_url_funktionstypen_anzeigen',
+    {
+        x01: selectedDSId
+    }, 
+    {
+        success: function (pData)
+        {           
+            apex.navigation.redirect(pData);
+        },
+        dataType: "text"                     
+    });
+
+});
+```
+
+```JavaScript
+
+$('div#ig_bew').parent().toggleClass("col-10 col-12");
+
+$('button#b_mfb_eigenschaften').detach().insertBefore('button#b_tooltip');
+$('button#b_neuer_Umfang').detach().insertBefore('button#b_mfb_eigenschaften');
+
+/* Für Horizontalen Scrollbalken (09.09.19) */
+$(window).on("apexwindowresized", resizeMainContent);
+$('button.t-Button--hideShow').on("click", resizeMainContent);
+resizeMainContent();
+ 
+// Bugfix für APEX 18.1
+$( "#ig_bew" ).on( "interactivegridreportsettingschange interactivegridreportchange", function( event, data ) {
+    apex.region("ig_bew").widget().interactiveGrid("resize");
+    checkFilterFreigabepaket ("BEWERTUNGSSTATUS_ET_C2");
+    hideAuxColumns();
+    if (data.view === "grid" && data.created) { 
+        $("#ig_bew_ig_grid_vc").grid("hideColumn", "FREIGABESTATUSID");
+    }
+} );
+$("#ig_bew").on("interactivegridviewchange", function(event, data) {  
+    if (data.view === "grid" && data.created) { 
+        $("#ig_bew_ig_grid_vc").grid("hideColumn", "FREIGABESTATUSID");
+    }  
+}); 
+checkFilterFreigabepaket ("BEWERTUNGSSTATUS_ET_C2");
+hideAuxColumns();
+$("#ig_bew_ig_grid_vc").grid("hideColumn", "FREIGABESTATUSID");
+
+/*
+ * Aufruf des modalen Dialogs für die Zuordnung von Eigenschaften
+ */
+$(function() {
+    var isIE = /*@cc_on!@*/false || !!document.documentMode;
+    var fachliche_verantwortung;
+    if (isIE) {
+        $(window.document).delegate("td.c_md_oeffnen", "dblclick", function(event, data) {
+            var model = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid").model,
+                id = $(this).closest('tr').attr('data-id'),
+                record = model.getRecord(id),
+                quelle = model.getValue(record, "QUELLE");
+            if (Object.values($(this)[0].classList).indexOf('c_betr_eig_et_g') > -1) {
+               fachliche_verantwortung = '100';
+            }
+            else if (Object.values($(this)[0].classList).indexOf('c_betr_eig_et_a') > -1) {
+               fachliche_verantwortung = '200';
+            }
+            else {
+               fachliche_verantwortung = '';
+            }
+            apex.server.process(
+                'prepare_url_eigenschaften',
+                {
+                    x01: fachliche_verantwortung,
+                    x02: quelle,
+                    pageItems: "#P10_SELECTED_IDS"
+                }, 
+                {
+                    success: function (pData)
+                    {           
+                        apex.navigation.redirect(pData);
+                    },
+                    dataType: "text"                     
+                }
+            );
+        });
+    }
+    else {
+        $('body').on("dblclick", "td.c_md_oeffnen", function(event, data) {
+            var model = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid").model,
+                id = $(this).closest('tr').attr('data-id'),
+                record = model.getRecord(id),
+                quelle = model.getValue(record, "QUELLE");
+            if (Object.values($(this)[0].classList).indexOf('c_betr_eig_et_g') > -1) {
+               fachliche_verantwortung = '100';
+            }
+            else if (Object.values($(this)[0].classList).indexOf('c_betr_eig_et_a') > -1) {
+               fachliche_verantwortung = '200';
+            }
+            else {
+               fachliche_verantwortung = '';
+            }
+            apex.server.process(
+                'prepare_url_eigenschaften',
+                {
+                    x01: fachliche_verantwortung,
+                    x02: quelle,
+                    pageItems: "#P10_SELECTED_IDS"
+                }, 
+                {
+                    success: function (pData)
+                    {           
+                        apex.navigation.redirect(pData);
+                    },
+                    dataType: "text"                     
+                }
+            );
+        });
+    }
+});
+
+
+/* Für Hilfe-Icons */
+var target = $('#ig_bew')[0];   // Ziel-Container
+var observer = new MutationObserver(function( mutations ) {
+    addHelpButtons();                   // Aufruf der obigen Funktion
+});
+var config = {
+    childList: true,
+    subtree: true                       // Erforderlich, da die Tabellenzellen einige Ebenen unter dem Element mit der Static ID sind
+};
+observer.observe(target, config);       // Installieren des Observers
+addHelpButtons();                       // Zur Erstausführung beim initialen Laden der Seite
+
+apex.region("ig_bew").widget().interactiveGrid("setSelectedRecords", []);
+
+/* Für Zeilenmenü (Burger-Menü) */
+$(function() {
+    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+        model = view.model,
+        rowActionMenuObj$ = apex.region("ig_bew").widget().interactiveGrid("getViews").grid.rowActionMenu$;
+    rowActionMenuObj$.menu({
+        beforeOpen: function(event, ui) {
+            var //lRow$ = view.view$.find('.is-active').closest('tr'),
+                lRow$ = view.view$.find('.is-hover').closest('tr'),
+                record = view.getContextRecord(lRow$)[0],
+                recordId = model.getValue(record, "FREIGABEPAKET_ID"),
+                freigabepaket_aktuell = model.getValue(record, "BEWERTUNGSSTATUS_ET_C2"),
+                umsetzungsstatus_homologationsauftrag = model.getValue(record, "UMSETZUNGSSTATUS_HOMOLOGATIONSAUFTRAG_TEXT"),
+                linkFreigabepaketItem = rowActionMenuObj$.menu("find", "link_freigabepaket"),
+                linkETFreigabeItem = rowActionMenuObj$.menu("find", "Link ET-Freigabe"),
+                linkHFFreigabeItem = rowActionMenuObj$.menu("find", "Link HF-Freigabe"),
+                linkFreigabePaketnameItem = rowActionMenuObj$.menu("find", "Freigabepaketname kopieren"),
+                einsatzzwecke = view.model.getValue(record, "EINSATZZWECKE"),
+                dsidfalkoanzeige = model.getValue(record, "DS_ID_FALKO_ANZEIGE"),
+                linkWorklisteItem = rowActionMenuObj$.menu("find", "Öffnen WL-Aufträge zum EA/PP"),
+                linkWorklisteEinsatzzweckeItem = rowActionMenuObj$.menu("find", "Öffnen WL-Aufträge zum Einsatzzwecke"),
+                linkFALKOItem = rowActionMenuObj$.menu("find", "Öffnen FALKO Daten Anzeige");
+            
+            if (freigabepaket_aktuell == '') {
+                linkFreigabepaketItem.disabled = true;
+                linkFreigabepaketItem.label = "Link Freigabepaket (kein Paket)";
+            }
+            else {
+                linkFreigabepaketItem.disabled = false;
+                linkFreigabepaketItem.label = "Link Freigabepaket";
+            }
+            
+            if (freigabepaket_aktuell == '') {
+                linkETFreigabeItem.disabled = true;
+                linkETFreigabeItem.label = "Öffnen in ET-Freigabe (kein Paket)";
+            }
+            else {
+                linkETFreigabeItem.disabled = false;
+                linkETFreigabeItem.label = "Link ET-Freigabe";
+            }
+            
+            if (freigabepaket_aktuell == '') {
+                linkHFFreigabeItem.disabled = true;
+                linkHFFreigabeItem.label = "Öffnen in HF-Freigabe (kein Paket)";
+            }
+            else {
+                linkHFFreigabeItem.disabled = false;
+                linkHFFreigabeItem.label = "Öffnen in HF-Freigabe";
+            }
+            
+            if (freigabepaket_aktuell == '') {
+                linkFreigabePaketnameItem.disabled = true;
+                linkFreigabePaketnameItem.label = "Freigabepaketname kopieren (kein Paket)";
+            }
+            else {
+                linkFreigabePaketnameItem.disabled = false;
+                linkFreigabePaketnameItem.label = "Freigabepaketname kopieren";
+            }
+            
+            if (umsetzungsstatus_homologationsauftrag == 'in Workliste (in Bearbeitung Audi)' || umsetzungsstatus_homologationsauftrag == 'Behördendurchlauf gestartet' || umsetzungsstatus_homologationsauftrag == 'typgenehmigt') {
+                linkWorklisteItem.disabled = false;
+                linkWorklisteItem.label = "Öffnen WL-Aufträge zum EA/PP";
+            }
+            else {
+                linkWorklisteItem.disabled = true;
+                linkWorklisteItem.label = "Öffnen WL-Aufträge zum EA/PP (kein Eintrag in der Workliste)";
+            }
+            
+            if (dsidfalkoanzeige == '') {
+                linkFALKOItem.disabled = true;
+                linkFALKOItem.label = "Öffnen FALKO Daten Anzeige (keine Daten)";
+            }
+            else {
+                linkFALKOItem.disabled = false;
+                linkFALKOItem.label = "Öffnen FALKO Daten Anzeige";
+            }
+
+            if (einsatzzwecke != '' && (umsetzungsstatus_homologationsauftrag == 'in Workliste (in Bearbeitung Audi)' || umsetzungsstatus_homologationsauftrag == 'Behördendurchlauf gestartet' || umsetzungsstatus_homologationsauftrag == 'typgenehmigt')) {
+                linkWorklisteEinsatzzweckeItem.disabled = false; 
+                linkWorklisteEinsatzzweckeItem.label = "Öffnen WL-Aufträge zum Einsatzzweck";
+            }
+            else {
+                linkWorklisteEinsatzzweckeItem.disabled = true;
+                linkWorklisteEinsatzzweckeItem.label = "Öffnen WL-Aufträge zum Einsatzzweck (kein Eintrag in der Workliste)";
+            }
+        }
+    });
+    rowActionMenuObj$.menu("option")
+        .items.push(
+            {
+                id: "link_freigabepaket",
+                type: "action",
+                label: "Link Freigabepaket",
+                iconType: "fa",
+                icon: "fa-chain",
+                action: function(menu, element) {
+                    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+                        model = view.model,
+                        record = view.getContextRecord( element )[0],
+                        freigabepaket = view.model.getValue(record, "BEWERTUNGSSTATUS_ET_C2"),
+                        freigabepaketId = view.model.getValue(record, "FREIGABEPAKET_ID");    
+                    copyStringToClipboard($v('P10_HOST_URL') + "f?p=&APP_ID.:10:::NO::P10_FREIGABEPAKET_ID,P10_FREIGABEPAKET:" + freigabepaketId + ","+ freigabepaket);
+                    apex.message.showPageSuccess( "Der Link für das ausgewählte Freigabepaket wurde in die Zwischenablage kopiert." );
+                }
+            },          
+            {
+                type:"separator"
+            },
+            {
+                id: "Link ET-Freigabe",
+                type:"action",
+                label:"Link ET-Freigabe",
+                iconType: "fa",
+                icon: "fa-chain",
+                disabled: false,
+                action: function(menu, element) {
+                    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+                        model = view.model,
+                        record = view.getContextRecord( element )[0],
+                        freigabepaketId = view.model.getValue(record, "FREIGABEPAKET_ID");
+                        //freigabepaket = view.model.getValue(record, "BEWERTUNGSSTATUS_ET_C2");
+                    apex.server.process(
+                        'prepare_url_link_freigabapaket_et_freigabe',                           
+                        {
+                            x02: freigabepaketId
+                        }, 
+                        {
+                            success: function (pData)
+                            {           
+                                apex.navigation.redirect(pData);
+                            },
+                            dataType: "text"                     
+                        }
+                    );          
+                }
+    
+                },
+                {
+                    type:"separator"
+                },
+
+               { 
+                id: "Link HF-Freigabe",
+                type:"action",
+                label:"Link HF-Freigabe",
+                iconType: "fa",
+                icon: "fa-chain",
+                disabled: false,
+                action: function(menu, element) {
+                    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+                        model = view.model,
+                        record = view.getContextRecord( element )[0],
+                        freigabepaketId = view.model.getValue(record, "FREIGABEPAKET_ID");
+                        //freigabepaket = view.model.getValue(record, "BEWERTUNGSSTATUS_ET_C2");
+                    apex.server.process(
+                        'prepare_url_link_freigabapaket_hf_freigabe',                           
+                        {
+                            x02: freigabepaketId
+                        }, 
+                        {
+                            success: function (pData)
+                            {           
+                                apex.navigation.redirect(pData);
+                            },
+                            dataType: "text"                     
+                        }
+                        
+                        
+                    );
+                }
+            },
+        
+         {
+                type:"separator"
+            },
+        
+               {
+                id: "Freigabepaketname kopieren",
+                type: "action",
+                label: "Freigabepaketname kopieren",
+                iconType: "fa",
+                icon: "fa-copy",
+                action: function(menu, element) {
+                    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+                        model = view.model,
+                        record = view.getContextRecord( element )[0],
+                        btoa_freigabepaket = view.model.getValue(record, "BEWERTUNGSSTATUS_ET_C2");
+                    copyStringToClipboard(btoa_freigabepaket);
+                    apex.message.showPageSuccess( "Der Freigabepaketname wurde in die Zwischenablage kopiert." );
+               }
+            },
+            
+            {
+                    type:"separator"
+                },
+
+               { 
+                id: "Öffnen FALKO Daten Anzeige",
+                type:"action",
+                label:"Öffnen FALKO Daten Anzeige",
+                iconType: "fa",
+                icon: "fa-chain",
+                disabled: false,
+                action: function(menu, element) {
+                    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+                        model = view.model,
+                        record = view.getContextRecord( element )[0],
+                        dsid = view.model.getValue(record, "DS_ID");
+                       var url = "f?p=&APP_ID.:41:&APP_SESSION.:::41:P41_DS_ID:P_DS";   
+                       url = url.replace('P_DS', dsid);                   
+                       apex.navigation.redirect (url); 
+                }
+            },
+        
+                {
+                    type:"separator"
+                },
+
+               { 
+                id: "Öffnen WL-Aufträge zum EA/PP",
+                type:"action",
+                label:"Öffnen WL-Aufträge zum EA/PP",
+                iconType: "fa",
+                icon: "fa-chain",
+                disabled: false,
+                action: function(menu, element) {
+                    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+                        model = view.model,
+                        record = view.getContextRecord( element )[0],
+                        eapp = view.model.getValue(record, "EA_PP"),
+                        dsid = view.model.getValue(record, "DS_ID");
+                        //freigabepaket = view.model.getValue(record, "BEWERTUNGSSTATUS_ET_C2");
+                    apex.server.process(
+                        'prepare_url_link_workliste',                           
+                        {
+                            x01: dsid,
+                            x02: eapp
+                        }, 
+                        {
+                            success: function (pData)
+                            {           
+                                apex.navigation.redirect(pData);
+                            },
+                            dataType: "text"                     
+                        }
+                        
+                        
+                    );
+                }
+            
+            },
+
+            {
+                    type:"separator"
+                },
+
+               { 
+                id: "Öffnen WL-Aufträge zum Einsatzzwecke",
+                type:"action",
+                label:"Öffnen WL-Aufträge zum Einsatzzwecke",
+                iconType: "fa",
+                icon: "fa-chain",
+                disabled: false,
+                action: function(menu, element) {
+                    var view = apex.region("ig_bew").widget().interactiveGrid("getViews", "grid"),
+                        model = view.model,
+                        record = view.getContextRecord( element )[0],
+                        einsatzzwecke = view.model.getValue(record, "EINSATZZWECKE");
+                    apex.server.process(
+                        'prepare_url_link_workliste_einsatzzwecke',                           
+                        {
+                            x01: einsatzzwecke
+                        }, 
+                        {
+                            success: function (pData)
+                            {           
+                                apex.navigation.redirect(pData);
+                            },
+                            dataType: "text"                     
+                        }
+                        
+                        
+                    );
+                }
+            }
+      
+       );
+    
+    
+})
+
+/* Button für Portal */
+//$("button#b_portal").detach().insertBefore('.t-Region-title#a_Collapsible1_notes_heading');
+$("button#b_portal").detach().insertBefore('.t-Region-headerItems--controls');
+
+
+/* Doppelklick der "Funktionstyp" Spalte zum Öffnen des "Funktionstypen Anzeige" Dialogs */
+$('body').on("dblclick", "td.funktionstypen_anzeigen", function(event, data) {
+    console.log(event);
+    var view = apex.region("ig_bew").call("getViews").grid; 
+    var lRow$ = view.view$.find('.is-hover').closest('tr');
+    var record = view.getContextRecord(lRow$);  
+    view.setSelectedRecords(record, true, true); // Ändere Selection auf für Bearbeitung ausgewählte Zeile
+    var selectedDSId = view.model.getValue(record[0], "DS_ID");
+    
+    apex.server.process('prepare_url_funktionstypen_anzeigen',
+    {
+        x01: selectedDSId
+    }, 
+    {
+        success: function (pData)
+        {           
+            apex.navigation.redirect(pData);
+        },
+        dataType: "text"                     
+    });
+
+});
+
+
+```
+
+
+```javascript
+
+$('button#b_save_profile').detach().insertAfter('#filter_heading');
+$('button#b_manage_profile').detach().insertAfter('button#b_save_profile');
+$('button#b_startprofile').detach().insertAfter('button#b_manage_profile');
+$('button#b_profile').detach().insertAfter('button#b_manage_profile');
+//$('button#b_mehrfach').detach().insertAfter('.t-Region-title#heading_heading');
+//$('button#b_mehrfach_et_a').detach().insertAfter('button#b_mehrfach');
+//$('button#b_expertenteam').detach().insertAfter('button#b_mehrfach_et_a');
+
+$('button#b_fpp').detach().insertAfter('#heading_heading');
+
+$('button#b_mehrfach').detach().insertAfter('button#b_fpp');
+$('button#b_mehrfach_et_a').detach().insertAfter('button#b_mehrfach');
+$('button#b_expertenteam').detach().insertAfter('button#b_mehrfach_et_a');
+
+setZellfarbeTailoring();
+setZellfarbeTailoringAntrieb();
+
+/* Für Horizontalen Scrollbalken (09.09.19) */
+$(window).on("apexwindowresized", resizeMainContent);
+$('button.t-Button--hideShow').on("click", resizeMainContent);
+resizeMainContent();
+ 
+// Bugfix für APEX 18.1
+$( "#ig_prnummern" ).on( "interactivegridreportsettingschange interactivegridreportchange", function( event, data ) {
+    apex.region("ig_prnummern").widget().interactiveGrid("resize");
+} );
+
+/* Für Hilfe-Icons */
+var target = $('#ig_prnummern')[0];   // Ziel-Container
+var observer = new MutationObserver(function( mutations ) {
+    addHelpButtons();                   // Aufruf der obigen Funktion
+});
+var config = {
+    childList: true,
+    subtree: true                       // Erforderlich, da die Tabellenzellen einige Ebenen unter dem Element mit der Static ID sind
+};
+observer.observe(target, config);       // Installieren des Observers
+addHelpButtons();                       // Zur Erstausführung beim initialen Laden der Seite
+
+$("button#b_portal").detach().insertBefore('.t-Region-title#heading_heading');
+
+
+```
+
+
+```javascript
+/* Für Horizontalen Scrollbalken (09.09.19) */
+$(window).on("apexwindowresized", resizeMainContent);
+$('button.t-Button--hideShow').on("click", resizeMainContent);
+resizeMainContent();
+
+$("button#b_fst_portal").detach().insertBefore('#ig_filter .t-Region-headerItems--controls');
+
+$("#P2000_SEARCH_COLUMN_CONTAINER").detach().insertBefore('button[data-action="reset-report"]');
+
+$('button#b_create').detach().insertBefore('button[data-action="save"]').removeClass("t-Button").addClass("a-Button").addClass("a-Toolbar-item");
+$('button#b_conflict').detach().insertBefore('button[data-action="save"]').removeClass("t-Button").addClass("a-Button").addClass("a-Toolbar-item");
+$('button#b_gantt').detach().insertBefore('button[data-action="save"]').removeClass("t-Button").addClass("a-Button").addClass("a-Toolbar-item");
+$('button#b_nutzungen').detach().insertBefore('button[data-action="save"]').removeClass("t-Button").addClass("a-Button").addClass("a-Toolbar-item");
+
+
+$("button#b_dokumentation").detach().insertAfter('#ig_filter_heading');
+$("button#b_filter_name").detach().insertAfter('button#b_dokumentation');
+
+
+/* Burgermenü */
+
+$(function() {
+    var view = apex.region("ig_fahrzeugsteuerung").widget().interactiveGrid("getViews", "grid"),
+        model = view.model,
+        rowActionMenuObj$ = apex.region("ig_fahrzeugsteuerung").widget().interactiveGrid("getViews").grid.rowActionMenu$;
+        rowActionMenuObj$.menu({
+        beforeOpen: function(event, ui) {
+            var lRow$ = view.view$.find('.is-hover').closest('tr'),
+                record = view.getContextRecord(lRow$)[0],
+                fahrzeugsteuerer = $v("P2000_USER_IS_FAHRZEUGSTEUERUNG");
+                bedarfsid = model.getValue(record, "BEDARFS_ID_MENU"),
+                linkFahrzeugItem = rowActionMenuObj$.menu("find", "Fahrzeug");
+                linkKopieren = rowActionMenuObj$.menu("find", "Kopieren");
+
+            if (fahrzeugsteuerer == 1) {
+                linkFahrzeugItem.hide = false;
+                linkKopieren.hide = false;
+
+                if (bedarfsid.match(/M/)) {         // Format: (/M[0-9]{1}_[0-9]{3}$/)
+                    linkFahrzeugItem.disabled = false;
+                    linkFahrzeugItem.label = "Fahrzeug löschen";
+                    linkKopieren.disabled = false;
+                    linkKopieren.label = "Fahrzeug kopieren";
+                }
+
+                else {
+                    linkFahrzeugItem.disabled = true;
+                    linkFahrzeugItem.label = "Fahrzeug löschen (kein manuelles Fahrzeug)";
+                    linkKopieren.disabled = true;
+                    linkKopieren.label = "Fahrzeug kopieren (kein manuelles Fahrzeug)";
+                }
+            }
+            else {
+                linkFahrzeugItem.hide = true;
+                linkKopieren.hide = true;
+            }
+        }
+    });
+  
+    rowActionMenuObj$.menu("option").items.push(
+        {
+            id: "historie",
+            type: "action",
+            label: "Historie",
+            iconType: "fa",
+            icon: "fa-history",
+            action: function(menu, element){
+                    var record = view.getContextRecord(element)[0];
+                    var selectedId = view.model.getValue(record, "FST_FAHRZEUGSTEUERUNG_ID");
+
+                    javascript:void(window.open('f?p=&APP_ID.:2010:&APP_SESSION.:::2010:P2010_FST_ID:' + selectedId, 'Historie'));                    
+            }
+        },                                  
+
+        {
+            id: "Generik",
+            type: "action",
+            label: "Generik anpassen",
+            iconType: "fa",
+            icon: "fa-gear",
+            action: function(menu, element){
+                    var record = view.getContextRecord(element);
+                    view.setSelectedRecords(record, true, true); // Ändere Selection auf für Bearbeitung ausgewählte Zeile
+                    var selectedId = view.model.getValue(record[0], "FST_FAHRZEUGSTEUERUNG_ID");
+                   var url = "f?p=&APP_ID.:2150:&APP_SESSION.:::2150:P2150_FST_ID:P_SELECTED_ID"; 
+                   url = url.replace('P_SELECTED_ID', selectedId);
+                   apex.navigation.redirect (url);   
+
+            }
+        },
+
+/*        {
+            id: "Generik 2",
+            type: "action",
+            label: "Generik berechnen",
+            iconType: "fa",
+            icon: "fa-gear",
+            action: function(menu, element){
+                    var record = view.getContextRecord(element)[0];
+                    var selectedId = view.model.getValue(record, "FST_FAHRZEUGSTEUERUNG_ID");
+
+                    apex.server.process(
+                        'Generik_berechnen', 
+                        {
+                            x01: selectedId
+                        }, 
+                        {
+                            success: function (pData)
+                            {           
+                                apex.page.submit();
+                            },
+                            dataType: "text"                     
+                        }
+                    );
+            }
+        },*/
+        
+        {
+            id: "Nutzungsabfolge",
+            type: "action",
+            label: "Nutzungsabfolge zuordnen",
+            iconType: "fa",
+            icon: "fa-arrows-v",
+            action: function(menu, element){
+                    var record = view.getContextRecord(element)[0];
+                    var selectedId = view.model.getValue(record, "FST_FAHRZEUGSTEUERUNG_ID");
+
+                    var url ="f?p=&APP_ID.:2140:&APP_SESSION.:::2140:P2140_FST_ID:P_SELECTED_ID";
+                    url = url.replace('P_SELECTED_ID', selectedId);
+                    apex.navigation.redirect (url);
+            }
+        },
+
+        {
+            id: "Kopieren",
+            type: "action",
+            label: "Fahrzeug kopieren",
+            iconType: "fa",
+            icon: "fa-clone",
+
+            action: function(_menu, element) {
+                // Hole die Informationen der angeklickten Reihe
+                var record = view.getContextRecord(element)[0];
+                var selectedId = view.model.getValue(record, "FST_FAHRZEUGSTEUERUNG_ID");
+                var fahrzeug = view.model.getValue(record, "VDS_NUMMER");
+                apex.server.process('prepare_url_fahrzeug_kopieren', 
+                {
+                    x01: selectedId,
+                    x02: fahrzeug
+                }, 
+                {
+                    success: function (pData)
+                    {   
+                        apex.navigation.redirect(pData);
+                    },
+                    dataType: "text"                     
+                });
+             /*   var record = view.getContextRecord(element)[0];
+                var selectedId = view.model.getValue(record, "FST_FAHRZEUGSTEUERUNG_ID");
+                var fahrzeug = view.model.getValue(record, "VDS_NUMMER");
+
+                javascript:void(window.open('f?p=&APP_ID.:2008:&APP_SESSION.:::2008:P2008_FST_ID,P2008_VDS_NUMMER:,' + 
+                                            selectedId + ',' + fahrzeug, 'Fahrzeug kopieren')); */
+
+            }
+        },
+
+        {
+            id: "Fahrzeug",
+            type: "action",
+            label: "Fahrzeug löschen",
+            iconType: "fa",
+            icon: "fa-trash-o",
+            action: function(menu, element) {
+                var record = view.getContextRecord(element)[0];
+                var selectedId = view.model.getValue(record, "FST_FAHRZEUGSTEUERUNG_ID");
+                var fahrzeug = view.model.getValue(record, "VDS_NUMMER");
+
+                    apex.message.confirm ("Wollen Sie das Fahrzeug \"" + fahrzeug + "\" wirklich löschen?", function( okPressed ) { 
+                        if( okPressed ) {
+                            apex.server.process(
+                                'fahrzeug_löschen',                           
+                                {
+                                    x01: selectedId
+                                }, 
+                                {
+                                    success: function(pData)
+                                    {           
+                                        apex.page.submit();
+                                    },
+                                    dataType: "text"                     
+                                }
+                            );
+                        }
+                    });
+          
+            }
+        } 
+    )
+});
+
+/* Für Hilfe-Icons */
+var target = $('#ig_fahrzeugsteuerung')[0];   // Ziel-Container
+var observer = new MutationObserver(function( mutations ) {
+    addHelpButtons();                   // Aufruf der obigen Funktion
+});
+var config = {
+    childList: true,
+    subtree: true                       // Erforderlich, da die Tabellenzellen einige Ebenen unter dem Element mit der Static ID sind
+};
+observer.observe(target, config);       // Installieren des Observers
+addHelpButtons();                       // Zur Erstausführung beim initialen Laden der Seite
+
+/* Für unterschiedlich eingefärbte Meilenstein-Gruppen Header und dem einfärben der Lead-Zeilen */
+var target = $('#ig_fahrzeugsteuerung')[0];   // Ziel-Container
+var observer = new MutationObserver(function( mutations ) {
+    fSetGroupBackground();                   // Aufruf der obigen Funktion
+    fSetLeadColor();
+});
+var config = {
+    childList: true,
+    subtree: true                       // Erforderlich, da die Tabellenzellen einige Ebenen unter dem Element mit der Static ID sind
+};
+observer.observe(target, config);       // Installieren des Observers
+fSetGroupBackground();                       // Zur Erstausführung beim initialen Laden der Seite
+fSetLeadColor();
+
+```
+
+
+
+# INLINE CSS PAGE
+
+
+```css
+/* If trying to maximize the screen space available for the wide grid region
+ * you may not want much or any padding on the main body.
+ */
+.t-Body-contentInner {
+    padding: 0;
+}
+
+/* Bearbeiten Button ausblenden */
+#ig_fahrzeugsteuerung div[data-action="edit"] {
+    display: none !important;
+}
+
+/* Im Zeilenmenü ausblenden */
+#ig_fahrzeugsteuerung_ig_row_actions_menu_0, /* single-row-view */
+#ig_fahrzeugsteuerung_ig_row_actions_menu_3, /* row-refresh */
+#ig_fahrzeugsteuerung_ig_row_actions_menu_4 /* row-revert */
+{
+    display:none !important;
+}
+#ig_fahrzeugsteuerung_ig_row_actions_menu_0 + .a-Menu-itemSep /* Seperator nach single-row-view */
+{
+    display:none !important;
+}
+
+/* checkboxen in Filter-Region */
+.checkbox  {
+    text-decoration: underline;
+    text-decoration-style: dashed;
+    cursor: pointer;
+}
+
+/* Style des Hilfe-Links */
+.ehelplink {
+    color: rgba(64, 64, 64, 0.25);
+}
+
+.ehelplink:hover {
+    color: rgba(64, 64, 64, 0.75) !important;
+}
+
+.weiss{
+    color: whitesmoke;
+    background-color: whitesmoke !important;
+}
+
+.gelb {
+    color: yellow;
+    background-color: yellow !important;
+}
+
+.rot {
+    color: red;
+    background-color: red !important;
+}
+
+.weiss a {
+    color: whitesmoke;
+    background-color: whitesmoke;
+}
+
+.gelb a {
+    color: yellow;
+    background-color: yellow;
+}
+
+.rot a {
+    color: red ;
+    background-color: red;
+}
+
+/* Tool-Tip */
+.a-GV-tooltip.ui-tooltip {
+    max-width: inherit;
+    overflow: initial;
+    background-color: grey;
+    padding: 5px;
+}
+/* Tooltip Tabelle */
+div.tooltipTabelle {
+    margin: 0px;
+    padding: 4px;
+}
+div.tooltipTabelle div {
+    margin: 5px;
+}
+.tooltipTabelle table {
+    background-color: grey;
+    margin: 5px;
+}
+.tooltipTabelle td, .tooltipTabelle th {
+    background-color: white;
+    padding: 4px;
+    white-space: pre-wrap;
+}
+
+/* Die Farbe für die Meilenstein-Gruppen Header */
+.bg1 {
+    background-color: #ededed;   
+}
+
+.bg2 {
+    background-color: #bcbcbc;     
+}
+
+/* Für die dickeren Linien zwischen den Meilenstein-Gruppen */
+.bl{
+    border-left-width: 3px;
+}
+
+.br{
+    border-right-width: 3px;
+}
+
+/* Für die Group Header */
+th.a-GV-headerGroup {
+    border-right-width: 3px;
+    border-left-width: 3px;
+}
+
+/* Ausblenden einzelner Punkte im Aktionenmenü */
+div.a-Toolbar-menu div.a-Menu-content li:nth-child(n+2):nth-child(-n+10) {
+    display: none !important;
+}
+
+.hell_gelb {
+    background-color: rgb(248, 235, 116);
+}
+
+/*Zeile einfärben, falls Fahrzeug nicht mehr in TraX */
+.ntrax {
+    background-color: rgba(255, 0, 0, 0.466) !important;
+}
+
+/* Zelle einfärben, wenn ET-C VSI verändert wurde */
+.etc {
+    background-color: rgba(255, 251, 0, 0.664) !important;
+}
+
+
+
+```
+
+
+```CSS
+.hide_region {
+    display: none;
+}
+
+.notbold{
+    font-weight:normal;
+    font-size: 12px;
+    line-height: 16px;
+    margin-right: 8px;
+    margin-left: 8px;
+}
+
+.EMANO_kommentarTable td {
+    vertical-align: top
+    
+}
+
+tr:not(.is-selected) td.a-GV-cell.zellfarbe_stammdaten {
+    /*background-color: #b3b3b3  !important;*/
+    background-color: #DADADA  !important;
+    /*color: #2b2f33 !important;*/
+    color: #000000 !important;
+}
+
+tr:not(.is-selected) td.a-GV-cell.pseudoterminschluessel {
+    /*background-color: #b3b3b3  !important;*/
+    background-color: #DADADA  !important;
+    /*color: #2b2f33 !important;*/
+    color: #000000 !important;
+}
+
+
+tr:not(.is-selected) td.a-GV-cell:not(.bew_kommentar) a.zellfarbe_stammdaten {
+    /*background-color: #b3b3b3  !important;*/
+    background-color: #DADADA  !important;
+    /*color: #2b2f33 !important;*/
+    color: #000000 !important;
+}
+
+tr:not(.is-selected) td.a-GV-cell:not(.bew_kommentar) a.pseudoterminschluessel {
+    /*background-color: #b3b3b3  !important;*/
+    background-color: #DADADA  !important;
+    /*color: #2b2f33 !important;*/
+    color: #000000 !important;
+}
+
+/*div:not(.u-Form-inputContainer)*/
+/*not(div[id^='ig_bew_ig_singleRow'])*/
+
+tr:not(.is-selected) td.bew_kommentar.a-GV-cell a.zellfarbe_stammdaten {
+    /*background-color: #b3b3b3  !important;*/
+    color: #2b2f33 !important;
+}
+
+tr:not(.is-selected) td.bew_kommentar.a-GV-cell a.pseudoterminschluessel {
+    /*background-color: #b3b3b3  !important;*/
+    color: #2b2f33 !important;
+}
+
+td.a-GV-cell .schriftfarbe_stammdaten {
+    /*color: #2b2f33 !important;*/
+    color: #ffffff !important;
+}
+
+.zellfarbe_error {
+    background-color: #FBCE4A  !important; /*#FEF7E0   #FBCE4A*/
+    color: #2b2f33 !important;
+}
+
+/*#ig_bew_ig  { height: calc(100vh - 220px) !important; }*/
+#ig_bew {margin-bottom: 0px}
+#id_kom button {width: 75px}
+
+/*.ui-dialog-titlebar {display: none !important;}*/
+/*.ui-button {display: none !important;}*/
+/*.ui-dialog-titlebar { width: 30px !important; height: 24px !important/*; top: 40% !important*//* }*/
+
+#ig_bew div[data-action="edit"] {
+    display: none !important;
+}
+
+
+.specialHeader_alle {
+    background-color: #C5D9F1
+}
+
+.specialHeader_jira {
+    background-color: #CCA6D6
+}
+
+.specialHeader_et_g {
+    background-color: #C4D79B
+}
+
+.specialHeader_et_a {
+    background-color: #FABF8F
+}
+
+.specialHeader_eg_x {
+    background-color: #2E64FE;
+    color: #ffffff
+}
+
+
+
+/* Horizontaler Scrollbalken (09.09.19) */
+/* If trying to maximize the screen space available for the wide grid region
+ * you may not want much or any padding on the main body.
+ */
+.t-Body-contentInner {
+    padding: 0;
+}
+/* The region heights will be set in JavaScript so don't want the body to
+ * have an explicit height */
+.t-Body-content {
+    min-height: inherit !important;
+}
+/* If the main page never scrolls then there is little point in a back to top button
+ * You could hide the while footer (.t-Footer) but at that point you may want
+ * to look at creating a custom page template such as 'Fit to Window' that doesn't have a footer.
+ */
+.t-Footer-top {
+    display: none;
+}
+
+/* Bugfix IE 11 */
+div.t-Body {
+    margin-bottom: 0px !important;
+}
+
+
+/* Um Margin unter dem IG zu entfernen */
+#ig_bew { margin-bottom: 0px !important; }
+
+
+button#b_tooltip {
+    padding: 0;
+    min-width: 16px;
+    line-height: 32px;
+}
+
+
+
+td.mo_tab, th.mo_tab {
+    border-right: 1px solid;
+    border-collapse: collapse
+}
+
+
+
+/* CSS für Mouseover Betroffene Eigenschaften (mit Eigenschaft Beschreibung) */
+.a-GV-tooltip.ui-tooltip {
+    max-width: inherit;
+    overflow: initial;
+}
+.rTable {
+    display: block;
+    //width: 800px;
+    //font-size: 12px;
+    //text-overflow: ellipsis;
+}
+div.rTable.shortT {
+    width: 485px !important;
+}
+.sTableRow {
+    display: table-row;
+    clear: both;
+    //width: 485px;
+    padding: 0px;
+    margin: 0px;
+}
+		.rTableRow {
+    display: table-row;
+    clear: both;
+    //width: 100%;
+    padding: 0px;
+    margin: 0px;
+}
+.sTableHead {
+    display: table-cell;
+    //border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: hidden;
+    //padding: 1px; // 1.8%;
+    //width: 33%;
+}
+.rEigenschaften {
+    width: 435px;
+}
+
+.rFreigabe {
+    width: 100px;
+}
+
+.rMarkt {
+    width: 200px;
+}
+
+.rKommentar {
+    width:400px;
+}
+
+.rMarkt_Vorschlag {
+    width: 200px;
+}
+
+.rDokument {
+    width: 250px;
+}
+
+.rStatus {
+    width: 150px;
+}
+
+.rTraxid {
+    width: 90px;
+}
+
+.rSystemnomenklatur {
+    width: 350px;
+}
+
+.rUnr {
+    width: 100px;
+}
+
+.rDatum {
+    width: 120px;
+}
+.rBenutzer {
+    width: 250px;
+}
+		.rTableHead {
+    display: block;
+    border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: inherit;
+    //padding: 1px; // 1.8%;
+    //width: initial;
+    text-overflow: ellipsis;
+    font-weight: bold;
+}
+.sTableCell {
+    display: table-cell;
+    //border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: hidden;
+    //padding: 1px; // 1.8%;
+    //width: 33%;
+    text-overflow: ellipsis;
+}
+		.rTableCell {
+    display: block;
+    border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: inherit;
+    //padding: 1px; // 1.8%;
+    //width: inherit;
+    text-overflow: ellipsis;
+}
+
+/* CSS für Mouseover Betroffene Eigenschaften (ohne Eigenschaft Beschreibung)*/
+.a-GV-tooltip.ui-tooltip {
+    max-width: inherit;
+    overflow: initial;
+}
+.rTable2 {
+    display: block;
+    //width: 800px;
+    //font-size: 12px;
+    //text-overflow: ellipsis;
+}
+div.rTable.shortT2 {
+    width: 485px !important;
+}
+.sTableRow2 {
+    display: table-row;
+    clear: both;
+    //width: 485px;
+    padding: 0px;
+    margin: 0px;
+}
+		.rTableRow2 {
+    display: table-row;
+    clear: both;
+    //width: 100%;
+    padding: 0px;
+    margin: 0px;
+}
+.sTableHead2 {
+    display: table-cell;
+    //border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: hidden;
+    //padding: 1px; // 1.8%;
+    //width: 33%;
+}
+.rEigenschaften2 {
+    width: 120px;
+}
+
+.rFreigabe2 {
+    width: 100px;
+}
+
+.rMarkt2 {
+    width: 120px;
+}
+
+.rMarkt2_Vorschlag {
+    width: 200px;
+}
+
+.rDokument2 {
+    width: 250px;
+}
+
+.rStatus2 {
+    width: 150px;
+}
+
+.rUnr {
+    width: 100px;
+}
+
+.rDatum2 {
+    width: 120px;
+}
+.rBenutzer2 {
+    width: 250px;
+}
+		.rTableHead2 {
+    display: block;
+    border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: inherit;
+    //padding: 1px; // 1.8%;
+    //width: initial;
+    text-overflow: ellipsis;
+    font-weight: bold;
+}
+.sTableCell2 {
+    display: table-cell;
+    //border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: hidden;
+    //padding: 1px; // 1.8%;
+    //width: 33%;
+    text-overflow: ellipsis;
+}
+		.rTableCell2 {
+    display: block;
+    border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: inherit;
+    //padding: 1px; // 1.8%;
+    //width: inherit;
+    text-overflow: ellipsis;
+}
+
+/* Style des Hilfe-Links */
+.ehelplink {
+    color: rgba(64, 64, 64, 0.25);
+}
+
+.ehelplink:hover {
+    color: rgba(64, 64, 64, 0.75) !important;
+}
+
+.gelb {
+    color: black !important;
+    background-color: yellow !important;
+}
+
+* Zeilenmenü in Header ausblenden */
+.js-selectionMenu {
+    display: none !important;
+}
+/* Im Zeilenmenü ausblenden */
+#ig_bew_ig_row_actions_menu_3, /* row-refresh */
+#ig_bew_ig_row_actions_menu_4, /* row-revert */
+#ig_bew_ig_row_actions_menu_0 /* single-row ansicht */
+{
+    display:none !important;
+}
+
+.t-Region-header {
+  height: 50px;
+}
+
+/*Historie Tooltip*/
+
+.a-GV-tooltip.ui-tooltip {
+    max-width: inherit;
+    overflow: initial;  
+    background-color: grey;
+    padding: 5px;
+}
+
+div.tooltipHistorie {
+    margin: 0px;
+    padding: 4px;
+}
+div.tooltipHistorie div {
+    margin: 5px;
+}
+.tooltipHistorie table {
+    background-color: grey;
+    margin: 5px;
+}
+.tooltipHistorie td, .tooltipHistorie th {
+    background-color: white;
+    padding: 4px;
+    white-space: pre-wrap;
+    
+}
+
+/*Für die Funktionstyp Tooltips*/
+
+.fb_tooltip_block {
+    display: flex;
+    flex-direction: column;
+    min-width: 90vh;
+    flex-wrap: wrap;
+    max-height: 170px;
+    font-size:10px;
+    align-content: flex-start;
+}
+
+.fb_tooltip_block div {
+    margin-right: 15px;
+}
+
+```
+
+```CSS
+.hide_region {
+    display: none;
+}
+
+.notbold{
+    font-weight:normal;
+    font-size: 12px;
+    line-height: 16px;
+    margin-right: 8px;
+    margin-left: 8px;
+}
+
+.EMANO_kommentarTable td {
+    vertical-align: top
+    
+}
+
+tr:not(.is-selected) td.a-GV-cell.zellfarbe_stammdaten {
+    /*background-color: #b3b3b3  !important;*/
+    background-color: #DADADA  !important;
+    /*color: #2b2f33 !important;*/
+    color: #000000 !important;
+}
+
+tr:not(.is-selected) td.a-GV-cell.pseudoterminschluessel {
+    /*background-color: #b3b3b3  !important;*/
+    background-color: #DADADA  !important;
+    /*color: #2b2f33 !important;*/
+    color: #000000 !important;
+}
+
+tr:not(.is-selected) td.a-GV-cell:not(.bew_kommentar) a.zellfarbe_stammdaten {
+    /*background-color: #b3b3b3  !important;*/
+    background-color: #DADADA  !important;
+    /*color: #2b2f33 !important;*/
+    color: #000000 !important;
+}
+
+tr:not(.is-selected) td.a-GV-cell:not(.bew_kommentar) a.pseudoterminschluessel {
+    /*background-color: #b3b3b3  !important;*/
+    background-color: #DADADA  !important;
+    /*color: #2b2f33 !important;*/
+    color: #000000 !important;
+}
+
+/*div:not(.u-Form-inputContainer)*/
+/*not(div[id^='ig_bew_ig_singleRow'])*/
+
+tr:not(.is-selected) td.bew_kommentar.a-GV-cell a.zellfarbe_stammdaten {
+    /*background-color: #b3b3b3  !important;*/
+    color: #2b2f33 !important;
+}
+
+tr:not(.is-selected) td.bew_kommentar.a-GV-cell a.pseudoterminschluessel {
+    /*background-color: #b3b3b3  !important;*/
+    color: #2b2f33 !important;
+}
+
+
+td.a-GV-cell .schriftfarbe_stammdaten {
+    /*color: #2b2f33 !important;*/
+    color: #ffffff !important;
+}
+
+.zellfarbe_error {
+    background-color: #FBCE4A  !important; /*#FEF7E0   #FBCE4A*/
+    color: #2b2f33 !important;
+}
+
+/*#ig_bew_ig  { height: calc(100vh - 220px) !important; }*/
+#ig_bew {margin-bottom: 0px}
+#id_kom button {width: 75px}
+
+/*.ui-dialog-titlebar {display: none !important;}*/
+/*.ui-button {display: none !important;}*/
+/*.ui-dialog-titlebar { width: 30px !important; height: 24px !important/*; top: 40% !important*//* }*/
+
+#ig_bew div[data-action="edit"] {
+    display: none !important;
+}
+
+
+
+.specialHeader_alle {
+    background-color: #C5D9F1
+}
+
+.specialHeader_jira {
+    background-color: #CCA6D6
+}
+
+.specialHeader_et_g {
+    background-color: #C4D79B
+}
+
+.specialHeader_et_a {
+    background-color: #FABF8F
+}
+
+
+
+/* Horizontaler Scrollbalken (09.09.19) */
+/* If trying to maximize the screen space available for the wide grid region
+ * you may not want much or any padding on the main body.
+ */
+.t-Body-contentInner {
+    padding: 0;
+}
+/* The region heights will be set in JavaScript so don't want the body to
+ * have an explicit height */
+.t-Body-content {
+    min-height: inherit !important;
+}
+/* If the main page never scrolls then there is little point in a back to top button
+ * You could hide the while footer (.t-Footer) but at that point you may want
+ * to look at creating a custom page template such as 'Fit to Window' that doesn't have a footer.
+ */
+.t-Footer-top {
+    display: none;
+}
+
+/* Bugfix IE 11 */
+div.t-Body {
+    margin-bottom: 0px !important;
+}
+
+
+/* Um Margin unter dem IG zu entfernen */
+#ig_bew { margin-bottom: 0px !important; }
+
+
+button#b_tooltip {
+    padding: 0;
+    min-width: 16px;
+    line-height: 32px;
+}
+
+
+.g-laender {
+    padding: 3px 5px 3px 5px;
+}
+
+
+td.mo_tab, th.mo_tab {
+    border-right: 1px solid;
+    border-collapse: collapse
+}
+
+
+
+/* CSS für Mouseover Betroffene Eigenschaften (mit Eigenschaft Beschreibung) */
+.a-GV-tooltip.ui-tooltip {
+    max-width: inherit;
+    overflow: initial;
+}
+.rTable {
+    display: block;
+    //width: 800px;
+    //font-size: 12px;
+    //text-overflow: ellipsis;
+}
+div.rTable.shortT {
+    width: 485px !important;
+}
+.sTableRow {
+    display: table-row;
+    clear: both;
+    //width: 485px;
+    padding: 0px;
+    margin: 0px;
+}
+		.rTableRow {
+    display: table-row;
+    clear: both;
+    //width: 100%;
+    padding: 0px;
+    margin: 0px;
+}
+.sTableHead {
+    display: table-cell;
+    //border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: hidden;
+    //padding: 1px; // 1.8%;
+    //width: 33%;
+}
+.rEigenschaften {
+    width: 435px;
+}
+
+.rFreigabe {
+    width: 100px;
+}
+
+.rMarkt {
+    width: 200px;
+}
+
+.rKommentar {
+    width:400px;
+}
+
+.rMarkt_Vorschlag {
+    width: 600px;
+}
+
+.rDokument {
+    width: 250px;
+}
+
+.rStatus {
+    width: 150px;
+}
+
+.rTraxid {
+    width: 90px;
+}
+
+.rSystemnomenklatur {
+    width: 350px;
+}
+
+.rUnr {
+    width: 100px;
+}
+
+.rDatum {
+    width: 120px;
+}
+.rBenutzer {
+    width: 250px;
+}
+		.rTableHead {
+    display: block;
+    border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: inherit;
+    //padding: 1px; // 1.8%;
+    //width: initial;
+    text-overflow: ellipsis;
+    font-weight: bold;
+}
+.sTableCell {
+    display: table-cell;
+    //border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: hidden;
+    //padding: 1px; // 1.8%;
+    //width: 33%;
+    text-overflow: ellipsis;
+}
+		.rTableCell {
+    display: block;
+    border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: inherit;
+    //padding: 1px; // 1.8%;
+    //width: inherit;
+    text-overflow: ellipsis;
+}
+
+/* CSS für Mouseover Betroffene Eigenschaften (ohne Eigenschaft Beschreibung)*/
+.a-GV-tooltip.ui-tooltip {
+    max-width: inherit;
+    overflow: initial;
+}
+.rTable2 {
+    display: block;
+    //width: 800px;
+    //font-size: 12px;
+    //text-overflow: ellipsis;
+}
+div.rTable.shortT2 {
+    width: 485px !important;
+}
+.sTableRow2 {
+    display: table-row;
+    clear: both;
+    //width: 485px;
+    padding: 0px;
+    margin: 0px;
+}
+		.rTableRow2 {
+    display: table-row;
+    clear: both;
+    //width: 100%;
+    padding: 0px;
+    margin: 0px;
+}
+.sTableHead2 {
+    display: table-cell;
+    //border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: hidden;
+    //padding: 1px; // 1.8%;
+    //width: 33%;
+}
+.rEigenschaften2 {
+    width: 120px;
+}
+
+.rFreigabe2 {
+    width: 100px;
+}
+
+.rMarkt2 {
+    width: 120px;
+}
+
+.rMarkt2_Vorschlag {
+    width: 600px;
+}
+
+.rDokument2 {
+    width: 250px;
+}
+
+.rStatus2 {
+    width: 150px;
+}
+
+.rUnr {
+    width: 100px;
+}
+
+.rDatum2 {
+    width: 120px;
+}
+.rBenutzer2 {
+    width: 250px;
+}
+		.rTableHead2 {
+    display: block;
+    border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: inherit;
+    //padding: 1px; // 1.8%;
+    //width: initial;
+    text-overflow: ellipsis;
+    font-weight: bold;
+}
+.sTableCell2 {
+    display: table-cell;
+    //border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: hidden;
+    //padding: 1px; // 1.8%;
+    //width: 33%;
+    text-overflow: ellipsis;
+}
+		.rTableCell2 {
+    display: block;
+    border: 1px solid #999999;
+    float: left;
+    height: 16px;
+    overflow: inherit;
+    //padding: 1px; // 1.8%;
+    //width: inherit;
+    text-overflow: ellipsis;
+}
+
+#ig_bew .a-GV-headerGroup[data-idx="2"] {
+    background-color: #C4D79B
+}
+
+/* Style des Hilfe-Links */
+.ehelplink {
+    color: rgba(64, 64, 64, 0.25);
+}
+
+.ehelplink:hover {
+    color: rgba(64, 64, 64, 0.75) !important;
+}
+
+.gelb {
+    color: black !important;
+    background-color: yellow !important;
+}
+
+
+/* Zeilenmenü in Header ausblenden */
+.js-selectionMenu {
+    display: none !important;
+}
+/* Im Zeilenmenü ausblenden */
+#ig_bew_ig_row_actions_menu_3, /* row-refresh */
+#ig_bew_ig_row_actions_menu_4, /* row-revert */
+#ig_bew_ig_row_actions_menu_0 /* single-row ansicht */
+{
+    display:none !important;
+}
+
+/* Für die Spalte Abgleich Zuweisung" */
+
+.syn-check-Identisch:after{
+    content: "\e9f4";
+    color: #00b533 !important;
+    font-size: 20px !important;
+}
+
+.syn-check-Identisch_plausibilisierung:after{
+    content: "\e9f4  plausibilisierung";
+    color: #00b533 !important;
+    font-size: 18 px !important;
+}
+
+.syn-check-Abweichung:before{
+    content: "\f071";
+    color: orange;
+    font-size: 20px !important;
+}
+
+#b_mfb_dokumenten {
+    background-color: #C4D79B;
+    color:  black;
+}
+
+#b_mfb_dokumenten_et_a {
+    background-color: #FABF8F;
+    color:  black;
+}
+
+#b_vorschlag {
+    background-color: #C4D79B;
+    color:  black;
+}
+
+#b_vorschlag_et_a {
+    background-color: #FABF8F;
+    color:  black;
+}
+
+#b_neuer_Umfang {
+   height: 56px;
+}
+
+#b_mfb_eigenschaften {
+   height: 56px;
+}
+
+.t-Button--gapTop {
+  margin-top: 3.2rem !important;
+}
+
+.col.col-3.apex-col-auto {
+  width: 50px;
+}
+
+.t-Region-header {
+  height: 50px;
+}
+
+/*Historie Tooltip*/
+
+.a-GV-tooltip.ui-tooltip {
+    max-width: inherit;
+    overflow: initial;  
+    background-color: grey;
+    padding: 5px;
+}
+
+div.tooltipHistorie {
+    margin: 0px;
+    padding: 4px;
+}
+div.tooltipHistorie div {
+    margin: 5px;
+}
+.tooltipHistorie table {
+    background-color: grey;
+    margin: 5px;
+}
+.tooltipHistorie td, .tooltipHistorie th {
+    background-color: white;
+    padding: 4px;
+    white-space: pre-wrap;
+    
+}
+
+
+#b_bewertungsassistent {
+    background-color: #00BFFF; 
+    color: black!important; 
+    font-weight:bold;  
+}
+
+
+/* Seperator entfernen */
+#ig_bew_ig_row_actions_menu_0 + .a-Menu-itemSep, 
+#ig_bew_ig_row_actions_menu_3 + .a-Menu-itemSep
+{
+    display:none !important;
+}
+
+
+/*Für die Funktionstyp Tooltips*/
+
+.fb_tooltip_block {
+    display: flex;
+    flex-direction: column;
+    min-width: 90vh;
+    flex-wrap: wrap;
+    max-height: 170px;
+    font-size:10px;
+    align-content: flex-start;
+}
+
+.fb_tooltip_block div {
+    margin-right: 15px;
+}
+
+.col-1 {
+  flex-basis: 8.3333333333%;
+  max-width: 6.3333333333%;
+}
+
+```
+
+
+
+# SCRIPT TO DROP ALL TABLES IN THE CURRENT USER SCHEMA or DELETE ENTIRE DATA BASE 
+
+```sql
+BEGIN
+  FOR c IN (SELECT table_name FROM user_tables) LOOP
+    EXECUTE IMMEDIATE ('DROP TABLE "' || c.table_name || '" CASCADE CONSTRAINTS');
+  END LOOP;
+END;
+/
+```
+
+
+
+# INTERACTIVE GRID NAVIGATIONS PAGES JAVA SCRIPT CODE FOR EDIT DELETE ICONS IN CLASSIC REPORT DATE FORMAT EDIT ICON IN COLUMN
+
+
+```sql
+'<a href="javascript:confirmDelete(' || tdecf.DS_ET_C_FREIGABESTEUERUNG_ID || ',''P5009_DELETE_ID'', ''Soll dieses Projekt wirklich gelöscht werden?'');">
+        <span aria-hidden="true" alt="Projekt löschen" title="Projekt löschen" class="fa fa-trash-o"></span>
+     </a>' AS DELETE_LINK,
+'<a href="' || apex_util.prepare_url('f?p=&APP_ID.:5011:&SESSION.::NO::P5011_DS_ET_C_FREIGABESTEUERUNG_ID:' || tdecf.DS_ET_C_FREIGABESTEUERUNG_ID) || '">
+	<span aria-hidden="true" alt="Projekt bearbeiten" title="Projekt bearbeiten" class="fa fa-edit"></span>
+ </a>' AS EDIT_LINK,
+to_char(tdecf.ERSTELL_DATUM, 'DD.MM.YYYY - HH24:MI:SS')
+```
+
+
+# INTERACTIVE GRID NAVIGATIONS PAGES EDIT ICON IN COLUMN
+
+
+```sql
+'<a href="javascript:confirmDelete(' || tdecf.DS_ET_C_FREIGABESTEUERUNG_ID || ',''P5009_DELETE_ID'', ''Soll dieses Projekt wirklich gelöscht werden?'');">
+        <span aria-hidden="true" alt="Projekt löschen" title="Projekt löschen" class="fa fa-trash-o"></span>
+     </a>' AS DELETE_LINK,
+'<a href="' || apex_util.prepare_url('f?p=&APP_ID.:5011:&SESSION.::NO::P5011_DS_ET_C_FREIGABESTEUERUNG_ID:' || tdecf.DS_ET_C_FREIGABESTEUERUNG_ID) || '">
+	<span aria-hidden="true" alt="Projekt bearbeiten" title="Projekt bearbeiten" class="fa fa-edit"></span>
+ </a>' AS EDIT_LINK,
+to_char(tdecf.ERSTELL_DATUM, 'DD.MM.YYYY - HH24:MI:SS')
+```
+
+
+# COMPLETE CODES RELATED TO INTERACTIVE GRIDS
+
+## TOOLTIP
+
+`APPROACH 1`
+
+1. *Inline CSS*
+
+```sql
+/*Beginn - Historie Tooltip*/
+
+.a-GV-tooltip.ui-tooltip {
+    max-width: inherit;
+    overflow: initial;  
+    background-color: white;
+    padding: 1px;
+}
+
+div.tooltipHistorie {
+    margin: 0px;
+    padding: 1px;
+}
+div.tooltipHistorie div {
+    margin: 5px;
+}
+.tooltipHistorie table {
+    background-color: grey;
+    margin: 5px;
+    border-collapse: collapse;
+    border: 1px solid black;
+}
+.tooltipHistorie td, .tooltipHistorie th {
+    background-color: white;
+    padding: 4px;
+    white-space: pre-wrap;
+    border: 1px solid black;
+    
+}
+
+.tooltipHistorie th {
+    background-color: #f2f2f2;
+}
+
+
+/*Ende - Historie Tooltip*/
+```
+
+2. *AJAX call back process*
+
+```sql
+
+DECLARE
+    v_data_exists BOOLEAN := FALSE;
+    -- v_css CLOB;
+    v_html CLOB;
+    v_count NUMBER;
+BEGIN
+    -- Check if data exists
+    SELECT 
+        CASE 
+            WHEN EXISTS (
+                SELECT 1
+                FROM T_DS_ET_C_PROJEKTSTEUERUNG tdecp
+                JOIN t_ds tds ON tds.ds_id = tdecp.DS_ID
+                WHERE tds.ds_id = apex_application.g_x01
+            ) 
+            THEN 1 
+            ELSE 0 
+        END
+    INTO v_count
+    FROM DUAL;
+
+    v_data_exists := (v_count = 1);
+/*
+    -- Define CSS
+  v_css := q'[
+        <style>
+            .a-GV-tooltip.ui-tooltip {
+    max-width: inherit;
+    overflow: initial;  
+    background-color: white;
+    padding: 1px;
+}
+
+div.tooltipHistorie {
+    margin: 0px;
+    padding: 1px;
+}
+div.tooltipHistorie div {
+    margin: 5px;
+}
+.tooltipHistorie table {
+    background-color: grey;
+    margin: 5px;
+    border-collapse: collapse;
+    border: 1px solid black;
+}
+.tooltipHistorie td, .tooltipHistorie th {
+    background-color: white;
+    padding: 4px;
+    white-space: pre-wrap;
+    border: 1px solid black;
+    
+}
+
+.tooltipHistorie th {
+    background-color: #f2f2f2;
+}
+        </style>
+    ]';
+*/
+    -- Generate HTML content
+    IF v_data_exists THEN
+        v_html := '<div class="tooltipHistorie"><table>';
+        v_html := v_html || '<tr>
+            <th>Erstelldatum</th>
+            <th>Ersteller</th>
+            <th>Kommentar ET-C Projektsteuerung</th>
+            <th>Änderungsdatum</th>
+            <th>Änderung durch</th>
+        </tr>';
+
+        FOR rec IN (
+            SELECT 
+                TO_CHAR(tdecp.ERSTELL_DATUM, 'DD.MM.YYYY - HH24:MI:SS') AS ERSTELL_DATUM,
+                NVL2(tdecp.ERSTELL_BENUTZER_ID, b.nachname || ', ' || b.vorname || ' (' || b.abteilung || ')', '-') AS ERSTELL_BENUTZER,
+                tdecp.ET_C_PROJEKTSTEUERUNG,
+                TO_CHAR(tdecp.LETZTE_AENDERUNG_DATUM, 'DD.MM.YYYY - HH24:MI:SS') AS LETZTE_AENDERUNG_DATUM,
+                NVL2(tdecp.LETZTE_AENDERUNG_BENUTZER_ID, b1.nachname || ', ' || b1.vorname || ' (' || b1.abteilung || ')', '-') AS LETZTE_AENDERUNG_BENUTZER
+            FROM T_DS_ET_C_PROJEKTSTEUERUNG tdecp
+            JOIN t_ds tds ON tds.ds_id = tdecp.DS_ID
+            LEFT JOIN T_BENUTZER b ON b.Benutzer_id = tdecp.ERSTELL_BENUTZER_ID
+            LEFT JOIN T_BENUTZER b1 ON b1.Benutzer_id = tdecp.LETZTE_AENDERUNG_BENUTZER_ID
+            WHERE tds.ds_id = apex_application.g_x01
+            ORDER BY tdecp.ERSTELL_DATUM DESC
+            FETCH FIRST 10 ROWS ONLY
+        ) LOOP
+            v_html := v_html || '<tr>' ||
+                '<td>' || rec.ERSTELL_DATUM || '</td>' ||
+                '<td>' || rec.ERSTELL_BENUTZER || '</td>' ||
+                '<td>' || rec.ET_C_PROJEKTSTEUERUNG || '</td>' ||
+                '<td>' || rec.LETZTE_AENDERUNG_DATUM || '</td>' ||
+                '<td>' || rec.LETZTE_AENDERUNG_BENUTZER || '</td>' ||
+                '</tr>';
+        END LOOP;
+
+        v_html := v_html || '</table></div>';
+    ELSE
+        v_html := '<div class="tooltipHistorie"><p>Keine Daten gefunden</p></div>';
+    END IF;
+
+    -- Output CSS and HTML
+    -- htp.p(v_css);
+    htp.p(v_html);
+END;
+
+```
+
+3. *Report - Attributes - Initialization JavaScript Function*
+
+```sql
+
+function(config) {
+    // Anfang Mouseover
+    config.defaultGridViewOptions = {
+        tooltip: {
+            // when the tooltip is integrated with the grid view the content callback
+            // gets some extra helpful parameters
+            content: function(callback, model, recordMeta, colMeta, columnDef ) {
+                var text = null;
+                if (recordMeta && columnDef && columnDef.property != "APEX$ROW_SELECTOR" && columnDef.property != "APEX$ROW_ACTION" && columnDef.property != "DEL" && !$(this).hasClass( "a-GV-rowHeader" )) {
+                    switch (columnDef.property) {
+
+                            case "":
+                                text = model.getValue( recordMeta.record, "" );
+                                break;
+                            
+                            case "MARKER":
+                                fAJAXTooltip("get_historie_marker", model.getValue( recordMeta.record, "DS_ID"), columnDef.property, callback);    
+                                break;
+
+                            case "EA_PP_SPLITTUNGEN1":
+                                fAJAXTooltip("get_historie_ea_pp_splittungen", model.getValue( recordMeta.record, "DS_ID"), columnDef.property, callback);    
+                                break;
+                            
+
+                            case "ET_C_PROJEKTSTEUERUNG":
+                                fAJAXTooltip("get_historie_et_c_projektsteuerung", model.getValue( recordMeta.record, "DS_ID"), columnDef.property, callback);    
+                                break;
+
+
+                            case "ET_C_FREIGABESTEUERUNG":
+                                fAJAXTooltip("get_historie_et_c_freigabetsteuerung", model.getValue( recordMeta.record, "DS_ID"), columnDef.property, callback);    
+                                break;
+
+
+
+                            // case "TEST":
+                            //     fAJAXTooltip("get_historie_marker", model.getValue( recordMeta.record, "DS_ID"), columnDef.property, callback);    
+                            //     break;
+                            
+                            default:
+                                text = model.getValue( recordMeta.record, columnDef.property );
+                                if (typeof text != "string") {
+                                    text = text.d;
+                            }
+                    }
+                }
+                return text;
+            }
+        }
+    };
+    // Ende Mouseover
+    return config;
+}
+
+```
+
+
+
+
