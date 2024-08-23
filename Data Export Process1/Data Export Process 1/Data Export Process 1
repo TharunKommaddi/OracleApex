@@ -1,0 +1,17 @@
+
+SELECT 
+    CUSTOMER_ID,
+    NAME,
+    ADDRESS,
+    CITY,
+    STATE
+    ZIPCODE,
+    EMAIL,
+    PHONE
+   
+FROM 
+    T_CUSTOMERS
+
+
+
+
