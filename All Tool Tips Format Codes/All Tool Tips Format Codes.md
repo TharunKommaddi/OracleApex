@@ -744,7 +744,7 @@ END;
 
 
 ### JS Initialization code in Report Atrributes in Advanced Section
-
+### APPROACH 1
 ```js
 
 
@@ -846,3 +846,85 @@ return config;
 
 ```
 
+### APPROACH 2 - OPTIMZED
+
+
+```js
+function(config) {
+// Mouseover configuration
+config.defaultGridViewOptions = {
+tooltip: {
+content: function(callback, model, recordMeta, colMeta, columnDef) {
+if (!recordMeta || !columnDef || 
+["APEX$ROW_SELECTOR", "APEX$ROW_ACTION", "DEL"].includes(columnDef.property) || 
+$(this).hasClass("a-GV-rowHeader")) {
+return null;
+}
+const property = columnDef.property;
+const dsId = model.getValue(recordMeta.record, "DS_ID");
+// Helper function for AJAX tooltips
+const fAJAXTooltip = (process, x01, x02, callback) => {
+apex.server.process(process, { x01, x02 }, {
+success: callback,
+dataType: "text"
+}).catch(error => {
+console.error(`Error fetching ${process} data:`, error);
+callback("");
+});
+};
+// Group similar cases
+const etCases = ["ET_A_HF", "ET_A11_HF", "ET_A12_HF", "ET_A21_HF", "ET_A22_HF", "ET_A5_HF", "ET_G_HF", "ET_G1_HF", "ET_G2_HF", "ET_G3_HF", "ET_G4_HF", "ET_G5_HF", "ET_C2_HF", "ET_C3_HF", "ET_A_ET", "ET_A11_ET", "ET_A12_ET", "ET_A21_ET", "ET_A22_ET", "ET_A5_ET", "ET_G_ET", "ET_G1_ET", "ET_G2_ET", "ET_G3_ET", "ET_G4_ET", "ET_G5_ET", "ET_C2_ET", "ET_C3_ET"];
+if (etCases.includes(property)) {
+const htmlValue = model.getValue(recordMeta.record, `${property}_HTML`);
+const process = property.endsWith("_HF") ? "get_historie_et_hf" : "get_historie_et_et";
+fAJAXTooltip(process, dsId, property, data => callback(data || htmlValue));
+} else {
+switch (property) {
+case "MARKER":
+    fAJAXTooltip("get_historie_marker", dsId, property, callback);
+    break;
+case "EA_PP_SPLITTUNGEN1":
+    fAJAXTooltip("get_historie_ea_pp_splittungen", dsId, property, callback);
+    break;
+case "ET_C_PROJEKTSTEUERUNG":
+    fAJAXTooltip("get_historie_et_c_projektsteuerung", dsId, property, callback);
+    break;
+case "ET_C_FREIGABESTEUERUNG":
+    fAJAXTooltip("get_historie_et_c_freigabetsteuerung", dsId, property, callback);
+    break;
+case "P3_TICKETS_VORSCHLAG":
+    fAJAXTooltip("get_historie_P3_TICKETS_VORSCHLAG", dsId, property, callback);
+    break;
+case "P3_TICKETS":
+    fAJAXTooltip("get_historie_P3_TICKETS", dsId, property, callback);
+    break;
+case "BETROFFENE_EIGENSCHAFT_ET_G":
+case "BETROFFENE_EIGENSCHAFT_ET_A":
+    fAJAXTooltip("get_eigenschaften", dsId, property, callback);
+    break;
+case "EA_PP":
+    fAJAXTooltip("get_ea_pp", dsId, property, callback);
+    break;
+case "BETROFFENE_MAERKTE_ET_G":
+    fAJAXTooltip("Tooltip_BETROFFENE_MAERKTE_ET_G", dsId, property, callback);
+    break;
+case "BETROFFENE_MAERKTE_ET_A":
+    fAJAXTooltip("Tooltip_BETROFFENE_MAERKTE_ET_A", dsId, property, callback);
+    break;
+case "STATUS_IDEX":
+    fAJAXTooltip("Tooltip_STATUS_IDEX", dsId, property, callback);
+    break;
+case "TRAX_IDS":
+    fAJAXTooltip("Tooltip_TRAX_IDS", dsId, property, callback);
+    break;
+default:
+    let text = model.getValue(recordMeta.record, property);
+    callback(typeof text !== "string" ? text.d : text);
+}
+}
+}
+}
+};
+return config;
+}
+```
