@@ -29253,6 +29253,751 @@ WHERE TABLE_NAME = 'T_THEMA' AND COLUMN_NAME = 'BETA_FLAG';
 
 
 
+# COMPLETE WORKING EXAMPLE FOR MATERIALIZED VIEW PROCESS FROM SCRATCH TO END - SEE THIS ALSO IT INVOLVES ALL CONCEPTS
+
+[`Link to Youtube - Materialized View - https://youtu.be/cC0AK7yRebo`](https://youtu.be/cC0AK7yRebo)
+
+[`Link to Google Drive - Materialized View - https://youtu.be/cC0AK7yRebo`](https://youtu.be/cC0AK7yRebo)
+
+## COMPLETE MATERIALIZED VIEW PROCESS FROM SCRATCH TO END FOR NEW
+
+### SQL QUERY
+
+```sql
+
+with cte_typschild1 as (
+    select distinct vrv.vorgaenger_vorschriftid vorschriftid ,l.typschild typschild
+    from t_vorschrift v1
+     left outer join t_vorschrift_ref_land vrl on (v1.vorschriftid = vrl.vorschriftid)
+    join t_vorschrift_ref_vorschrift vrv on (vrv.nachfolger_vorschriftid = v1.vorschriftid and vrv.beziehung_art = 40)
+    join T_LAND l on l.landid = vrl.landid
+    where vrl.geloescht = 0 
+    union
+    Select distinct trl.vorschriftid, l.typschild typschild
+    from T_VORSCHRIFT_REF_LAND trl
+    join T_LAND l on l.landid = trl.landid
+    where trl.geloescht = 0
+), cte_typschild2 as (
+    select vorschriftid, listagg(typschild,', ') within group (order by typschild) as liste_typschild
+    from cte_typschild1
+    group by vorschriftid
+)
+
+,r as (
+  select v.vorschriftid vorschriftid, 
+  listagg(CASE WHEN vrv.IST_HAUPTVERANTWORTLICHER = 10 THEN 
+  '<span style="text-decoration: underline;">' || vv.nachname || ', ' || vv.vorname || '</span>'
+  ELSE vv.nachname || ', ' || vv.vorname END, '; ') WITHIN GROUP (ORDER BY vv.nachname) as verantwortlicher  
+from t_vorschrift v
+join t_vorschrift_ref_verantwortlicher vrv on vrv.vorschriftid = v.vorschriftid
+join t_verantwortlicher vv on vv.verantwortlicherid = vrv.verantwortlicherid
+group by v.vorschriftid
+),
+
+konzerntickets as (
+    select tv.vorschriftid, listagg('<a href="' || link || '" target="_blank">' || ticketnr || '</a>',', ') within group (order by ticketnr) tickets
+    from t_konzern_jira_ticket t
+    join t_konzern_jira_ticket_ref_vorschrift tv on (t.konzern_jira_ticketid = tv.konzern_jira_ticketid)
+    group by tv.vorschriftid
+)
+
+select vs."ROWID" as xrowid,
+'<a href="' ||
+            apex_page.get_url(p_page => 25, p_items => 'P25_VORSCHRIFTID', p_values => vs.vorschriftid, p_clear_cache => 25)
+            || '" target="detail_s"><span alt="Anzeigen" title="Anzeigen" class="fa fa-search"></span></a> ' detail_s,
+1 as checkbox,
+vs.vorschriftid,
+vs.vorschriftid as link_netz,
+"VORSCHRIFT_NUMMER",
+"VORSCHRIFT_BEZEICHNUNG",
+"VORSCHRIFT_TYPID",
+vs.prognose_qualitaetid as "PROGNOSE_QUALITAET",
+--PCK_RI.fJiraTicketsToLinks("JIRA_TICKET") AS "JIRA_TICKET",
+"VORSCHRIFT_FREIGABESTATUSID",
+"BEMERKUNG",
+PCK_RI.fCreateLinkIfUrl("LINK_ZUR_VORSCHRIFT_DMS") AS "LINK_ZUR_VORSCHRIFT_DMS",
+nvl2("LINK_ZUR_VORSCHRIFT_GETEX", "LINK_ZUR_VORSCHRIFT_GETEX" || ' <a href="https://getex.wob.vw.vwg/web/guest/dokumente_suche" target="_blank">Getex 1.0 &ouml;ffnen</a>', null) AS "LINK_ZUR_VORSCHRIFT_GETEX",
+mfv.liste_mfv as "MfV ID",
+ts.liste_typschild as "TYPSCHILD",
+    nvl2(ws.hilfetext, ' <span class="fa fa-info-circle" aria-hidden="true" onClick="javascript:apex.message.alert('
+         || apex_escape.js_literal(ws.hilfetext) || ');"></span> ', null) || PCK_RI.fCreateLinkIfUrl("WEBSITELINK") as "WEBSITLINK",
+ws.hilfetext as WEBSITE_HILFETEXT,
+k.bezeichnung as "KSU",
+vs."LETZTE_AENDERUNG_DATUM",
+nvl2(b.benutzerid, b.nachname || ', ' || b.vorname, null) letzte_aenderung_benutzer,
+x.list_land,
+ed.in_kraft,
+etb.liste as etb_ak,
+tg.liste as themengebiete,
+vs.VORSCHRIFT_STATUSID,
+vs.rxswin as rxswin_relevant,
+  case when (nvl(vs.without_norm_validation, 0) = 0 ) then 'Nein' 
+          else 'Ja' end  "Keine Norm Validierung",
+r.verantwortlicher,
+MJ_Phasein_start,
+MJ_Phasein_end,
+Alle_Fahrzeuge_FBU,
+Alle_Fahrzeuge_CKD,
+Neue_Typen_FBU,
+Neue_Typen_CKD,
+Neue_Typen,
+Alle_Fahrzeuge,
+EINSATZDATUM_MODELLID,
+apex_util.host_url('SCRIPT') || apex_page.get_url(
+    p_application => :APP_ALIAS
+    , p_page => 'VORSCHRIFT'
+    , p_items => 'P25_VORSCHRIFTID'
+    , p_values => vs.vorschriftid
+    , p_session => null
+    , p_clear_cache => '25'
+) as permalink,
+antriebsart.liste antriebsart,
+vs.COP_RELEVANT cop_relevant,
+vs.technologie,
+-- vs.inhaltlich_sachlich_geprueft,
+vs.swr_hauptumsetzende_oe,
+kt.tickets,
+n.bezeichnung as notation,
+case vs.vorschrift_typid when 20 then fks.liste else fk.liste end liste,
+nvl2(vs.lead_VKO_Benutzerid, b2.nachname ||', ' || b2.vorname, '') as Lead_VKO,
+case when (vs.status_update_getex is null) then '-'
+                 when vs.status_update_getex  =10 then 'aktuell' 
+            when vs.status_update_getex  =20 then 'nicht aktuell' 
+            when vs.status_update_getex  =30 then  'nicht in Getex'  end  as status_update_getex
+
+
+from "#OWNER#"."T_VORSCHRIFT" vs
+left outer join konzerntickets kt on (vs.vorschriftid = kt.vorschriftid)
+ left join r on (r.vorschriftid = vs.vorschriftid)
+--  left outer join t_vorschrift_ref_verantwortlicher vrv on (vrv.vorschriftid = r.vorschriftid)
+left outer join T_BENUTZER b on b.benutzerid = vs.letzte_aenderung_benutzerid
+left outer join T_BENUTZER b2 on b2.benutzerid = vs.lead_VKO_Benutzerid
+left outer join T_WEBSITE ws on ws.websiteid = vs.websiteid
+left outer join T_KSU k on k.ksuid = vs.ksuid
+left outer join cte_typschild2 ts on (vs.vorschriftid = ts.vorschriftid)
+left outer join t_norm n on (vs.normid = n.normid)
+
+outer apply (
+    select einsatzdatum in_kraft
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1000
+    fetch first 1 rows only
+) ed
+outer apply (
+         select listagg(concat( b_nummer, case when mod(r_n,8)=0 then ', ' else ',' end ), '') list_land  
+          from
+          (  select b_nummer, row_number() over (order by b_nummer) as r_n
+             from (
+                select distinct land.b_nummer b_nummer
+                from T_VORSCHRIFT_REF_LAND vtl 
+                left outer join t_land land on land.landid = vtl.landid
+                where vtl.vorschriftid = vs.vorschriftid and vtl.geloescht = 0
+                
+                union
+                  -- demands
+                select distinct l.b_nummer b_nummer
+                from t_vorschrift_ref_vorschrift vrv
+                join t_vorschrift_ref_land rtl on (vrv.nachfolger_vorschriftid = rtl.vorschriftid)
+                join t_land l on (rtl.landid = l.landid)
+                where vorgaenger_vorschriftid = vs.vorschriftid and beziehung_art = 40 and rtl.geloescht = 0
+                
+                 union
+                  -- equivalent
+                select  distinct l.b_nummer b_nummer 
+                from t_vorschrift_ref_vorschrift vrv
+                join t_vorschrift_ref_land rtl on (vrv.nachfolger_vorschriftid = rtl.vorschriftid)
+                join t_land l on (rtl.landid = l.landid)
+                where vorgaenger_vorschriftid = vs.vorschriftid 
+                and vrv.beziehung_art = 102 and rtl.geloescht = 0
+             ) 
+          )
+ ) x
+
+outer apply (
+    select listagg(etb,', ') within group (order by etb) liste
+    from (
+        
+        select distinct ak.kurz etb
+        from t_vorschrift_ref_et_b_ak t
+        join t_et_b_ak ak on (ak.et_b_akid = t.et_b_akid)
+        where t.vorschriftid = vs.vorschriftid and t.geloescht = 0
+    )
+) etb
+
+outer apply (
+    select listagg(tg,', ') within group (order by tg) liste
+    from (
+        select distinct t.nummer tg
+        from t_vorschrift_ref_thema vtl
+        join t_thema t on (vtl.themaid = t.themaid)
+        where vtl.vorschriftid = vs.vorschriftid and vtl.geloescht = 0
+    )
+) tg
+
+outer apply (
+   select listagg(distinct mfv,', ') within group (order by mfv) as liste_mfv
+   from(
+       select  m.mfv_name  mfv
+         from T_MFV_Ref_Vorschrift mrv  --on (mrv.Vorschriftid = v.Vorschriftid)
+         join t_MFV m on (m.MFVid = mrv.MFVid)
+        where mrv.vorschriftid = vs.vorschriftid 
+    )
+) mfv
+
+outer apply (
+    select listagg(antriebsart,', ') within group (order by antriebsart) liste
+    from (
+        select distinct aa.bezeichnung antriebsart
+        from t_vorschrift_ref_thema vtl
+        join t_thema_ref_antriebsart trf on (vtl.themaid = trf.themaid)
+        join t_antriebsart aa on (aa.antriebsartid = trf.antriebsartid)
+        where vtl.vorschriftid = vs.vorschriftid and vtl.geloescht = 0
+    )
+) antriebsart
+
+ /*
+ select distinct typschild typschild
+        from cte1 ttl
+        where ttl.vorschriftid = vs.vorschriftid 
+    )
+) ts*/
+outer apply (
+    select einsatzdatum Neue_Typen_CKD
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1020
+    fetch first 1 rows only
+) ntc
+outer apply (
+    select einsatzdatum Alle_Fahrzeuge_CKD
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1021
+    fetch first 1 rows only
+) afc
+outer apply (
+    select einsatzdatum Neue_Typen_FBU
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1022
+    fetch first 1 rows only
+) ntc
+outer apply (
+    select einsatzdatum Alle_Fahrzeuge_FBU
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1023
+    fetch first 1 rows only
+) afc
+outer apply (
+    select einsatzdatum MJ_Phasein_start
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1030
+    fetch first 1 rows only
+) ntmj
+outer apply (
+    select einsatzdatum MJ_Phasein_end
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1031
+    fetch first 1 rows only
+) afmj
+outer apply (
+    select einsatzdatum Neue_Typen
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1010
+    fetch first 1 rows only
+) nt
+outer apply (
+    select einsatzdatum Alle_Fahrzeuge
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1011
+    fetch first 1 rows only
+) af
+
+outer apply (
+    select listagg(bezeichnung,'; ') within group (order by bezeichnung) liste
+    from t_vorschrift_ref_fahrzeugklasse vrf
+    join t_fahrzeugklasse f on (vrf.fahrzeugklasseid = f.fahrzeugklasseid)
+    where vrf.vorschriftid = vs.vorschriftid
+) fk
+
+outer apply (
+    select listagg(bezeichnung,'; ') within group (order by bezeichnung) liste
+    from t_vorschrift_ref_fahrzeugklasse vrf
+    join t_fahrzeugklasse f on (vrf.fahrzeugklasseid = f.fahrzeugklasseid)
+    where vrf.vorschriftid = (
+        select vrv.vorgaenger_vorschriftid
+        from t_vorschrift_ref_vorschrift vrv
+        where vrv.nachfolger_vorschriftid = vs.vorschriftid
+        and vrv.BEZIEHUNG_ART = 30
+        fetch first row only
+    )
+) fks
+
+
+where (vs.vorschrift_typid in (10, 30, 40) -- Supplements nicht anzeigen
+       or vs.vorschrift_typid in (select case when (:P21_SUPPLEMENTS = 20) then 20 else 0 end from dual)
+       )
+and (
+    (vs.vorschrift_freigabestatusid = 10 and pck_ri.fIsUserInRolle(listRolleId => '1003:1000:1002:1001:1040:1006') > 0) -- Wenn Status "in Bearbeitung" dann sichtbar für Fachadmin, VKO, VEX, ZVEX, KFEX, GBEX
+    or vs.vorschrift_freigabestatusid = 20 -- Wenn Status "freigegeben", dann sichtbar für alle
+    or (vs.vorschrift_freigabestatusid = 30 and pck_ri.fIsUserInRolle(listRolleId => '1003:1000:1002:1001') > 0) -- Wenn Status "nicht relevant", dann sichtbar für Fachadmin, VKO, VEX, ZVEX
+    or (vs.vorschrift_freigabestatusid is null and vs.vorschrift_typid = 20) -- Supplements haben keinen Status
+)
+  
+
+
+```
+
+### CREATE VIEW FROM SQL QUERY
+
+
+```sql
+CREATE OR REPLACE FORCE EDITIONABLE VIEW "V_VORSCHRIFTEN_LANG_VERSION_REPORT" ("XROWID", "DETAIL_S", "CHECKBOX", "VORSCHRIFTID", "LINK_NETZ", "VORSCHRIFT_NUMMER", "VORSCHRIFT_BEZEICHNUNG", "VORSCHRIFT_TYPID", "PROGNOSE_QUALITAET", "VORSCHRIFT_FREIGABESTATUSID", "BEMERKUNG", "LINK_ZUR_VORSCHRIFT_DMS", "LINK_ZUR_VORSCHRIFT_GETEX", "MFV_ID", "TYPSCHILD", "WEBSITLINK", "WEBSITE_HILFETEXT", "KSU", "LETZTE_AENDERUNG_DATUM", "LETZTE_AENDERUNG_BENUTZER", "LIST_LAND", "IN_KRAFT", "ETB_AK", "THEMENGEBIETE", "VORSCHRIFT_STATUSID", "RXSWIN_RELEVANT", "KEINE_NORM_VALIDIERUNG", "VERANTWORTLICHER", "MJ_PHASEIN_START", "MJ_PHASEIN_END", "ALLE_FAHRZEUGE_FBU", "ALLE_FAHRZEUGE_CKD", "NEUE_TYPEN_FBU", "NEUE_TYPEN_CKD", "NEUE_TYPEN", "ALLE_FAHRZEUGE", "EINSATZDATUM_MODELLID", "PERMALINK", "ANTRIEBSART", "COP_RELEVANT", "TECHNOLOGIE", "SWR_HAUPTUMSETZENDE_OE", "TICKETS", "NOTATION", "LISTE", "LEAD_VKO", "STATUS_UPDATE_GETEX", "REV_NOTWENDIG") AS 
+  with cte_typschild1 as (
+    select distinct vrv.vorgaenger_vorschriftid vorschriftid ,l.typschild typschild
+    from t_vorschrift v1
+     left outer join t_vorschrift_ref_land vrl on (v1.vorschriftid = vrl.vorschriftid)
+    join t_vorschrift_ref_vorschrift vrv on (vrv.nachfolger_vorschriftid = v1.vorschriftid and vrv.beziehung_art = 40)
+    join T_LAND l on l.landid = vrl.landid
+    where vrl.geloescht = 0 
+    union
+    Select distinct trl.vorschriftid, l.typschild typschild
+    from T_VORSCHRIFT_REF_LAND trl
+    join T_LAND l on l.landid = trl.landid
+    where trl.geloescht = 0
+), cte_typschild2 as (
+    select vorschriftid, listagg(typschild,', ') within group (order by typschild) as liste_typschild
+    from cte_typschild1
+    group by vorschriftid
+)
+,r as (
+  select v.vorschriftid vorschriftid, 
+  listagg(CASE WHEN vrv.IST_HAUPTVERANTWORTLICHER = 10 THEN 
+  '<span style="text-decoration: underline;">' || vv.nachname || ', ' || vv.vorname || '</span>'
+  ELSE vv.nachname || ', ' || vv.vorname END, '; ') WITHIN GROUP (ORDER BY vv.nachname) as verantwortlicher  
+from t_vorschrift v
+join t_vorschrift_ref_verantwortlicher vrv on vrv.vorschriftid = v.vorschriftid
+join t_verantwortlicher vv on vv.verantwortlicherid = vrv.verantwortlicherid
+group by v.vorschriftid
+),
+konzerntickets as (
+    select tv.vorschriftid, listagg('<a href="' || link || '" target="_blank">' || ticketnr || '</a>',', ') within group (order by ticketnr) tickets
+    from t_konzern_jira_ticket t
+    join t_konzern_jira_ticket_ref_vorschrift tv on (t.konzern_jira_ticketid = tv.konzern_jira_ticketid)
+    group by tv.vorschriftid
+)
+select vs.ROWID as xrowid,
+'DETAIL_S_PLACEHOLDER' AS detail_s, -- Placeholder for detail_s
+1 as checkbox,
+vs.vorschriftid,
+vs.vorschriftid as link_netz,
+VORSCHRIFT_NUMMER,
+VORSCHRIFT_BEZEICHNUNG,
+VORSCHRIFT_TYPID,
+vs.prognose_qualitaetid as PROGNOSE_QUALITAET,
+--PCK_RI.fJiraTicketsToLinks("JIRA_TICKET") AS "JIRA_TICKET",
+VORSCHRIFT_FREIGABESTATUSID,
+BEMERKUNG,
+PCK_RI.fCreateLinkIfUrl(LINK_ZUR_VORSCHRIFT_DMS) AS LINK_ZUR_VORSCHRIFT_DMS,
+LINK_ZUR_VORSCHRIFT_GETEX AS LINK_ZUR_VORSCHRIFT_GETEX,
+mfv.liste_mfv as MfV_ID,
+ts.liste_typschild as TYPSCHILD,
+    nvl2(ws.hilfetext, ' <span class="fa fa-info-circle" aria-hidden="true" onClick="javascript:apex.message.alert('
+         || apex_escape.js_literal(ws.hilfetext) || ');"></span> ', null) || PCK_RI.fCreateLinkIfUrl("WEBSITELINK") as WEBSITLINK,
+ws.hilfetext as WEBSITE_HILFETEXT,
+k.bezeichnung as KSU,
+vs.LETZTE_AENDERUNG_DATUM,
+nvl2(b.benutzerid, b.nachname || ', ' || b.vorname, null) letzte_aenderung_benutzer,
+x.list_land,
+ed.in_kraft,
+etb.liste as etb_ak,
+tg.liste as themengebiete,
+vs.VORSCHRIFT_STATUSID,
+vs.rxswin as rxswin_relevant,
+  case when (nvl(vs.without_norm_validation, 0) = 0 ) then 'Nein' 
+          else 'Ja' end  Keine_Norm_Validierung,
+r.verantwortlicher,
+MJ_Phasein_start,
+MJ_Phasein_end,
+Alle_Fahrzeuge_FBU,
+Alle_Fahrzeuge_CKD,
+Neue_Typen_FBU,
+Neue_Typen_CKD,
+Neue_Typen,
+Alle_Fahrzeuge,
+EINSATZDATUM_MODELLID,
+'PERMALINK_PLACEHOLDER_' || vs.vorschriftid AS permalink, -- Placeholder for permalink
+antriebsart.liste antriebsart,
+vs.COP_RELEVANT cop_relevant,
+vs.technologie,
+-- vs.inhaltlich_sachlich_geprueft,
+vs.swr_hauptumsetzende_oe,
+kt.tickets,
+n.bezeichnung as notation,
+case vs.vorschrift_typid when 20 then fks.liste else fk.liste end liste,
+nvl2(vs.lead_VKO_Benutzerid, b2.nachname ||', ' || b2.vorname, '') as Lead_VKO,
+case when (vs.status_update_getex is null) then '-'
+                 when vs.status_update_getex  =10 then 'aktuell' 
+            when vs.status_update_getex  =20 then 'nicht aktuell' 
+            when vs.status_update_getex  =30 then  'nicht in Getex'  end  as status_update_getex,
+case vs.REV_NOTWENDIG
+    when 10 then 'nicht bewertet'
+    when 20 then 'ja'
+    when 30 then 'nein'
+    else 'unbekannt'
+end as REV_NOTWENDIG
+from T_VORSCHRIFT vs
+left outer join konzerntickets kt on (vs.vorschriftid = kt.vorschriftid)
+ left join r on (r.vorschriftid = vs.vorschriftid)
+--  left outer join t_vorschrift_ref_verantwortlicher vrv on (vrv.vorschriftid = r.vorschriftid)
+left outer join T_BENUTZER b on b.benutzerid = vs.letzte_aenderung_benutzerid
+left outer join T_BENUTZER b2 on b2.benutzerid = vs.lead_VKO_Benutzerid
+left outer join T_WEBSITE ws on ws.websiteid = vs.websiteid
+left outer join T_KSU k on k.ksuid = vs.ksuid
+left outer join cte_typschild2 ts on (vs.vorschriftid = ts.vorschriftid)
+left outer join t_norm n on (vs.normid = n.normid)
+outer apply (
+    select einsatzdatum in_kraft
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1000
+    fetch first 1 rows only
+) ed
+outer apply (
+         select listagg(concat( b_nummer, case when mod(r_n,8)=0 then ', ' else ',' end ), '') list_land  
+          from
+          (  select b_nummer, row_number() over (order by b_nummer) as r_n
+             from (
+                select distinct land.b_nummer b_nummer
+                from T_VORSCHRIFT_REF_LAND vtl 
+                left outer join t_land land on land.landid = vtl.landid
+                where vtl.vorschriftid = vs.vorschriftid and vtl.geloescht = 0
+                
+                union
+                  -- demands
+                select distinct l.b_nummer b_nummer
+                from t_vorschrift_ref_vorschrift vrv
+                join t_vorschrift_ref_land rtl on (vrv.nachfolger_vorschriftid = rtl.vorschriftid)
+                join t_land l on (rtl.landid = l.landid)
+                where vorgaenger_vorschriftid = vs.vorschriftid and beziehung_art = 40 and rtl.geloescht = 0
+                
+                 union
+                  -- equivalent
+                select  distinct l.b_nummer b_nummer 
+                from t_vorschrift_ref_vorschrift vrv
+                join t_vorschrift_ref_land rtl on (vrv.nachfolger_vorschriftid = rtl.vorschriftid)
+                join t_land l on (rtl.landid = l.landid)
+                where vorgaenger_vorschriftid = vs.vorschriftid 
+                and vrv.beziehung_art = 102 and rtl.geloescht = 0
+             ) 
+          )
+ ) x
+outer apply (
+    select listagg(etb,', ') within group (order by etb) liste
+    from (
+        
+        select distinct ak.kurz etb
+        from t_vorschrift_ref_et_b_ak t
+        join t_et_b_ak ak on (ak.et_b_akid = t.et_b_akid)
+        where t.vorschriftid = vs.vorschriftid and t.geloescht = 0
+    )
+) etb
+outer apply (
+    select listagg(tg,', ') within group (order by tg) liste
+    from (
+        select distinct t.nummer tg
+        from t_vorschrift_ref_thema vtl
+        join t_thema t on (vtl.themaid = t.themaid)
+        where vtl.vorschriftid = vs.vorschriftid and vtl.geloescht = 0
+    )
+) tg
+outer apply (
+   select listagg(distinct mfv,', ') within group (order by mfv) as liste_mfv
+   from(
+       select  m.mfv_name  mfv
+         from T_MFV_Ref_Vorschrift mrv  --on (mrv.Vorschriftid = v.Vorschriftid)
+         join t_MFV m on (m.MFVid = mrv.MFVid)
+        where mrv.vorschriftid = vs.vorschriftid 
+    )
+) mfv
+outer apply (
+    select listagg(antriebsart,', ') within group (order by antriebsart) liste
+    from (
+        select distinct aa.bezeichnung antriebsart
+        from t_vorschrift_ref_thema vtl
+        join t_thema_ref_antriebsart trf on (vtl.themaid = trf.themaid)
+        join t_antriebsart aa on (aa.antriebsartid = trf.antriebsartid)
+        where vtl.vorschriftid = vs.vorschriftid and vtl.geloescht = 0
+    )
+) antriebsart
+ /*
+ select distinct typschild typschild
+        from cte1 ttl
+        where ttl.vorschriftid = vs.vorschriftid 
+    )
+) ts*/
+outer apply (
+    select einsatzdatum Neue_Typen_CKD
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1020
+    fetch first 1 rows only
+) ntc
+outer apply (
+    select einsatzdatum Alle_Fahrzeuge_CKD
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1021
+    fetch first 1 rows only
+) afc
+outer apply (
+    select einsatzdatum Neue_Typen_FBU
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1022
+    fetch first 1 rows only
+) ntc
+outer apply (
+    select einsatzdatum Alle_Fahrzeuge_FBU
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1023
+    fetch first 1 rows only
+) afc
+outer apply (
+    select einsatzdatum MJ_Phasein_start
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1030
+    fetch first 1 rows only
+) ntmj
+outer apply (
+    select einsatzdatum MJ_Phasein_end
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1031
+    fetch first 1 rows only
+) afmj
+outer apply (
+    select einsatzdatum Neue_Typen
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1010
+    fetch first 1 rows only
+) nt
+outer apply (
+    select einsatzdatum Alle_Fahrzeuge
+    from t_vorschrift_ref_einsatzdatum_typ vre
+    where vre.vorschriftid = vs.vorschriftid
+    and vre.einsatzdatum_typid = 1011
+    fetch first 1 rows only
+) af
+outer apply (
+    select listagg(bezeichnung,'; ') within group (order by bezeichnung) liste
+    from t_vorschrift_ref_fahrzeugklasse vrf
+    join t_fahrzeugklasse f on (vrf.fahrzeugklasseid = f.fahrzeugklasseid)
+    where vrf.vorschriftid = vs.vorschriftid
+) fk
+outer apply (
+    select listagg(bezeichnung,'; ') within group (order by bezeichnung) liste
+    from t_vorschrift_ref_fahrzeugklasse vrf
+    join t_fahrzeugklasse f on (vrf.fahrzeugklasseid = f.fahrzeugklasseid)
+    where vrf.vorschriftid = (
+        select vrv.vorgaenger_vorschriftid
+        from t_vorschrift_ref_vorschrift vrv
+        where vrv.nachfolger_vorschriftid = vs.vorschriftid
+        and vrv.BEZIEHUNG_ART = 30
+        fetch first row only
+    )
+) fks
+/
+
+```
+
+
+### CREATE MATERIALIZED VIEW FROM ABOVE VIEW
+
+```sql
+CREATE MATERIALIZED VIEW  "MV_VORSCHRIFTEN_LANG_VERSION_REPORT" ("XROWID", "DETAIL_S", "CHECKBOX", "VORSCHRIFTID", "LINK_NETZ", "VORSCHRIFT_NUMMER", "VORSCHRIFT_BEZEICHNUNG", "VORSCHRIFT_TYPID", "PROGNOSE_QUALITAET", "VORSCHRIFT_FREIGABESTATUSID", "BEMERKUNG", "LINK_ZUR_VORSCHRIFT_DMS", "LINK_ZUR_VORSCHRIFT_GETEX", "MFV_ID", "TYPSCHILD", "WEBSITLINK", "WEBSITE_HILFETEXT", "KSU", "LETZTE_AENDERUNG_DATUM", "LETZTE_AENDERUNG_BENUTZER", "LIST_LAND", "IN_KRAFT", "ETB_AK", "THEMENGEBIETE", "VORSCHRIFT_STATUSID", "RXSWIN_RELEVANT", "KEINE_NORM_VALIDIERUNG", "VERANTWORTLICHER", "MJ_PHASEIN_START", "MJ_PHASEIN_END", "ALLE_FAHRZEUGE_FBU", "ALLE_FAHRZEUGE_CKD", "NEUE_TYPEN_FBU", "NEUE_TYPEN_CKD", "NEUE_TYPEN", "ALLE_FAHRZEUGE", "EINSATZDATUM_MODELLID", "PERMALINK", "ANTRIEBSART", "COP_RELEVANT", "TECHNOLOGIE", "SWR_HAUPTUMSETZENDE_OE", "TICKETS", "NOTATION", "LISTE", "LEAD_VKO", "STATUS_UPDATE_GETEX", "REV_NOTWENDIG")
+  SEGMENT CREATION IMMEDIATE
+  ORGANIZATION HEAP PCTFREE 10 PCTUSED 40 INITRANS 1 MAXTRANS 255 
+ NOCOMPRESS LOGGING
+  STORAGE(INITIAL 65536 NEXT 1048576 MINEXTENTS 1 MAXEXTENTS 2147483645
+  PCTINCREASE 0 FREELISTS 1 FREELIST GROUPS 1
+  BUFFER_POOL DEFAULT FLASH_CACHE DEFAULT CELL_FLASH_CACHE DEFAULT)
+  TABLESPACE "VORSCHRIFTEN_DAT_OBJ" 
+  BUILD IMMEDIATE
+  USING INDEX 
+  REFRESH COMPLETE ON DEMAND
+  USING DEFAULT LOCAL ROLLBACK SEGMENT
+  USING ENFORCED CONSTRAINTS DISABLE ON QUERY COMPUTATION DISABLE QUERY REWRITE
+  AS SELECT 
+    XROWID,
+    DETAIL_S,
+    CHECKBOX,
+    VORSCHRIFTID,
+    LINK_NETZ,
+    VORSCHRIFT_NUMMER,
+    VORSCHRIFT_BEZEICHNUNG,
+    VORSCHRIFT_TYPID,
+    PROGNOSE_QUALITAET,
+    VORSCHRIFT_FREIGABESTATUSID,
+    BEMERKUNG,
+    LINK_ZUR_VORSCHRIFT_DMS,
+    LINK_ZUR_VORSCHRIFT_GETEX,
+    MFV_ID,
+    TYPSCHILD,
+    WEBSITLINK,
+    WEBSITE_HILFETEXT,
+    KSU,
+    LETZTE_AENDERUNG_DATUM,
+    LETZTE_AENDERUNG_BENUTZER,
+    LIST_LAND,
+    IN_KRAFT,
+    ETB_AK,
+    THEMENGEBIETE,
+    VORSCHRIFT_STATUSID,
+    RXSWIN_RELEVANT,
+    KEINE_NORM_VALIDIERUNG,
+    VERANTWORTLICHER,
+    MJ_PHASEIN_START,
+    MJ_PHASEIN_END,
+    ALLE_FAHRZEUGE_FBU,
+    ALLE_FAHRZEUGE_CKD,
+    NEUE_TYPEN_FBU,
+    NEUE_TYPEN_CKD,
+    NEUE_TYPEN,
+    ALLE_FAHRZEUGE,
+    EINSATZDATUM_MODELLID,
+    PERMALINK,
+    ANTRIEBSART,
+    COP_RELEVANT,
+    TECHNOLOGIE,
+    SWR_HAUPTUMSETZENDE_OE,
+    TICKETS,
+    NOTATION,
+    LISTE,
+    LEAD_VKO,
+    STATUS_UPDATE_GETEX,
+    REV_NOTWENDIG
+FROM V_VORSCHRIFTEN_LANG_VERSION_REPORT
+/
+
+```
+
+#### CREATE PROCEDURE FOR JOB SCHEDULER INSIDE PACKAGE ( WE NEED THIS IF WE ARE CREATING USING SQL DEVELOPER )
+
+```sql
+PROCEDURE REFRESH_MV_VORSCHRIFTEN_LANG_VERSION_REPORT
+  AS
+  BEGIN
+   DBMS_MVIEW.REFRESH('MV_VORSCHRIFTEN_LANG_VERSION_REPORT');
+END REFRESH_MV_VORSCHRIFTEN_LANG_VERSION_REPORT;
+
+```
+
+
+#### NOW CREATE JOB SCHEDULER USING THIS PROCEDURE WHICH YOU DONE INSIDE PACKAGE IN SQL ( HERE IM WRITING CODE APPROACH FOR SQL DEVELOPER APPROACH. YOU CAN CHECK VIDEO)
+
+
+```sql
+BEGIN
+  DBMS_SCHEDULER.CREATE_JOB (
+    job_name        => 'J_REFRESH_MV_VORSCHRIFTEN_LANG_VERSION_REPORT',
+    job_type        => 'PLSQL_BLOCK',
+    job_action      => 'BEGIN DBMS_MVIEW.REFRESH(''MV_VORSCHRIFTEN_LANG_VERSION_REPORT''); END;',
+    start_date      => TRUNC(SYSDATE) + 1, -- Start tomorrow
+    repeat_interval => 'FREQ=DAILY;BYHOUR=2;BYDAY=MON,TUE,WED,THU,FRI', -- Daily at 2 AM on weekdays
+    end_date        => NULL, -- No end date (run indefinitely)
+    enabled         => TRUE,
+    comments        => 'Refresh materialized view MV_VORSCHRIFTEN_LANG_VERSION_REPORT'
+  );
+END;
+/
+
+```
+
+### CREATE MATERIALIZED VIEW RePORT FROM ABOVE CREATED MATERIALIZED VIEW FOR THE SQl REPORT FOR IR OR IG1
+
+```sql
+SELECT 
+    MVLVR.XROWID,
+    '<a href="' || apex_page.get_url(p_page => 25, p_items => 'P25_VORSCHRIFTID', p_values => MVLVR.vorschriftid, p_clear_cache => 25)
+    || '" target="detail_s"><span alt="Anzeigen" title="Anzeigen" class="fa fa-search"></span></a> ' AS DETAIL_S,
+    MVLVR.CHECKBOX,
+    MVLVR.VORSCHRIFTID,
+    MVLVR.LINK_NETZ,
+    MVLVR.VORSCHRIFT_NUMMER,
+    MVLVR.VORSCHRIFT_BEZEICHNUNG,
+    MVLVR.VORSCHRIFT_TYPID,
+    MVLVR.PROGNOSE_QUALITAET,
+    MVLVR.VORSCHRIFT_FREIGABESTATUSID,
+    MVLVR.BEMERKUNG,
+    MVLVR.LINK_ZUR_VORSCHRIFT_DMS,
+    nvl2(MVLVR.LINK_ZUR_VORSCHRIFT_GETEX, MVLVR.LINK_ZUR_VORSCHRIFT_GETEX || ' <a href="https://getex.wob.vw.vwg/web/guest/dokumente_suche" target="_blank">Getex 1.0 &ouml;ffnen</a>', null) AS LINK_ZUR_VORSCHRIFT_GETEX,
+    MVLVR.MFV_ID,
+    MVLVR.TYPSCHILD,
+    MVLVR.WEBSITLINK,
+    MVLVR.WEBSITE_HILFETEXT,
+    MVLVR.KSU,
+    MVLVR.LETZTE_AENDERUNG_DATUM,
+    MVLVR.LETZTE_AENDERUNG_BENUTZER,
+    MVLVR.LIST_LAND,
+    MVLVR.IN_KRAFT,
+    MVLVR.ETB_AK,
+    MVLVR.THEMENGEBIETE,
+    MVLVR.VORSCHRIFT_STATUSID,
+    MVLVR.RXSWIN_RELEVANT,
+    MVLVR.KEINE_NORM_VALIDIERUNG,
+    MVLVR.VERANTWORTLICHER,
+    MVLVR.MJ_PHASEIN_START,
+    MVLVR.MJ_PHASEIN_END,
+    MVLVR.ALLE_FAHRZEUGE_FBU,
+    MVLVR.ALLE_FAHRZEUGE_CKD,
+    MVLVR.NEUE_TYPEN_FBU,
+    MVLVR.NEUE_TYPEN_CKD,
+    MVLVR.NEUE_TYPEN,
+    MVLVR.ALLE_FAHRZEUGE,
+    MVLVR.EINSATZDATUM_MODELLID,
+    apex_util.host_url('SCRIPT') || apex_page.get_url(
+        p_page => 'VORSCHRIFT',
+        p_items => 'P25_VORSCHRIFTID',
+        p_values => MVLVR.vorschriftid,
+        p_clear_cache => '25'
+    ) AS PERMALINK,
+    MVLVR.ANTRIEBSART,
+    MVLVR.COP_RELEVANT,
+    MVLVR.TECHNOLOGIE,
+    MVLVR.SWR_HAUPTUMSETZENDE_OE,
+    MVLVR.TICKETS,
+    MVLVR.NOTATION,
+    MVLVR.LISTE,
+    MVLVR.LEAD_VKO,
+    MVLVR.STATUS_UPDATE_GETEX,
+    MVLVR.REV_NOTWENDIG
+FROM MV_VORSCHRIFTEN_LANG_VERSION_REPORT MVLVR
+WHERE (MVLVR.vorschrift_typid IN (10, 30, 40) -- Supplements nicht anzeigen
+       OR MVLVR.vorschrift_typid IN (SELECT CASE WHEN (:P21_SUPPLEMENTS = 20) THEN 20 ELSE 0 END FROM DUAL)
+      )
+  AND (
+    (MVLVR.vorschrift_freigabestatusid = 10 AND pck_ri.fIsUserInRolle(listRolleId => '1003:1000:1002:1001:1040:1006') > 0) -- Wenn Status "in Bearbeitung" dann sichtbar für Fachadmin, VKO, VEX, ZVEX, KFEX, GBEX
+    OR MVLVR.vorschrift_freigabestatusid = 20 -- Wenn Status "freigegeben", dann sichtbar für alle
+    OR (MVLVR.vorschrift_freigabestatusid = 30 AND pck_ri.fIsUserInRolle(listRolleId => '1003:1000:1002:1001') > 0) -- Wenn Status "nicht relevant", dann sichtbar für Fachadmin, VKO, VEX, ZVEX
+    OR (MVLVR.vorschrift_freigabestatusid IS NULL AND MVLVR.vorschrift_typid = 20) -- Supplements haben keinen Status
+  )
+
+```
+
+
+
+
+
 # COMPLETE MATERIALIZED VIEW PROCESS FROM SCRATCH TO END
 
 [`Link to Youtube - Materialized View - https://youtu.be/cC0AK7yRebo`](https://youtu.be/cC0AK7yRebo)
@@ -35253,6 +35998,30 @@ or
 ```
 
 
+# Priority Status Counts
 
-
-
+```sql
+WITH StatusCounts AS (
+    SELECT
+        DS_ID,
+        SUM(CASE WHEN FREIGABE_STATUS = 10 THEN 1 ELSE 0 END) AS OpenCount,
+        SUM(CASE WHEN FREIGABE_STATUS = 20 THEN 1 ELSE 0 END) AS keinP3TicketCount,
+        SUM(CASE WHEN FREIGABE_STATUS = 30 THEN 1 ELSE 0 END) AS ETMoeglichCount
+    FROM t_ds_ref_p3p_ticket
+    WHERE FREIGABE_STATUS IN (10, 20, 30)
+    GROUP BY DS_ID
+)
+SELECT 
+    t_ds.*,
+    CASE
+        WHEN sc.OpenCount > 0 THEN 'offen'
+        WHEN sc.keinP3TicketCount > 0 THEN 'kein P3-Ticket'
+        WHEN sc.ETMoeglichCount > 0 THEN 'ET möglich'
+        ELSE NULL
+    END AS PrioritizedStatus
+FROM 
+    t_ds
+LEFT JOIN 
+    StatusCounts sc ON t_ds.DS_ID = sc.DS_ID;
+	
+```
