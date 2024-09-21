@@ -259,6 +259,10 @@ function generateCustomerExcel() {
         { hpt: 25 }   // Set height for the second row (header)
     ];
 
+     // Add autofilter
+    sheet['!autofilter'] = { ref: `A2:H${dim.e.r}` };
+
+
     XLSX.utils.book_append_sheet(workbook, sheet, "Customer Data");
     
     XLSX.writeFile(workbook, 'Customer_Data_Export.xlsx', {compression: true});
