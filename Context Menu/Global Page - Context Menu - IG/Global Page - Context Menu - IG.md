@@ -1,20 +1,22 @@
-I'll help create clear documentation for your context menu implementation in Oracle APEX. Here's an organized version:
-
-# Context Menu Implementation Documentation
+# Global Page - Context Menu - IG - Context Menu Implementation Documentation
 
 ## 1. Required Files Location
-The necessary files are located in Universal Theme under Shared Components > Themes:
+The necessary files need to keep in Universal Theme under Shared Components > Themes:
 - `jquery.contextMenu.js` - Reference: `#THEME_DB_FILES#jquery.contextMenu.js`
-- `jquery.contextMenu.css` - Reference: `#THEME_DB_FILES#jquery.contextMenu.css`
 - `jquery.ui.position.js` - Reference: `#THEME_DB_FILES#jquery.ui.position.js`
+- `jquery.contextMenu.css` - Reference: `#THEME_DB_FILES#jquery.contextMenu.css`
+
 
 ## 2. File References Configuration
 Configure these files in **Shared Components > User Interface Attributes**:
 1. Navigate to: Application > User Interfaces
 2. Under the JavaScript section:
    - Add file URLs for the JavaScript files
+      -  `jquery.contextMenu.js` - Reference: `#THEME_DB_FILES#jquery.contextMenu.js`
+      - `jquery.ui.position.js` - Reference: `#THEME_DB_FILES#jquery.ui.position.js`          
 3. Under the CSS section:
    - Add file URL for the CSS file
+      - `jquery.contextMenu.css` - Reference: `#THEME_DB_FILES#jquery.contextMenu.css`
 
 ## 3. Implementation Code
 Place this code in the Global Page:
@@ -112,4 +114,4 @@ document.addEventListener("DOMContentLoaded", function(event) {
 - APEX version 18.x or higher
 - jQuery Migrate (ensure it's enabled in User Interface attributes)
 
-Would you like me to add or clarify any part of this documentation?
+
