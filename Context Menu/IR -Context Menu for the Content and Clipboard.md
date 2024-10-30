@@ -1,16 +1,29 @@
+# 📊 APEX Interactive Report Context Menu - Complete Implementation Guide
 
-# APPROACH 1 FOR ALL COLUMNS with dynamic column names
+## 📑 Table of Contents
+1. [Approach 1: Dynamic Column Names](#approach-1-dynamic-column-names)
+2. [Approach 2: Static Column Names](#approach-2-static-column-names)
+3. [Approach 3: Name Column Only](#approach-3-name-column-only)
 
-<h1>Context Menu for the Content and Clipboard</h1>
+# 🔄 Approach 1: Dynamic Column Names
+> Context Menu for ALL COLUMNS with dynamic column names
 
-<h2>JavaScript</h2>
-<h3>File URLs</h3>
-<pre data-line="1" class="language-js line-numbers"><code class="language-js">https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.js
-</code></pre>
+## Required Files
+### 📜 JavaScript File URL
+```javascript
+https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.js
+```
 
-<h2>Function and Global Variable Declaration</h2>
+### 🎨 CSS File URL
+```css
+https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.css
+-- keep in comment <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.css">
+```
 
-<pre data-line="1" class="language-js line-numbers"><code class="language-js">function initInteractiveReportContextMenu(reportId) {
+## Implementation
+### 💻 Function and Global Variable Declaration
+```javascript
+function initInteractiveReportContextMenu(reportId) {
     var report = apex.region(reportId);
     
     $('#' + reportId).contextMenu({
@@ -85,29 +98,20 @@
         }
     });
 }
-</code></pre>
+```
 
-
-<h2>Execute when Page Loads</h2>
-
-<pre data-line="1" class="language-js line-numbers"><code class="language-js">apex.jQuery(document).ready(function() {
+### ▶️ Execute when Page Loads
+```javascript
+apex.jQuery(document).ready(function() {
     initInteractiveReportContextMenu('IR_1');
 });
-</code></pre>
+```
 
-<h2>CSS</h2>
-<h3>File URLs</h3>
-<pre data-line="1" class="language-css line-numbers"><code class="language-css">https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.css
--- keep in comment <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.css">
-</code></pre>
-
-
-<h2>Inline CSS</h2>
-
-<pre data-line="1" class="language-css line-numbers"><code class="language-css">.context-menu-list {
+### 🎯 Inline CSS
+```css
+.context-menu-list {
     z-index: 9999 !important;
 }
-
 
 .context-menu-icon.context-menu-close-icon::before {
     content: "\2716";  /* Unicode for multiplication sign (×) which can act as a close icon */
@@ -115,22 +119,27 @@
     color: red;
     margin-right: 5px;
 }
-</code></pre>
+```
 
+# 📋 Approach 2: Static Column Names
+> Context Menu for ALL COLUMNS without dynamic column names
 
+## Required Files
+### 📜 JavaScript File URL
+```javascript
+https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.js
+```
 
-# APPROACH 2 FOR ALL COLUMNS with not dynamic column names
+### 🎨 CSS File URL
+```css
+https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.css
+-- keep in comment <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.css">
+```
 
-<h1>Context Menu for the Content and Clipboard</h1>
-
-<h2>JavaScript</h2>
-<h3>File URLs</h3>
-<pre data-line="1" class="language-js line-numbers"><code class="language-js">https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.js
-</code></pre>
-
-<h2>Function and Global Variable Declaration</h2>
-
-<pre data-line="1" class="language-js line-numbers"><code class="language-js">function initInteractiveReportContextMenu(reportId) {
+## Implementation
+### 💻 Function and Global Variable Declaration
+```javascript
+function initInteractiveReportContextMenu(reportId) {
     var report = apex.region(reportId);
     
     $('#' + reportId).contextMenu({
@@ -203,29 +212,20 @@
     });
 }
 
-</code></pre>
+```
 
-
-<h2>Execute when Page Loads</h2>
-
-<pre data-line="1" class="language-js line-numbers"><code class="language-js">apex.jQuery(document).ready(function() {
+### ▶️ Execute when Page Loads
+```javascript
+apex.jQuery(document).ready(function() {
     initInteractiveReportContextMenu('IR_1');
 });
-</code></pre>
+```
 
-<h2>CSS</h2>
-<h3>File URLs</h3>
-<pre data-line="1" class="language-css line-numbers"><code class="language-css">https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.css
--- keep in comment <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.css">
-</code></pre>
-
-
-<h2>Inline CSS</h2>
-
-<pre data-line="1" class="language-css line-numbers"><code class="language-css">.context-menu-list {
+### 🎯 Inline CSS
+```css
+.context-menu-list {
     z-index: 9999 !important;
 }
-
 
 .context-menu-icon.context-menu-close-icon::before {
     content: "\2716";  /* Unicode for multiplication sign (×) which can act as a close icon */
@@ -233,20 +233,27 @@
     color: red;
     margin-right: 5px;
 }
-</code></pre>
+```
 
-# APPROACH 3 FOR NAME COLUMN
+# 👤 Approach 3: Name Column Only
+> Context Menu for the Content and Clipboard and REDIRECT_TO_PAGE_46
 
-<h1>Context Menu for the Content and Clipboard and REDIRECT_TO_PAGE_46</h1>
+## Required Files
+### 📜 JavaScript File URL
+```javascript
+https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.js
+```
 
-<h2>JavaScript</h2>
-<h3>File URLs</h3>
-<pre data-line="1" class="language-js line-numbers"><code class="language-js">https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.js
-</code></pre>
+### 🎨 CSS File URL
+```css
+https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.css
+-- keep in comment <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.css">
+```
 
-<h2>Function and Global Variable Declaration</h2>
-
-<pre data-line="1" class="language-js line-numbers"><code class="language-js">function initInteractiveReportContextMenu(reportId) {
+## Implementation
+### 💻 Function and Global Variable Declaration
+```javascript
+function initInteractiveReportContextMenu(reportId) {
     var report = apex.region(reportId);
     
     $('#' + reportId).contextMenu({
@@ -329,30 +336,20 @@
 
 
 
-</code></pre>
+```
 
-
-<h2>Execute when Page Loads</h2>
-
-<pre data-line="1" class="language-js line-numbers"><code class="language-js">apex.jQuery(document).ready(function() {
+### ▶️ Execute when Page Loads
+```javascript
+apex.jQuery(document).ready(function() {
     initInteractiveReportContextMenu('IR_1');
 });
-</code></pre>
+```
 
-<h2>CSS</h2>
-<h3>File URLs</h3>
-<pre data-line="1" class="language-css line-numbers"><code class="language-css">https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.css
--- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.9.2/jquery.contextMenu.min.css">
-
-</code></pre>
-
-
-<h2>Inline CSS</h2>
-
-<pre data-line="1" class="language-css line-numbers"><code class="language-css">.context-menu-list {
+### 🎯 Inline CSS
+```css
+.context-menu-list {
     z-index: 9999 !important;
 }
-
 
 .context-menu-icon.context-menu-close-icon::before {
     content: "\2716";  /*Unicode for multiplication sign (×) which can act as a close icon */
@@ -360,18 +357,13 @@
     color: red;
     margin-right: 5px;
 }
+```
 
-
-</code></pre>
-
-<h2>AJAX Call back</h2>
-
-
-<pre data-line="1" class="language-sql line-numbers"><code class="language-sql">
+### 🔄 AJAX Callback
+```sql
 declare
-
-lURL VARCHAR2(4000);
-lID  VARCHAR2(100);
+    lURL VARCHAR2(4000);
+    lID  VARCHAR2(100);
 BEGIN
     -- Assuming lID should be set to the cell data passed from JavaScript
     lID := apex_application.g_x01;
@@ -380,14 +372,22 @@ BEGIN
     
     apex_json.write('url', lURL);
     apex_json.close_object;
-
-
-    
-    
 END;
-</code></pre>
+```
 
+## 🔍 Key Differences Between Approaches
+1. **Approach 1**: 
+   - ✨ Shows dynamic column names
+   - 📊 Works for all columns
+   - 🏷️ Display includes column name in menu
 
+2. **Approach 2**:
+   - 📋 Generic implementation for all columns
+   - 🔤 Fixed "Cell content" label
+   - 🌐 Works across all columns
 
-
-
+3. **Approach 3**:
+   - 👤 Name column specific
+   - ⚡ Includes specialized messaging
+   - 🚫 Blocks other columns
+   - 🔄 Includes AJAX redirect functionality
