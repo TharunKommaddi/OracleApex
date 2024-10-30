@@ -1,27 +1,50 @@
-# Global Page - Context Menu - IG - Context Menu Implementation Documentation
+# Oracle APEX Context Menu Implementation Guide
+> Interactive Grid (IG) Context Menu Implementation Documentation for Global Page
+
+## Table of Contents
+1. [Required Files Location](#1-required-files-location)
+2. [Configuration Steps](#2-configuration-steps)
+3. [Implementation Code](#3-implementation-code)
+4. [Features](#4-features)
+5. [Usage Notes](#5-usage-notes)
+6. [Dependencies](#6-dependencies)
+7. [Troubleshooting](#7-troubleshooting)
 
 ## 1. Required Files Location
-The necessary files need to keep in Universal Theme under Shared Components > Themes:
-- `jquery.contextMenu.js` - Reference: `#THEME_DB_FILES#jquery.contextMenu.js`
-- `jquery.ui.position.js` - Reference: `#THEME_DB_FILES#jquery.ui.position.js`
-- `jquery.contextMenu.css` - Reference: `#THEME_DB_FILES#jquery.contextMenu.css`
+### Theme Files (Universal Theme)
+Navigate to: **Shared Components > Themes**
+- `jquery.contextMenu.js` → `#THEME_DB_FILES#jquery.contextMenu.js`
+- `jquery.ui.position.js` → `#THEME_DB_FILES#jquery.ui.position.js`
+- `jquery.contextMenu.css` → `#THEME_DB_FILES#jquery.contextMenu.css`
 
+## 2. Configuration Steps
+### Step 1: JavaScript Configuration
+Navigate to: **Shared Components > User Interface Attributes > JavaScript**
 
-## 2. File References Configuration
-Configure these files in **Shared Components > User Interface Attributes**:
-1. Navigate to: Application > User Interfaces
-2. Under the JavaScript section:
-   - Add file URLs for the JavaScript files
-      -  `jquery.contextMenu.js` - Reference: `#THEME_DB_FILES#jquery.contextMenu.js`
-      - `jquery.ui.position.js` - Reference: `#THEME_DB_FILES#jquery.ui.position.js`          
-3. Under the CSS section:
-   - Add file URL for the CSS file
-      - `jquery.contextMenu.css` - Reference: `#THEME_DB_FILES#jquery.contextMenu.css`
+Add these File URLs:
+```
+#THEME_DB_IMAGES#jquery.contextMenu#MIN#.js
+#THEME_DB_IMAGES#jquery.ui.position#MIN#.js
+```
+
+### Step 2: Required Settings
+Under "Include Deprecated or Desupported Javascript Functions":
+- ✅ Enable **18.x**
+- ✅ Enable **Include jQuery Migrate**
+- ❌ Do NOT enable "Pre 18.1"
+
+### Step 3: CSS Configuration
+Navigate to: **User Interface Attributes > CSS**
+
+Add this File URL:
+```
+#THEME_DB_IMAGES#jquery.contextMenu.css
+```
+
+⚠️ **IMPORTANT**: Use exact file references as shown above. Any variation may cause functionality issues.
 
 ## 3. Implementation Code
-Place this code in the Global Page:
-
-### JavaScript Implementation
+### Global Page JavaScript
 ```javascript
 document.addEventListener("DOMContentLoaded", function(event) { 
     function isEmptyOrDash(text) {
@@ -69,7 +92,7 @@ document.addEventListener("DOMContentLoaded", function(event) {
 });
 ```
 
-### CSS Styling
+### Global Page CSS
 ```css
 /* Context Menu Styles */
 .context-menu-list {
@@ -93,25 +116,31 @@ document.addEventListener("DOMContentLoaded", function(event) {
 ```
 
 ## 4. Features
-- Right-click context menu for table cells
-- Excludes empty cells and cells with dash ('-')
-- Menu options:
+- ✨ Right-click context menu for table cells
+- 🚫 Auto-excludes empty cells and cells with dash ('-')
+- 📋 Menu options:
   1. Close button (red X)
   2. Cell content display
-  3. Copy to clipboard function with success message
+  3. Copy to clipboard with success message
 
 ## 5. Usage Notes
-- To exclude cells from having context menu:
-  - Add class `nocm` or `no-context-menu` to the cell
-- Menu appears on right-click on valid table cells
-- Automatic copy-to-clipboard functionality
-- German language interface messages
+- 🔒 To exclude specific cells from context menu:
+  - Add class `nocm` or `no-context-menu`
+- 🖱️ Activation: Right-click on valid table cells
+- 📋 Automatic clipboard copying
+- 🌍 Interface language: German
 
 ## 6. Dependencies
-- Universal Theme
-- jQuery
-- Font Awesome (for icons)
-- APEX version 18.x or higher
-- jQuery Migrate (ensure it's enabled in User Interface attributes)
+- 🎨 Universal Theme
+- 📚 jQuery
+- 🎯 Font Awesome (for icons)
+- 📦 APEX version 18.x or higher
+- 🔄 jQuery Migrate
 
-
+## 7. Troubleshooting
+If context menu doesn't appear:
+- ✅ Verify all file references exactly match documentation
+- 🔍 Check browser console for JavaScript errors
+- ✅ Confirm jQuery Migrate is enabled
+- 🔍 Verify cell doesn't have `nocm` or `no-context-menu` classes
+- ✅ Check cell content isn't empty or just '-'
