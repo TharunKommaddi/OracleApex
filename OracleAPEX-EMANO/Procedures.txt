@@ -1,0 +1,1374 @@
+"-- Procedure: DEBUG
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."DEBUG" (akommentar1 in varchar2 default null, akommentar2 in varchar2 default null) is
+pragma autonomous_transaction;
+begin
+    insert into t_debug(kommentar1, kommentar2) values (akommentar1, akommentar2);
+    commit;
+end ;
+/
+======================================================
+"
+"-- Procedure: PADDMEILENSTEINTODATEN
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."PADDMEILENSTEINTODATEN" (asuchid number )
+as
+    jobj_1 clob :=null;
+    jobj_2 clob:=null;
+    jobj_3 clob:=null;
+    cur_suchid number :=0;
+    s_id number :=0;
+    co number :=0;
+    arr_dat clob :='[';
+begin
+for cur in (
+            select * from (
+                select sucheid, row_number() over( order by rownum) rn,  
+                --to_date(t.ms,'dd.mm.yyyy') ms_d,  to_date(t.sop, 'dd.mm.yyyy') sop, to_date(t.eop, 'dd.mm.yyyy') eop, 
+                t.laender laen , t.themen them,   t.smode smod, t.ckd_fbu_mode fbu_m,   t.l_risk l_r, t.h_risk h_r ,
+                t.ms ms_d, t.sop sop, t.eop eop
+                from t_suche_json t, json_table (t.suchdaten, '$[*]'  columns  (
+                nested path '$[*]' COLUMNS(
+                   laender varchar2(500) PATH '$.LAENDER',
+                    themen varchar2(2000) path '$.THEMEN',
+                    l_risk number path '$.LOW_RISK',
+                    h_risk number path '$.HIGH_RISK',
+                    ms varchar2(20) path '$.DATUM_MEILENSTEIN',
+                    sop varchar2 path '$.DATUM_SOP',
+                    eop varchar2(20) path '$.DATUM_EOP',
+                    smode varchar2(20) path '$.SUCHTYP',
+                    ckd_fbu_mode number path'$.CKD_FBU_MODE'
+                ) ) ) t   where sucheid = asuchid  
+            )
+    )
+
+  loop
+    co:= co+1;
+
+    if (co=1) then
+        with cte as ( SELECT cur.sucheid suchid, json_object('MEILENSTEIN'  VALUE co,
+         'DATUM_MEILENSTEIN' VALUE cur.ms_d,
+         'DATUM_SOP' VALUE cur.sop,
+         'DATUM_EOP' VALUE cur.eop,
+         'LAENDER' VALUE cur.laen,
+         'THEMEN' VALUE cur.them,
+         'SUCHTYP' VALUE cur.smod,
+         'CKD_FBU_MODE' VALUE cur.fbu_m ,
+         'HIGH_RISK' VALUE cur.h_r,
+         'LOW_RISK' VALUE cur.l_r ) jobject  from dual
+        )
+         select jobject, suchid into jobj_1, cur_suchid from cte;
+        -- dbms_output.put_line('s_id:'||cur_suchid ||', suche:'|| TO_CHAR(SUBSTR (jobj_1,0,3999)));
+    elsif (co=2) then
+        with cte as (  SELECT cur.sucheid suchid, json_object('MEILENSTEIN'  VALUE co,
+         'DATUM_MEILENSTEIN' VALUE cur.ms_d,
+         'DATUM_SOP' VALUE cur.sop,
+         'DATUM_EOP' VALUE cur.eop,
+         'LAENDER' VALUE cur.laen,
+         'THEMEN' VALUE cur.them,
+         'SUCHTYP' VALUE cur.smod,
+         'CKD_FBU_MODE' VALUE cur.fbu_m ,
+         'HIGH_RISK' VALUE cur.h_r,
+         'LOW_RISK' VALUE cur.l_r ) jobject  from dual
+        )
+        select jobject, suchid into jobj_2, cur_suchid from cte;
+        dbms_output.put_line('s_id:'||cur_suchid ||', suchid:'|| TO_CHAR(SUBSTR (jobj_2,0,3999)));
+    else
+        with cte as ( SELECT cur.sucheid suchid, json_object('MEILENSTEIN'  VALUE co,
+         'DATUM_MEILENSTEIN' VALUE cur.ms_d,
+         'DATUM_SOP' VALUE cur.sop,
+         'DATUM_EOP' VALUE cur.eop,
+         'LAENDER' VALUE cur.laen,
+         'THEMEN' VALUE cur.them,
+         'SUCHTYP' VALUE cur.smod,
+         'CKD_FBU_MODE' VALUE cur.fbu_m ,
+         'HIGH_RISK' VALUE cur.h_r,
+         'LOW_RISK' VALUE cur.l_r ) jobject  from dual
+        )
+        select jobject, suchid into jobj_3, cur_suchid from cte;
+        dbms_output.put_line('s_id:'||cur_suchid ||', suchid:'|| TO_CHAR(SUBSTR (jobj_3,0,3999)));
+    end if;
+
+  end loop;
+  if(0 < co) then
+      dbms_lob.append(arr_dat, jobj_1);
+      if(jobj_2 is not null) then
+         dbms_lob.append(arr_dat,',');
+         dbms_lob.append(arr_dat, jobj_2);
+       end if;
+       if(jobj_3 is not null) then
+         dbms_lob.append(arr_dat,',');
+         dbms_lob.append(arr_dat, jobj_3);
+       end if;
+      dbms_lob.append(arr_dat,']');
+      --INSERT INTO test_json (jid , suchdaten ) 
+      --values( 105, arr_dat );
+      update t_suche_json set suchdaten = arr_dat where sucheid = asuchid;
+  end if;
+
+end paddMeilensteintoDaten;
+/
+======================================================
+"
+"-- Procedure: PBENACHRICHT_MFV_ARBEITSKREISE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."PBENACHRICHT_MFV_ARBEITSKREISE" (
+   aVorschriftid in number, aBereich in varchar2, benutzerId in number)
+     is                                -- :P100_THEMENIDS
+    --lThemenliste apex_t_number := apex_string.split_numbers('1314:1189',':');
+    lBenachricht_ids varchar2(900);
+    lAkIds_for_update varchar2(900);
+    lAkIds_for_insert varchar2(900);
+    lAk_Idliste  varchar2(900);
+BEGIN
+  -- all ak of MFVs for given Vorschr
+  select  listagg(distinct et_b_akid,':') within group (order by et_b_akid)
+    into lAk_Idliste
+    from (
+     select distinct mra.et_b_akid as et_b_akid  --, mrv.letzte_aenderung_datum
+       from T_MFV_REF_VORSCHRIFT mrv
+       join T_MFV m             on (mrv.mfvid = m.mfvid)
+       join T_MFV_REF_et_b_ak mra on (mra.mfvid = m.mfvid)
+        -- join T_VORSCHRIFT_REF_et_b_ak vra on (vra.VORSCHRIFTid = mrv.VORSCHRIFTid)
+      where mrv.VORSCHRIFTid = aVorschriftid  
+
+     MINUS     -- ak von Benutzer 
+     select arb.et_b_akid as et_b_akid
+       from T_et_b_ak_ref_benutzer arb
+      where arb.benutzerid = benutzerId
+  );
+   -- inform über änderung in Themen_liste
+  -- empty do nothing 
+  if( length(lAk_Idliste) > 1) then
+   IF aBereich = 'Themen' then
+       select listagg(benachrichtigungId, ':') within group (order by benachrichtigungId),
+           listagg(ArbeitskreisId, ':') within group (order by ArbeitskreisId)
+         into lBenachricht_ids, lAkIds_for_update
+         from t_benachrichtigung 
+        where vorschriftid = aVorschriftid and GRUND =70 
+          and erstellung_datum > sysdate -1
+          and arbeitskreisid in (select column_value from table (apex_string.split_numbers(lAk_Idliste,':')))
+          and GRUND70_THEMEN not in (1);
+
+        if (length(lAkIds_for_update)>1) then
+           UPDATE t_benachrichtigung set benachrichtigung_text = benachrichtigung_text || ', ' || aBereich ,
+                                   GRUND70_THEMEN =1
+            WHERE benachrichtigungId in ( select column_value from table (apex_string.split_numbers(lBenachricht_ids,':')));
+        end if;
+
+      ELSIF aBereich = 'Datum' then
+        select listagg(benachrichtigungId, ':') within group (order by benachrichtigungId),
+           listagg(ArbeitskreisId, ':') within group (order by ArbeitskreisId)
+         into lBenachricht_ids, lAkIds_for_update
+         from t_benachrichtigung 
+        where vorschriftid = aVorschriftid and GRUND =70 
+          and erstellung_datum > sysdate -1
+          and arbeitskreisid in (select column_value from table (apex_string.split_numbers(lAk_Idliste,':')))
+          and GRUND70_DATUM not in (1);
+
+        if (length(lAkIds_for_update)>1) then
+           UPDATE t_benachrichtigung set benachrichtigung_text = benachrichtigung_text || ', ' || aBereich ,
+                                   GRUND70_DATUM =1
+            WHERE benachrichtigungId in ( select column_value from table (apex_string.split_numbers(lBenachricht_ids,':')));
+        end if;
+     ELSE  -- if aBereich = 'Laender' then
+        select listagg(benachrichtigungId, ':') within group (order by benachrichtigungId),
+           listagg(ArbeitskreisId, ':') within group (order by ArbeitskreisId)
+         into lBenachricht_ids, lAkIds_for_update
+         from t_benachrichtigung 
+        where vorschriftid = aVorschriftid and GRUND =70 
+          and erstellung_datum > sysdate -1
+          and arbeitskreisid in (select column_value from table (apex_string.split_numbers(lAk_Idliste,':')))
+          and GRUND70_LAENDER not in (1);
+
+        if (length(lAkIds_for_update)>1) then
+           UPDATE t_benachrichtigung set benachrichtigung_text = benachrichtigung_text || ', ' || aBereich ,
+                                   GRUND70_LAENDER =1
+            WHERE benachrichtigungId in ( select column_value from table (apex_string.split_numbers(lBenachricht_ids,':')));
+        end if;
+    END IF;
+
+  -- insert Nachricht für  restliche Arbeitskreise
+
+    SELECT listagg(distinct ArbeitskreisId, ':') within group (order by ArbeitskreisId)
+      into lAkIds_for_insert
+      FROM
+     ( select column_value as ArbeitskreisId from table (apex_string.split_numbers(lAk_Idliste,':'))
+      MINUS
+      select column_value as ArbeitskreisId from table (apex_string.split_numbers(lAkIds_for_update,':'))
+     );
+
+     if (length(lAkIds_for_insert)>1) then
+         PCK_RI_Benachrichtigung.pBenachrichtigung( aVorschriftid, lAkIds_for_insert,
+               ' Vorschrift wurde geändert in Bereichen: ' || aBereich, 70, 0, benutzerId );
+     end if;
+
+  end if;
+END;
+/
+======================================================
+"
+"-- Procedure: PCHECKDIFF_IN_KRAFT_DATUM
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."PCHECKDIFF_IN_KRAFT_DATUM" (avorschriftid IN NUMBER) RETURN NUMBER
+AS
+    l_ret number:=0;
+    l_co number  :=0;
+    l_getex_key varchar2(64);
+    l_in_force_date_gx date;
+    l_in_kraft_datum_regindex varchar2(32);
+BEGIN
+    select count(*) into l_co   
+    from t_Vorschrift_ref_einsatzdatum_typ
+    where Vorschriftid = avorschriftid --:P29_VORSCHRIFTID 
+    and einsatzdatum_typid = 1000;
+    -- go over getex key,
+    select regindexid  into  l_getex_key  
+    from T_VORSCHRIFT
+    where  vorschriftid = avorschriftid;  
+    if (l_getex_key is null) then
+        return 0;  -- keine daten von Getex
+    end if;
+
+    select REV_INFORCE_DATUM into l_in_force_date
+    from V_GETEX_VORSCHRIFT 
+    where  reg_id = l_getex_key
+    and rev_current ='true' ;
+
+    if (l_co > 0 ) then
+     select to_char(einsatzdatum, 'dd.mm.yyyy') into l_in_kraft_datum_regindex
+            from t_Vorschrift_ref_einsatzdatum_typ
+            where Vorschriftid = avorschriftid 
+            and einsatzdatum_typid = 1000 and rownum < 2;
+    end if;
+
+    if (l_in_force_date is null and l_in_kraft_datum_regindex is null) then
+        return 0;
+    elsif ( l_in_force_date is null and l_in_kraft_datum_regindex is not null
+         or l_in_force_date is not null and l_in_kraft_datum_regindex is null
+         or to_char(l_in_force_date, 'dd.mm.yyyy') != l_in_kraft_datum_regindex
+    ) then
+        return 1;
+    end if;
+
+    return l_ret;
+END;
+/
+======================================================
+"
+"-- Procedure: PDATUMAUSSERKRAFT
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."PDATUMAUSSERKRAFT" (aVorschriftID in number, aModus in number, aStatus out number, aValidation out varchar2) is
+-- aModus: 10 = validieren, 20 = ausführen
+-- aStatus: 20 = Datum wurde für mindestens eine Vorschrift gesetzt
+--          10 = Für mindestens eine Vorschrift wurde im Validationsmodus eine Änderung ausgemacht
+begin
+
+    aStatus := 0;
+
+    for x in (
+        select v.*, vs.vorschrift_nummer, vs.dokumentendatum, et.einsatzdatum_typ
+        from v_datum_ausser_kraft v
+        join t_vorschrift vs on (v.vorgaenger_vorschriftid = vs.vorschriftid)
+        join t_einsatzdatum_typ et on (v.typ_vv = et.einsatzdatum_typid)
+        where nachfolger_vorschriftid = aVorschriftID
+        and anwendungsfall is not null
+        and not (nvl(datum_vv,sysdate-10000) = datum_nv - 1)
+        and manuelle_eintragung = 20
+        and publ_name != 'UNECE'
+    ) loop
+
+
+
+        if (aModus = 20) then
+
+            merge into t_vorschrift_ref_einsatzdatum_typ t
+            using (
+                select x.datum_nv - 1 as datum, x.typ_vv as einsatzdatum_typid, x.vorgaenger_vorschriftid as vorschriftid,
+                'System Berechnung über Nachfolger' as text
+                from dual
+            ) u
+            on (t.einsatzdatum_typid = u.einsatzdatum_typid and t.vorschriftid = u.vorschriftid)
+            when matched then update set
+                t.einsatzdatum = u.datum, t.einsatzdatum_text = u.text, manuelle_eintragung = 20
+            when not matched then insert (
+                vorschriftid, einsatzdatum_typid, einsatzdatum,
+                einsatzdatum_text, manuelle_eintragung
+            ) values (
+                u.vorschriftid, u.einsatzdatum_typid, u.datum,
+                u.text, 20
+            );
+
+            aStatus := 20;
+
+        else 
+
+            aValidation := aValidation || 'Für die Vorschrift "' || x.vorschrift_nummer || '" (' || to_char(x.dokumentendatum,'dd.mm.yyyy') || ') wird das ' || x.einsatzdatum_typ || ' auf den ' || to_char(x.datum_nv-1,'dd.mm.yyyy') || ' festgelegt.<br />';
+            aStatus := 10;
+
+        end if;
+
+
+    end loop;
+
+    return;
+
+
+
+
+end;
+/
+======================================================
+"
+"-- Procedure: PIMPORTFROMZIP_SNIPPET
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."PIMPORTFROMZIP_SNIPPET" (aGetexZIPId number, askipfiles number, aimp_files number) AS
+     l_zip_file      blob;
+        l_files apex_zip.t_files;  
+        l_unzipped_file blob;
+        l_readNum number :=0;
+        l_startNum number :=0;
+   BEGIN
+        l_startNum :=askipfiles+1;   
+        select daten  into l_zip_file  from t_x_getex_zip
+        where getex_zipid = aGetexZIPID;
+
+        l_files := apex_zip.get_files (
+            p_zipped_blob => l_zip_file
+        );
+        debug ('AB proc: files in zip: ' || l_files.count);
+        if(l_files.count < (askipfiles + aimp_files)) then
+          l_readNum := l_files.count;
+        else
+            l_readNum :=  askipfiles + aimp_files;
+        end if;
+        for i in l_startNum .. l_readNum loop
+          l_unzipped_file := apex_zip.get_file_content (
+                p_zipped_blob => l_zip_file,
+                p_file_name   => l_files(i)
+            );   
+            insert into T_X_AB_IMPORT(daten)
+            values (emano_util.fBlobToClob(l_unzipped_file, nls_charset_id('AL32UTF8'))); 
+
+        end loop;
+        debug ('AB proc: files inserted: ' || aimp_files);
+   END;
+/
+======================================================
+"
+"-- Procedure: PSETATTRIBUTESFOR_AB_IMPORT
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."PSETATTRIBUTESFOR_AB_IMPORT" as
+     l_co number :=0;
+  begin
+    for cur in ( WITH imp_line AS ( select getex_importid, DATEN from T_X_AB_IMPORT )
+          SELECT reg_id, regindex_id, il.getex_importid
+            FROM  imp_line il, JSON_TABLE ( il.DATEN,   '$'
+         COLUMNS( reg_id VARCHAR2(32)    PATH '$.id'
+              , reg_num VARCHAR2(128)    PATH '$.regulationNumber' 
+              , NESTED PATH '$.revisions[*]' columns(
+               regindex_id NUMBER(16)   PATH '$.sourceInfo.regindexId'
+              )
+    )) )
+    loop
+     update T_X_AB_IMPORT 
+        set getex_schluessel = cur.reg_id,    status = 1,
+           vorschriftid  = cur.regindex_id
+     where getex_importid = cur.getex_importid 
+       and getex_schluessel is null and (status is null ); --or Status != 2);
+     l_co:= l_co+1;
+    end loop;
+
+  end;
+/
+======================================================
+"
+"-- Procedure: PSETVORSCHRIFTINKRAFT
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."PSETVORSCHRIFTINKRAFT" 
+  is 
+  v_id number;
+
+ BEGIN
+  FOR cu in ( SELECT  v.vorschriftid as vorschriftid --,   vre.einsatzdatum, e.einsatzdatum_typid , vre.einsatzdatum , v.vorschrift_statusid
+             FROM  t_einsatzdatum_typ e
+            join  T_Vorschrift_ref_einsatzdatum_typ vre on ( e.einsatzdatum_typid = vre.einsatzdatum_typid)
+            join t_vorschrift v on (v.vorschriftid = vre.vorschriftid)
+            WHERE vre.einsatzdatum_typid =1000 and v.vorschrift_statusid != 40 and (sysdate - vre.einsatzdatum ) between 0 and 1 
+            ) 
+   LOOP
+     --fetch cu into v_id;
+     --IF cu%notfound THEN 
+      -- exit;
+    -- ELSE
+       v_id := cu.vorschriftid;
+       dbms_output.put_line(' vorschriftid:' || to_char(cu.vorschriftid));
+       UPDATE t_vorschrift  
+          set vorschrift_statusid=40 
+       where  vorschriftid = cu.vorschriftid ;
+       -- send benachrichtigung an admin
+       --begin
+       -- benachrichtigung an Administratoren
+            pck_ri_benachrichtigung.pbenachrichtigung(cu.vorschriftid, '1000', 
+            'Status von Vorschrift ist automatisch in -Enacted- gesetzt', 0, 1);
+               --DBMS_OUTPUT.PUT_LINE(' Status von ' || v_id || ' ist aktualisiert.');
+--            EXCEPTION when OTHERS then
+--            rollback;
+        --end;
+   --  END IF;
+   END LOOP;
+   COMMIT;
+  -- close cu;
+ END;
+/
+======================================================
+"
+"-- Procedure: PTHEMENDIFF_VORGAENGER
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."PTHEMENDIFF_VORGAENGER" (aVorschriftid number ) is
+
+  lst_vorgaengerIds Varchar2(2000);
+  lst_nachfolgerIds Varchar2(2000);
+  l_co number :=0;
+  list_Ak Varchar2(2000);
+  list_Ak_nachf Varchar2(2000);
+begin
+  -- 1. suche vorgaenger 
+   select  count(*) into l_co  from t_vorschrift_ref_vorschrift 
+    where beziehung_art = 10 and nachfolger_vorschriftid = aVorschriftid ;
+   if(l_co >0) then
+        select  listagg(vorgaenger_vorschriftid, ':' ) within group (order by vorgaenger_vorschriftid)
+          into lst_vorgaengerIds
+          from t_vorschrift_ref_vorschrift 
+         where beziehung_art = 10 and nachfolger_vorschriftid = aVorschriftid ;
+
+    WITH vorg_th as ( 
+          select themaid from t_vorschrift_ref_thema 
+            where geloescht!=1 and vorschriftid in 
+                        ( select column_value from table(apex_string.split_numbers(lst_vorgaengerIds, ':')) )  
+    ),
+    eig_th as ( select themaid from t_vorschrift_ref_thema  where geloescht!=1 and vorschriftid in ( aVorschriftid)
+    )    
+     SELECT listagg(distinct et_b_akid, ':') within group (order by et_b_akid) into list_Ak
+     from
+     (
+       select distinct et_b_akid    
+         from T_thema_ref_et_b_ak tra
+         join eig_th on (eig_th.themaid = tra.themaid)
+         join vorg_th on (vorg_th.themaid != tra.themaid)
+       UNION
+        select distinct et_b_akid   
+         from T_thema_ref_et_b_ak tra 
+         join vorg_th on (vorg_th.themaid = tra.themaid)
+         join eig_th on (eig_th.themaid != tra.themaid)
+     ) ; 
+
+   pck_ri_benachrichtigung.pBenachrichtigung(aVorschriftid, list_Ak,
+               'Unterschiedliche Themengebietszuordnungen zwischen Vorgänger und Nachfolger einer Vorschrift', 120, 0 );
+   end if;
+    --2. nachfolger themas
+   select count(*) into l_co from t_vorschrift_ref_vorschrift 
+    where beziehung_art = 10 and vorgaenger_vorschriftid = aVorschriftid ;
+   if(l_co >0) then
+        select listagg(nachfolger_vorschriftid, ':' ) within group (order by nachfolger_vorschriftid)
+          into lst_nachfolgerIds
+          from t_vorschrift_ref_vorschrift 
+         where beziehung_art = 10 and vorgaenger_vorschriftid = aVorschriftid ;
+
+       WITH nachf_th as ( 
+          select themaid from t_vorschrift_ref_thema 
+            where geloescht!=1 and vorschriftid in 
+                        ( select column_value from table(apex_string.split_numbers(lst_nachfolgerIds, ':')) )  
+      ),
+       eig_th as ( select themaid from t_vorschrift_ref_thema  where geloescht!=1 and vorschriftid in ( aVorschriftid)
+      )    
+      SELECT listagg(distinct et_b_akid, ':') within group (order by et_b_akid) into list_Ak_nachf
+      from
+      (
+       select distinct et_b_akid    
+         from T_thema_ref_et_b_ak tra
+         join eig_th on (eig_th.themaid = tra.themaid)
+         join nachf_th on (nachf_th.themaid != tra.themaid)
+       UNION
+        select distinct et_b_akid   
+         from T_thema_ref_et_b_ak tra 
+         join nachf_th on (nachf_th.themaid = tra.themaid)
+         join eig_th on (eig_th.themaid != tra.themaid)
+      ) 
+      where et_b_akid not in (select column_value from table(apex_string.split_numbers(list_Ak, ':'))) ; 
+
+      pck_ri_benachrichtigung.pBenachrichtigung(aVorschriftid, list_Ak_nachf,
+               'Unterschiedliche Themengebietszuordnungen zwischen Vorgänger und Nachfolger einer Vorschrift', 120, 0 );
+   end if;
+end;
+/
+======================================================
+"
+"-- Procedure: PVERGLEICHATTRIBUTEVONGETEX
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."PVERGLEICHATTRIBUTEVONGETEX" (avorschriftid IN number )
+as
+   l_difference number :=0;
+   l_getex_schluessel varchar2(64);
+   l_upd_status number := 30;  --  getex vorsch. nicht vorhanden
+    l_diff_einsatzmod number :=0;
+    l_diff_thema number :=0;
+    l_diff_land number :=0;
+    l_diff_fz_typ number :=0;
+    l_diff_antriebsart number :=0;
+    l_diff_einsatzdaten number :=0;
+    --l_diff_ number :=0;
+    --l_thema_lst varchar2(1000);
+    l_co number :=0;
+
+ BEGIN
+  --select vorschriftid from t_vorschrift where regindexid ='653637c222dcb94d41b636ac'  12820
+   select count(*) into l_co
+     from v_getex_vorschrift 
+    where reg_id = (select REGINDEXID from t_vorschrift where vorschriftid = avorschriftid 
+                        and REGINDEXID is not null);
+   if (l_co >0) then
+      select  reg_id into l_getex_schluessel
+        from v_getex_vorschrift 
+       where reg_id = (select REGINDEXID from t_vorschrift where vorschriftid = avorschriftid 
+                        and REGINDEXID is not null);
+   end if;
+     DBMS_OUTPUT.PUT_LINE('g_schl:' || l_getex_schluessel);
+   if (l_getex_schluessel is null ) then
+     update t_vorschrift set status_update_getex = l_upd_status  
+      where vorschriftid = avorschriftid;
+     return;
+   end if;
+   -- check einsatzmodel differ
+   select count(*) into l_diff_einsatzmod   --g.v_id, v.vorschrift_nummer,  v.document_typeid, g.rev_documenttype, g.v_timelinedatetype,v.einsatzdatum_modellid
+     from t_Vorschrift v
+     join v_getex_vorschrift g on (v.regindexid is not null and g.reg_id = v.regindexid)
+    where v.Vorschriftid  = avorschriftid
+      and decode (g.timelinedatetype, 'MODELYEAR',30, 'CHINA',20 , 'EU',10, 10) != v.einsatzdatum_modellid
+      and (v.document_typeid is null or v.document_typeid != 1000);
+
+    if (l_diff_einsatzmod > 0) then
+      update t_vorschrift set status_update_getex = 20  
+       where vorschriftid = avorschriftid; --        l_difference:= l_difference+1;
+       DBMS_OUTPUT.PUT_LINE('diff_einsatzmod');
+        return;
+     end if;  
+     ----
+   -- Laender check diff
+    select count( REGINDEX_LANDID) into l_diff_land 
+      from V_GETEX_VORSCHRIFT_LAND 
+     where v_id = l_getex_schluessel 
+       and REGINDEX_LANDID not in (select landid from t_vorschrift_ref_land  where vorschriftid = avorschriftid and geloescht =0);
+
+    if (l_diff_land > 0) then
+      update t_vorschrift set status_update_getex = 20 
+       where vorschriftid = avorschriftid;   --  l_difference:= l_difference+1;
+       DBMS_OUTPUT.PUT_LINE('diff_land');
+      return;
+    end if;
+     --  reverse  check ----
+     select count(*)  into l_diff_land
+      from t_vorschrift_ref_land 
+     where vorschriftid = avorschriftid 
+      and geloescht =0
+       and landid not in (select regindex_landid  from V_GETEX_VORSCHRIFT_LAND 
+                         where v_id = l_getex_schluessel     --'653637c222dcb94d41b636ac'  
+       );
+
+     select count(*) into l_diff_land
+      from t_vorschrift_ref_land 
+     where vorschriftid = avorschriftid and geloescht =0
+       and landid not in (select regindex_landid  from V_GETEX_VORSCHRIFT_LAND 
+                         where v_id = l_getex_schluessel 
+       );
+
+    if (l_diff_land > 0) then
+       update t_vorschrift set status_update_getex = 20 
+        where vorschriftid = avorschriftid;  --  l_difference:= l_difference+1;
+        DBMS_OUTPUT.PUT_LINE('diff_land  rever');
+       return;
+    end if;
+
+   --themen check diff          '653637c222dcb94d41b636ac'  12820
+   select count( REGINDEX_THEMAID)  into l_diff_thema 
+     from V_GETEX_VORSCHRIFT_THEMA 
+    where v_id = l_getex_schluessel 
+     and REGINDEX_THEMAID not in (  select themaid from t_vorschrift_ref_Thema 
+                                where vorschriftid =  avorschriftid  and geloescht =0);
+
+    if (l_diff_thema > 0) then
+      update t_vorschrift set status_update_getex = 20 
+       where vorschriftid = avorschriftid; 
+       DBMS_OUTPUT.PUT_LINE('diff_thema');
+      return;
+    end if;
+   -- reverse check ---    --select * from T_THEMA where themaid in ( 1191)
+   select count(themaid) into l_diff_thema 
+     from t_vorschrift_ref_Thema 
+    where vorschriftid =  avorschriftid 
+      and geloescht =0
+      and themaid not in (select REGINDEX_THEMAID  from V_GETEX_VORSCHRIFT_THEMA 
+                           where v_id =  l_getex_schluessel);
+   if (l_diff_thema > 0) then  --      l_difference:= l_difference+1;
+      update t_vorschrift set status_update_getex = 20 
+       where vorschriftid = avorschriftid; 
+        DBMS_OUTPUT.PUT_LINE('diff_thema rev');
+      return;
+   end if;
+
+  --antriebsart check diff
+   select count(vra.antriebsartid) into l_diff_antriebsart 
+    from t_vorschrift_ref_antriebsart vra
+    join t_antriebsart aa on (aa.antriebsartid = vra.antriebsartid)
+   where vra.vorschriftid = avorschriftid 
+     and geloescht =0
+     and aa.mapping_GETEX not in (select antriebsart from v_GETEX_vorschrift_antriebsart where v_id =  l_getex_schluessel);
+
+    if (l_diff_antriebsart > 0) then
+       update t_vorschrift set status_update_getex = 20 
+        where vorschriftid = avorschriftid; 
+         DBMS_OUTPUT.PUT_LINE('diff_antr art');
+       return;
+    end if;
+  -- reverse
+  select count(antriebsart) into l_diff_antriebsart 
+  from v_GETEX_vorschrift_antriebsart where v_id =  l_getex_schluessel
+  and antriebsart not in (select aa.mapping_GETEX from t_antriebsart aa 
+                         join t_vorschrift_ref_antriebsart vra on (aa.antriebsartid = vra.antriebsartid)
+                         where vra.vorschriftid = avorschriftid and geloescht =0);
+
+    if (l_diff_antriebsart > 0) then
+         update t_vorschrift set status_update_getex = 20 
+       where vorschriftid = avorschriftid; 
+        DBMS_OUTPUT.PUT_LINE('diff_ant_art rev');
+       return;
+     end if;
+
+
+   -- fahrzeugklasse check diff     --  '653637c222dcb94d41b636ac')
+   select count(vrf.fahrzeugklasseid) into l_diff_fz_typ 
+   from t_vorschrift_ref_fahrzeugklasse vrf
+   --join t_fahrzeugklasse fk on (fk.fahrzeugklasseid = vrf.fahrzeugklasseid)
+  where vrf.vorschriftid =  avorschriftid 
+    --and vrf.geloescht =0
+    and vrf.fahrzeugklasseid not in (select fahrzeugklasseid from v_GETEX_vorschrift_FZ_TYP where v_id =  l_getex_schluessel);
+
+    if (l_diff_fz_typ > 0) then
+        update t_vorschrift set status_update_getex = 20 
+       where vorschriftid = avorschriftid;
+        DBMS_OUTPUT.PUT_LINE('diff_fz_typ');
+       return;
+     end if;
+
+     -- reverse check
+     select count(fahrzeugklasseid) into l_diff_fz_typ
+       from v_GETEX_vorschrift_FZ_TYP 
+      where v_id = l_getex_schluessel
+        and fahrzeugklasseid not in (select vrf.fahrzeugklasseid 
+                                    from t_vorschrift_ref_fahrzeugklasse vrf  
+                                     where vrf.vorschriftid = avorschriftid );
+     if (l_diff_fz_typ > 0) then
+       update t_vorschrift set status_update_getex = 20 
+        where vorschriftid = avorschriftid;
+        DBMS_OUTPUT.PUT_LINE('diff_fz_typ rever');
+       return;
+     end if;
+
+   -- einsatzdaten check diff
+    if( 0 < fcheckDiffGetexVorschriftEinsatzDaten(l_getex_schluessel, avorschriftid )) then
+      update t_vorschrift set status_update_getex = 20 
+       where vorschriftid = avorschriftid;
+       DBMS_OUTPUT.PUT_LINE('diff_einsatzdat');
+      return;
+     end if;
+
+   -- result
+    if (l_difference = 0) then
+       l_upd_status := 10;
+    else 
+       l_upd_status := 20;
+    end if;
+    update t_vorschrift set status_update_getex = l_upd_status 
+     where vorschriftid = avorschriftid;
+
+ END pVergleichAttributevonGetex;
+/
+======================================================
+"
+"-- Procedure: PVERGLEICHTEST
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."PVERGLEICHTEST" ( avorschriftid IN number )
+as
+   l_difference number :=0;
+   l_getex_schluessel varchar2(64);
+   l_upd_status number := 30;  --  getex vorsch. nicht vorhanden
+    l_diff_einsatzmod number :=0;
+    l_diff_thema number :=0;
+    l_diff_land number :=0;
+    l_diff_fz_typ number :=0;
+    l_diff_antriebsart number :=0;
+    l_diff_einsatzdaten number :=0;
+    --l_diff_ number :=0;
+    --l_thema_lst varchar2(1000);
+    l_co number :=0;
+
+ BEGIN
+  --select vorschriftid from t_vorschrift where regindexid ='653637c222dcb94d41b636ac'  12820
+   select count(*) into l_co
+     from v_getex_vorschrift 
+    where reg_id = (select REGINDEXID from t_vorschrift where vorschriftid = avorschriftid 
+                        and REGINDEXID is not null);
+   DBMS_OUTPUT.PUT_LINE('l_co:' || l_co);
+   if (l_co >0) then
+      select  reg_id into l_getex_schluessel
+        from v_getex_vorschrift 
+       where reg_id = (select REGINDEXID from t_vorschrift where vorschriftid = avorschriftid 
+                        and REGINDEXID is not null);
+   end if;
+     DBMS_OUTPUT.PUT_LINE('g_schl:' || l_getex_schluessel);
+   if (l_getex_schluessel is null   ) then
+     update t_vorschrift set status_update_getex = l_upd_status  
+      where vorschriftid = avorschriftid;
+     return;
+   end if;
+END;
+
+
+  -- ******   *****************************************************************
+  --**             PROCEDURE  VergleichAttribut                            ***
+  --***************************************************************************
+CREATE OR REPLACE PROCEDURE pVergleichAttributevonGetex(avorschriftid IN number )
+as
+   l_difference number :=0;
+   l_getex_schluessel varchar2(64);
+   l_upd_status number := 30;  --  getex vorsch. nicht vorhanden
+    l_diff_einsatzmod number :=0;
+    l_diff_thema number :=0;
+    l_diff_land number :=0;
+    l_diff_fz_typ number :=0;
+    l_diff_antriebsart number :=0;
+    l_diff_einsatzdaten number :=0;
+    --l_diff_ number :=0;
+    --l_thema_lst varchar2(1000);
+    l_co number :=0;
+
+ BEGIN
+  --select vorschriftid from t_vorschrift where regindexid ='653637c222dcb94d41b636ac'  12820
+   select count(*) into l_co
+     from v_getex_vorschrift 
+    where reg_id = (select REGINDEXID from t_vorschrift where vorschriftid = avorschriftid 
+                        and REGINDEXID is not null);
+   if (l_co >0) then
+      select  reg_id into l_getex_schluessel
+        from v_getex_vorschrift 
+       where reg_id = (select REGINDEXID from t_vorschrift where vorschriftid = avorschriftid 
+                        and REGINDEXID is not null);
+   end if;
+     DBMS_OUTPUT.PUT_LINE('g_schl:' || l_getex_schluessel);
+   if (l_getex_schluessel is null ) then
+     update t_vorschrift set status_update_getex = l_upd_status  
+      where vorschriftid = avorschriftid;
+     return;
+   end if;
+   -- check einsatzmodel differ
+   select count(*) into l_diff_einsatzmod   --g.v_id, v.vorschrift_nummer,  v.document_typeid, g.rev_documenttype, g.v_timelinedatetype,v.einsatzdatum_modellid
+     from t_Vorschrift v
+     join v_getex_vorschrift g on (v.regindexid is not null and g.reg_id = v.regindexid)
+    where v.Vorschriftid  = avorschriftid
+      and decode (g.timelinedatetype, 'MODELYEAR',30, 'CHINA',20 , 'EU',10, 10) != v.einsatzdatum_modellid
+      and (v.document_typeid is null or v.document_typeid != 1000);
+
+    if (l_diff_einsatzmod > 0) then
+      update t_vorschrift set status_update_getex = 20  
+       where vorschriftid = avorschriftid; --        l_difference:= l_difference+1;
+       DBMS_OUTPUT.PUT_LINE('diff_einsatzmod');
+        return;
+     end if;  
+     ----
+   -- Laender check diff
+    select count( REGINDEX_LANDID) into l_diff_land 
+      from V_GETEX_VORSCHRIFT_LAND 
+     where v_id = l_getex_schluessel 
+       and REGINDEX_LANDID not in (select landid from t_vorschrift_ref_land  where vorschriftid = avorschriftid and geloescht =0);
+
+    if (l_diff_land > 0) then
+      update t_vorschrift set status_update_getex = 20 
+       where vorschriftid = avorschriftid;   --  l_difference:= l_difference+1;
+       DBMS_OUTPUT.PUT_LINE('diff_land');
+      return;
+    end if;
+     --  reverse  check ----
+     select count(*)  into l_diff_land
+      from t_vorschrift_ref_land 
+     where vorschriftid = avorschriftid 
+      and geloescht =0
+       and landid not in (select regindex_landid  from V_GETEX_VORSCHRIFT_LAND 
+                         where v_id = l_getex_schluessel     --'653637c222dcb94d41b636ac'  
+       );
+
+     select count(*) into l_diff_land
+      from t_vorschrift_ref_land 
+     where vorschriftid = avorschriftid and geloescht =0
+       and landid not in (select regindex_landid  from V_GETEX_VORSCHRIFT_LAND 
+                         where v_id = l_getex_schluessel 
+       );
+
+    if (l_diff_land > 0) then
+       update t_vorschrift set status_update_getex = 20 
+        where vorschriftid = avorschriftid;  --  l_difference:= l_difference+1;
+        DBMS_OUTPUT.PUT_LINE('diff_land  rever');
+       return;
+    end if;
+
+   --themen check diff          '653637c222dcb94d41b636ac'  12820
+   select count( REGINDEX_THEMAID)  into l_diff_thema 
+     from V_GETEX_VORSCHRIFT_THEMA 
+    where v_id = l_getex_schluessel 
+     and REGINDEX_THEMAID not in (  select themaid from t_vorschrift_ref_Thema 
+                                where vorschriftid =  avorschriftid  and geloescht =0);
+
+    if (l_diff_thema > 0) then
+      update t_vorschrift set status_update_getex = 20 
+       where vorschriftid = avorschriftid; 
+       DBMS_OUTPUT.PUT_LINE('diff_thema');
+      return;
+    end if;
+   -- reverse check ---    --select * from T_THEMA where themaid in ( 1191)
+   select count(themaid) into l_diff_thema 
+     from t_vorschrift_ref_Thema 
+    where vorschriftid =  avorschriftid 
+      and geloescht =0
+      and themaid not in (select REGINDEX_THEMAID  from V_GETEX_VORSCHRIFT_THEMA 
+                           where v_id =  l_getex_schluessel);
+   if (l_diff_thema > 0) then  --      l_difference:= l_difference+1;
+      update t_vorschrift set status_update_getex = 20 
+       where vorschriftid = avorschriftid; 
+        DBMS_OUTPUT.PUT_LINE('diff_thema rev');
+      return;
+   end if;
+
+  --antriebsart check diff
+   select count(vra.antriebsartid) into l_diff_antriebsart 
+    from t_vorschrift_ref_antriebsart vra
+    join t_antriebsart aa on (aa.antriebsartid = vra.antriebsartid)
+   where vra.vorschriftid = avorschriftid 
+     and geloescht =0
+     and aa.mapping_GETEX not in (select antriebsart from v_GETEX_vorschrift_antriebsart where v_id =  l_getex_schluessel);
+
+    if (l_diff_antriebsart > 0) then
+       update t_vorschrift set status_update_getex = 20 
+        where vorschriftid = avorschriftid; 
+         DBMS_OUTPUT.PUT_LINE('diff_antr art');
+       return;
+    end if;
+  -- reverse
+  select count(antriebsart) into l_diff_antriebsart 
+  from v_GETEX_vorschrift_antriebsart where v_id =  l_getex_schluessel
+  and antriebsart not in (select aa.mapping_GETEX from t_antriebsart aa 
+                         join t_vorschrift_ref_antriebsart vra on (aa.antriebsartid = vra.antriebsartid)
+                         where vra.vorschriftid = avorschriftid and geloescht =0);
+
+    if (l_diff_antriebsart > 0) then
+         update t_vorschrift set status_update_getex = 20 
+       where vorschriftid = avorschriftid; 
+        DBMS_OUTPUT.PUT_LINE('diff_ant_art rev');
+       return;
+     end if;
+
+
+   -- fahrzeugklasse check diff     --  '653637c222dcb94d41b636ac')
+   select count(vrf.fahrzeugklasseid) into l_diff_fz_typ 
+   from t_vorschrift_ref_fahrzeugklasse vrf
+   --join t_fahrzeugklasse fk on (fk.fahrzeugklasseid = vrf.fahrzeugklasseid)
+  where vrf.vorschriftid =  avorschriftid 
+    --and vrf.geloescht =0
+    and vrf.fahrzeugklasseid not in (select fahrzeugklasseid from v_GETEX_vorschrift_FZ_TYP where v_id =  l_getex_schluessel);
+
+    if (l_diff_fz_typ > 0) then
+        update t_vorschrift set status_update_getex = 20 
+       where vorschriftid = avorschriftid;
+        DBMS_OUTPUT.PUT_LINE('diff_fz_typ');
+       return;
+     end if;
+
+     -- reverse check
+     select count(fahrzeugklasseid) into l_diff_fz_typ
+       from v_GETEX_vorschrift_FZ_TYP 
+      where v_id = l_getex_schluessel
+        and fahrzeugklasseid not in (select vrf.fahrzeugklasseid 
+                                    from t_vorschrift_ref_fahrzeugklasse vrf  
+                                     where vrf.vorschriftid = avorschriftid );
+     if (l_diff_fz_typ > 0) then
+       update t_vorschrift set status_update_getex = 20 
+        where vorschriftid = avorschriftid;
+        DBMS_OUTPUT.PUT_LINE('diff_fz_typ rever');
+       return;
+     end if;
+
+   -- einsatzdaten check diff
+    if( 0 < fcheckDiffGetexVorschriftEinsatzDaten(l_getex_schluessel, avorschriftid )) then
+      update t_vorschrift set status_update_getex = 20 
+       where vorschriftid = avorschriftid;
+       DBMS_OUTPUT.PUT_LINE('diff_einsatzdat');
+      return;
+     end if;
+
+   -- result
+    if (l_difference = 0) then
+       l_upd_status := 10;
+    else 
+       l_upd_status := 20;
+    end if;
+    update t_vorschrift set status_update_getex = l_upd_status 
+     where vorschriftid = avorschriftid;
+
+ END pVergleichAttributevonGetex;
+
+ --++++++++++++++++++++++++++++++++++++++++++++
+ --** TEST Proced
+ set serveroutput on  -- 65702c94e102426d06aaf382  12840
+  begin 
+     pVergleichAttributevonGetex(12840);
+ end;
+ --- Test vergl Einsatzdaten ***************************
+ declare
+ l_ret number :=0;
+ BEGIN
+   l_ret := fcheckDiffGetexVorschriftEinsatzDaten('65702c94e102426d06aaf382', 12840 );
+   DBMS_OUTPUT.PUT_LINE(l_ret);
+ END;
+ -- check error
+ select  min(sc_datum) --into l_sc_datum 
+ from V_GETEX_THEMA_SCENARIO
+      where  v_id = '65702c94e102426d06aaf382';  --sc_type ='PCV' and
+-- check getex
+     select * --count(*) into l_diff_ed 
+       from T_VORSCHRIFT_REF_EINSATZDATUM_TYP   --set einsatzdatum = l_sc_datum 
+      where vorschriftid = 12840 -- avorschriftid 
+        and ( einsatzdatum_typid in ( select column_value from table( apex_string.split_numbers(l_einsatzdat_Typids, ':')) )
+              and einsatzdatum != l_sc_datum
+         )
+         or
+         (  einsatzdatum_typid not in ( select column_value from table( apex_string.split_numbers(l_einsatzdat_Typids, ':')) )  );
+/
+======================================================
+"
+"-- Procedure: PWARNUNGEINSATZ
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."PWARNUNGEINSATZ" 
+ as
+   l_arbeitskreise varchar2(3000);
+   l_co number :=0;
+  begin
+
+  -- 1.1
+  for cur in (select distinct v.VORSCHRIFTid VORSCHRIFTid --, v.EINSATZDATUM_MODELLID, einsatzdatum --, vre.EINSATZDATUM_TYPID, vre.einsatzdatum  
+                from T_VORSCHRIFT_REF_EINSATZDATUM_TYP vre 
+             join T_Vorschrift v on (v.vorschriftid = vre.vorschriftid)
+            where v.EINSATZDATUM_MODELLID = 10 and  vorschrift_statusid = 40  
+                and vre.EINSATZDATUM_TYPid in (1010, 1011) and einsatzdatum is null)
+   loop
+      l_arbeitskreise:=''; --reset
+      select count(*) into l_co  from t_vorschrift_ref_et_b_ak where VORSCHRIFTid = cur.Vorschriftid;
+      if(l_co > 0 ) then
+             select listagg(distinct et_b_akid, ':') within group (order by et_b_akid)
+               into l_arbeitskreise
+               from t_vorschrift_ref_et_b_ak 
+              where VORSCHRIFTid = cur.Vorschriftid;
+           -- send message  typ 100 -einsatzdatum nicht gesetzt
+           debug('Benachricht 100 for vorsch.ID ='||cur.Vorschriftid, 'a-kreise = '||l_arbeitskreise);
+           pck_ri_benachrichtigung.pbenachrichtigung(cur.Vorschriftid , l_arbeitskreise , 
+            'Mindestens ein Wert in entweder Datum neue Typen ODER Datum alle Fahrzeuge ist notwendig', 100, 
+                                            aLoeschmarker => 0, aBenutzerid => 1280);-- pck_ri.fgetUserId );
+      end if;
+    end loop;
+    end;
+/
+======================================================
+"
+"-- Procedure: PWARNUNGEINSATZDATUM
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."PWARNUNGEINSATZDATUM" 
+ as
+   l_arbeitskreise varchar2(3000);
+   l_co number :=0;
+  begin
+
+  -- 1.1
+  for cur in (select distinct v.VORSCHRIFTid VORSCHRIFTid --, v.EINSATZDATUM_MODELLID, einsatzdatum --, vre.EINSATZDATUM_TYPID, vre.einsatzdatum  
+                from T_VORSCHRIFT_REF_EINSATZDATUM_TYP vre 
+             join T_Vorschrift v on (v.vorschriftid = vre.vorschriftid)
+            where v.EINSATZDATUM_MODELLID = 10 and  vorschrift_statusid = 40  
+                and vre.EINSATZDATUM_TYPid in (1010, 1011) and einsatzdatum is null)
+   loop
+      l_arbeitskreise:=''; --reset
+      select count(*) into l_co  from t_vorschrift_ref_et_b_ak where VORSCHRIFTid = cur.Vorschriftid;
+      if(l_co > 0 ) then
+             select listagg(distinct et_b_akid, ':') within group (order by et_b_akid)
+               into l_arbeitskreise
+               from t_vorschrift_ref_et_b_ak 
+              where VORSCHRIFTid = cur.Vorschriftid;
+           -- send message  typ 100 -einsatzdatum nicht gesetzt
+           debug('Benachricht 100 for vorsch.ID ='||cur.Vorschriftid, 'a-kreise = '||l_arbeitskreise);
+          -- pck_ri_benachrichtigung.pbenachrichtigung(cur.Vorschriftid , l_arbeitskreise , 
+          --  'Mindestens ein Wert in entweder Datum neue Typen ODER Datum alle Fahrzeuge ist notwendig', 100, 
+          --                                  aLoeschmarker => 0, aBenutzerid => pck_ri.fgetUserId );
+      end if;
+    end loop;
+      -- 1.2  Alle fZG Oder Neue Typ   
+    for cur in ( select distinct v.VORSCHRIFTid --, v.EINSATZDATUM_MODELLID
+              from T_Vorschrift v where  v.EINSATZDATUM_MODELLID = 10 and vorschrift_statusid = 40 --enacted
+             and VORSCHRIFTid not in (select distinct VORSCHRIFTid from T_VORSCHRIFT_REF_EINSATZDATUM_TYP vre 
+                             where vre.EINSATZDATUM_TYPid in (1010, 1011) and (vre.einsatzdatum is not null or vre.einsatzdatum >= sysdate ))
+                             order by vorschriftid)
+   loop
+      l_arbeitskreise:=''; --reset
+      select count(*) into l_co  from t_vorschrift_ref_et_b_ak where VORSCHRIFTid = cur.Vorschriftid;
+      if(l_co > 0 ) then
+             select listagg(distinct et_b_akid, ':') within group (order by et_b_akid)
+               into l_arbeitskreise
+               from t_vorschrift_ref_et_b_ak 
+              where VORSCHRIFTid = cur.Vorschriftid;
+           -- send message  typ 100 -einsatzdatum nicht gesetzt
+           debug('Benachricht. 100 for vorsch.ID ='||cur.Vorschriftid, 'a-kreise = '||l_arbeitskreise);
+          -- pck_ri_benachrichtigung.pbenachrichtigung(cur.Vorschriftid , l_arbeitskreise ,
+          -- 'Mindestens ein Wert in entweder Datum neue Typen ODER Datum alle Fahrzeuge ist notwendig', 100, 
+          --                                  aLoeschmarker => 0, aBenutzerid => pck_ri.fgetUserId );
+      end if;
+   end loop;
+
+    -- 2.1
+  for cur in (select distinct v.VORSCHRIFTid VORSCHRIFTid 
+                from T_VORSCHRIFT_REF_EINSATZDATUM_TYP vre 
+             join T_Vorschrift v on (v.vorschriftid = vre.vorschriftid)
+            where v.EINSATZDATUM_MODELLID = 20 and  vorschrift_statusid = 40  
+                and vre.EINSATZDATUM_TYPid in (1020, 1021, 1022, 1023) and einsatzdatum is null order by v.vorschriftid)
+   loop
+      l_arbeitskreise:=''; --reset
+      select count(*) into l_co  from t_vorschrift_ref_et_b_ak where VORSCHRIFTid = cur.Vorschriftid;
+      if(l_co > 0 ) then
+             select listagg(distinct et_b_akid, ':') within group (order by et_b_akid)
+               into l_arbeitskreise
+               from t_vorschrift_ref_et_b_ak 
+              where VORSCHRIFTid = cur.Vorschriftid;
+           -- send message  typ 100 -einsatzdatum nicht gesetzt
+           debug('Benachricht 100 for vorsch.ID ='||cur.Vorschriftid, 'a-kreise = '||l_arbeitskreise);
+          -- pck_ri_benachrichtigung.pbenachrichtigung(cur.Vorschriftid , l_arbeitskreise , 
+          --  'Mindestens ein Wert in entweder Datum neue Typen FBU ODER Datum alle Fahrzeuge FBU ODER Datum neue Typen CKD ODER Datum alle Fahrzeuge CKD ist notwendig',
+            -- 100,  aLoeschmarker => 0, aBenutzerid => pck_ri.fgetUserId );
+      end if;
+    end loop;
+    -- 2.2  ----------
+     for cur in (select v.VORSCHRIFTid, v.EINSATZDATUM_MODELLID
+    from T_Vorschrift v where  v.EINSATZDATUM_MODELLID = 20 and vorschrift_statusid = 40 --enacted
+   and VORSCHRIFTid not in (select distinct VORSCHRIFTid from T_VORSCHRIFT_REF_EINSATZDATUM_TYP vre 
+                             where vre.EINSATZDATUM_TYPid in (1020, 1021, 1022, 1023) and ( vre.einsatzdatum is not null or vre.einsatzdatum >= sysdate ))
+                             order by vorschriftid)
+   loop
+      l_arbeitskreise:=''; --reset
+      select count(*) into l_co  from t_vorschrift_ref_et_b_ak where VORSCHRIFTid = cur.Vorschriftid;
+      if(l_co > 0 ) then
+             select listagg(distinct et_b_akid, ':') within group (order by et_b_akid)
+               into l_arbeitskreise
+               from t_vorschrift_ref_et_b_ak 
+              where VORSCHRIFTid = cur.Vorschriftid;
+
+           debug('Benachricht 100 for vorsch.ID ='||cur.Vorschriftid, 'a-kreise = '||l_arbeitskreise);
+          -- pck_ri_benachrichtigung.pbenachrichtigung(cur.Vorschriftid , l_arbeitskreise , 
+          --  'Mindestens ein Wert in entweder Datum neue Typen FBU ODER Datum alle Fahrzeuge FBU ODER Datum neue Typen CKD ODER Datum alle Fahrzeuge CKD ist notwendig',
+            -- 100,  aLoeschmarker => 0, aBenutzerid => pck_ri.fgetUserId );
+      end if;
+   end loop;
+
+   -- 3.1  Modeljahr
+  for cur in (select distinct v.VORSCHRIFTid VORSCHRIFTid --, v.EINSATZDATUM_MODELLID, einsatzdatum --, vre.EINSATZDATUM_TYPID, vre.einsatzdatum  
+                from T_VORSCHRIFT_REF_EINSATZDATUM_TYP vre 
+             join T_Vorschrift v on (v.vorschriftid = vre.vorschriftid)
+            where v.EINSATZDATUM_MODELLID = 30 and  vorschrift_statusid = 40  
+                and vre.EINSATZDATUM_TYPid in (1030, 1031) and einsatzdatum is null)
+   loop
+      l_arbeitskreise:=''; --reset
+      select count(*) into l_co  from t_vorschrift_ref_et_b_ak where VORSCHRIFTid = cur.Vorschriftid;
+      if(l_co > 0 ) then
+             select listagg(distinct et_b_akid, ':') within group (order by et_b_akid)
+               into l_arbeitskreise
+               from t_vorschrift_ref_et_b_ak 
+              where VORSCHRIFTid = cur.Vorschriftid;
+           -- 
+           debug('Benachricht 100 for vorsch.ID ='||cur.Vorschriftid, 'a-kreise = '||l_arbeitskreise);
+          -- pck_ri_benachrichtigung.pbenachrichtigung(cur.Vorschriftid , l_arbeitskreise , 
+          --  'Mindestens ein Wert in entweder Phasein Start ODER Phasein End ist notwendig', 100, 
+          --                                  aLoeschmarker => 0, aBenutzerid => pck_ri.fgetUserId );
+      end if;
+    end loop;
+    -- 3.2   Modeljahr   --
+    for cur in ( select distinct v.VORSCHRIFTid --, v.EINSATZDATUM_MODELLID
+              from T_Vorschrift v where  v.EINSATZDATUM_MODELLID = 30 and vorschrift_statusid = 40 --enacted
+             and VORSCHRIFTid not in (select distinct VORSCHRIFTid from T_VORSCHRIFT_REF_EINSATZDATUM_TYP vre 
+                             where vre.EINSATZDATUM_TYPid in (1030, 1031) and (vre.einsatzdatum is not null or vre.einsatzdatum >= sysdate ))
+                             order by vorschriftid)
+   loop
+      l_arbeitskreise:=''; --reset
+      select count(*) into l_co  from t_vorschrift_ref_et_b_ak where VORSCHRIFTid = cur.Vorschriftid;
+      if(l_co > 0 ) then
+             select listagg(distinct et_b_akid, ':') within group (order by et_b_akid)
+               into l_arbeitskreise
+               from t_vorschrift_ref_et_b_ak 
+              where VORSCHRIFTid = cur.Vorschriftid;
+           -- send message  typ 100 -einsatzdatum nicht gesetzt
+           debug('Benachricht. 100 for vorsch.ID ='||cur.Vorschriftid, 'a-kreise = '||l_arbeitskreise);
+          -- pck_ri_benachrichtigung.pbenachrichtigung(cur.Vorschriftid , l_arbeitskreise , 
+          -- 'Mindestens ein Wert in entweder Phasein Start ODER Phasein End ist notwendig', 100, 
+          --                                  aLoeschmarker => 0, aBenutzerid => pck_ri.fgetUserId );
+      end if;
+   end loop;
+
+   end;
+/
+======================================================
+"
+"-- Procedure: P_APPLY_NEGATIVE_RULES
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."P_APPLY_NEGATIVE_RULES" (
+    p_sucheid      IN NUMBER,
+    p_sop_date     IN DATE,
+    p_meilenstein  IN NUMBER
+)
+AS
+    v_count NUMBER := 0;
+BEGIN
+    IF p_sop_date IS NULL THEN
+        debug('p_apply_negative_rules', 'SOP date is NULL, skipping. SUCHEID=' || p_sucheid);
+        RETURN;
+    END IF;
+    UPDATE T_MS_SUCHERGEBNISS se
+    SET
+        se.REGELNUMMER     = se.REGELNUMMER * -1,
+        se.MS_PARAMETERID  = (
+            SELECT neg.MS_PARAMETERID
+            FROM   T_MS_PARAMETER neg
+            WHERE  neg.NUMMER = se.REGELNUMMER * -1
+            AND    ROWNUM = 1
+        ),
+        se.FLAG_RULECHANGE = (
+            SELECT 'VORGAENGER_ID='     || rvv.VORGAENGER_VORSCHRIFTID
+                || '|NACHFOLGER_ID='    || rvv.NACHFOLGER_VORSCHRIFTID
+                || '|DATUM_NEUE_TYPEN=' || TO_CHAR(rvv.DATUM_NEUE_TYPEN, 'DD.MM.YYYY')
+                || '|SOP_DATE='         || TO_CHAR(p_sop_date, 'DD.MM.YYYY')
+            FROM T_VORSCHRIFT_REF_VORSCHRIFT rvv
+            JOIN T_MS_SUCHERGEBNISS se2
+                ON  se2.VORSCHRIFTID  = rvv.NACHFOLGER_VORSCHRIFTID
+                AND se2.SUCHEID       = p_sucheid
+                AND se2.MEILENSTEIN   = p_meilenstein
+                AND se2.REGELNUMMER   IN (
+                        40,5079,43,5052,5053,41,5043,44,5046,42,
+                        5066,45,5070,145,5096,5097,50,5092,53,51,
+                        5093,54,52,5094,55,155,5098,255,5105,60,
+                        63,61,64,62,65,165,5099,245,5103,5104,265,5106
+                    )
+            WHERE rvv.VORGAENGER_VORSCHRIFTID = se.VORSCHRIFTID
+              AND rvv.DATUM_NEUE_TYPEN        IS NOT NULL
+              AND p_sop_date                 >= rvv.DATUM_NEUE_TYPEN
+              AND ROWNUM = 1
+        ),
+        se.LETZTE_AENDERUNG_DATUM = SYSDATE
+    WHERE se.SUCHEID           = p_sucheid
+      AND se.MEILENSTEIN       = p_meilenstein
+      AND se.REGELNUMMER       > 0
+      AND se.MANUELLER_EINTRAG = 0
+      AND EXISTS (
+            SELECT 1
+            FROM   T_VORSCHRIFT_REF_VORSCHRIFT rvv
+            JOIN   T_MS_SUCHERGEBNISS se2
+                ON  se2.VORSCHRIFTID = rvv.NACHFOLGER_VORSCHRIFTID
+                AND se2.SUCHEID      = p_sucheid
+                AND se2.MEILENSTEIN  = p_meilenstein
+                AND se2.REGELNUMMER  IN (
+                        40,5079,43,5052,5053,41,5043,44,5046,42,
+                        5066,45,5070,145,5096,5097,50,5092,53,51,
+                        5093,54,52,5094,55,155,5098,255,5105,60,
+                        63,61,64,62,65,165,5099,245,5103,5104,265,5106
+                    )
+            WHERE  rvv.VORGAENGER_VORSCHRIFTID = se.VORSCHRIFTID
+              AND  rvv.DATUM_NEUE_TYPEN        IS NOT NULL
+              AND  p_sop_date                 >= rvv.DATUM_NEUE_TYPEN
+      )
+      AND EXISTS (
+            SELECT 1
+            FROM   T_MS_PARAMETER neg
+            WHERE  neg.NUMMER = se.REGELNUMMER * -1
+      );
+    v_count := SQL%ROWCOUNT;
+    debug('p_apply_negative_rules', 'SUCHEID=' || p_sucheid
+        || ' | MEILENSTEIN=' || p_meilenstein
+        || ' | SOP='         || TO_CHAR(p_sop_date, 'DD.MM.YYYY')
+        || ' | Rows updated='|| v_count);
+EXCEPTION
+    WHEN OTHERS THEN
+        debug('p_apply_negative_rules', 'ERROR: ' || SQLERRM);
+        RAISE;
+END p_apply_negative_rules;
+/
+======================================================
+"
+"-- Procedure: TPFILLTHETHEMAEINSATZDATEN_FROM_GETEX
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."TPFILLTHETHEMAEINSATZDATEN_FROM_GETEX" (aVorschriftid IN NUMBER)
+AS
+BEGIN
+  FOR c IN (
+    SELECT g.V_ID, g.SC_THEMAID, g.SC_TYPE, TO_DATE(g.SC_DATUM, 'DD-MM-YYYY') AS EINSATZDATUM,
+           t.THEMAID,
+           e.EINSATZDATUM_TYPID,
+           g.sc_fahrzeug_typ,
+           v.VORSCHRIFTID
+    FROM v_getex_thema_scenario g
+    INNER JOIN t_vorschrift v ON g.V_ID = v.REGINDEXID
+    INNER JOIN t_thema t ON g.regindex_THEMAID = t.THEMAID  -- Updated JOIN condition as per new requirement
+    INNER JOIN t_einsatzdatum_typ e ON g.SC_TYPE = e.MAPPING_GETEX
+    WHERE v.VORSCHRIFTID = aVorschriftid
+      AND g.sc_fahrzeug_typ = 'PCV'  -- Filtering to include only records of type 'PCV'
+  ) LOOP
+    INSERT INTO T_vorschrift_ref_thema_ref_einsatzdatum_typ (
+      VORSCHRIFTID, 
+      THEMAID, 
+      EINSATZDATUM_TYPID, 
+      EINSATZDATUM,
+    --   MODELJAHR,
+      LETZTE_AENDERUNG_DATUM
+    --   KOMMENTAR
+    )
+    VALUES (
+      aVorschriftid, 
+      c.THEMAID, 
+      c.EINSATZDATUM_TYPID, 
+      c.EINSATZDATUM,
+      -- null -- considering if MODELJAHR or KOMMENTAR need to be populated from new fields
+      SYSDATE
+      -- null -- considering  if MODELJAHR or KOMMENTAR need to be populated from new fields
+    );
+  END LOOP;
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+    RAISE;
+END tpFilltheThemaEinsatzdaten_from_getex;
+/
+======================================================
+"
+"-- Procedure: UPDATE_VORSCHRIFT_RXSWIN
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."UPDATE_VORSCHRIFT_RXSWIN" (P_LANDID NUMBER)
+AS  
+    L_COUNT NUMBER;
+    L_NO_COUNTRY_COUNT NUMBER;
+BEGIN
+    -- Existing logic
+    FOR I IN (
+        SELECT DISTINCT(vorschriftid)
+        FROM t_vorschrift_ref_land
+        WHERE LANDID = P_LANDID
+    ) LOOP
+        BEGIN
+            SELECT COUNT(vrl.vorschriftid) INTO L_COUNT 
+            FROM t_vorschrift_ref_land vrl
+            JOIN t_land la ON (vrl.landid = la.landid)
+            WHERE vrl.vorschriftid = i.vorschriftid
+                AND la.landid = P_LANDID
+                AND la.SUMS_RELEVANT = 10 -- or publisher is "UNECE"
+                AND vrl.geloescht != 1;
+        EXCEPTION 
+            WHEN NO_DATA_FOUND THEN 
+                L_COUNT := 0;
+        END;
+
+        IF L_COUNT = 0 THEN 
+            UPDATE T_VORSCHRIFT 
+            SET RXSWIN = 20 
+            WHERE VORSCHRIFTID = I.vorschriftid;
+        END IF;
+    END LOOP;
+
+
+END;
+/
+======================================================
+"
+"-- Procedure: UPDATE_VORSCHRIFT_RXSWIN_VOR
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."UPDATE_VORSCHRIFT_RXSWIN_VOR" (P_VORSCHRIFTID NUMBER)
+AS  
+-- DECLARE 
+--     P_VORSCHRIFTID NUMBER := 13940;
+    L_NO_COUNTRY_COUNT NUMBER;
+BEGIN
+    -- Check if the vorschrift has no associated countries
+    SELECT COUNT(*) INTO L_NO_COUNTRY_COUNT
+    FROM t_vorschrift_ref_land vrl
+    WHERE vrl.vorschriftid = P_VORSCHRIFTID
+      AND vrl.geloescht != 1;
+    -- Update if there are no associated countries
+    IF L_NO_COUNTRY_COUNT = 0 THEN
+        UPDATE T_VORSCHRIFT 
+        SET RXSWIN = 20 
+        WHERE VORSCHRIFTID = P_VORSCHRIFTID;
+    END IF;
+END;
+/
+======================================================
+"
+"-- Procedure: UPDATE_VORSHIFT_RXSWIN
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE PROCEDURE "VORSCHRIFTEN_ADMIN"."UPDATE_VORSHIFT_RXSWIN" (P_LANDID NUMBER)
+AS  
+    -- P_LANDID NUMBER:=1022;
+    L_COUNT NUMBER;
+BEGIN
+    FOR I IN (
+        SELECT DISTINCT(vorschriftid)
+        FROM t_vorschrift_ref_land
+        WHERE LANDID = P_LANDID
+    ) LOOP
+        BEGIN
+            SELECT COUNT(vrl.vorschriftid) INTO L_COUNT 
+            FROM t_vorschrift_ref_land vrl
+            JOIN t_land la ON (vrl.landid = la.landid)
+            WHERE vrl.vorschriftid = i.vorschriftid
+                AND la.landid = P_LANDID
+                AND la.SUMS_RELEVANT = 10
+                AND vrl.geloescht != 1;
+        EXCEPTION 
+            WHEN NO_DATA_FOUND THEN 
+                L_COUNT := 0;
+        END;
+
+        IF L_COUNT = 0 THEN 
+            -- dbms_output.put_line(i.vorschriftid);
+            UPDATE T_VORSCHRIFT 
+            SET RXSWIN = 20 
+            WHERE VORSCHRIFTID = I.vorschriftid;
+        END IF;
+    END LOOP;
+END;
+/
+======================================================
+"
