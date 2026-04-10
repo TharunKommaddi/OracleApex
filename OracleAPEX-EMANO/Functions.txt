@@ -1,0 +1,1652 @@
+"-- Function: COUNTRY_VORSCHRIFT_CARD_DETAIL
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "COUNTRY_VORSCHRIFT_CARD_DETAIL" (
+    p_search_id number, 
+    p_milestone number, 
+    P_LANDID VARCHAR2,
+    p_format IN VARCHAR2 DEFAULT 'DISPLAY' 
+) RETURN CLOB
+AS
+    l_body_html_table CLOB;
+    l_row_num NUMBER := 0;
+BEGIN
+    IF p_format = 'DISPLAY' THEN
+        l_body_html_table := '';
+                        
+        FOR i IN (
+            WITH search_countries AS (
+                SELECT 
+                    sucheid,
+                    to_number(COLUMN_VALUE) as landid
+                FROM t_suche_json,
+                TABLE(apex_string.split(
+                    json_value(suchdaten FORMAT JSON, '$[0].LAENDER'),
+                    ':'
+                ))
+                WHERE sucheid = p_search_id
+            )
+            SELECT DISTINCT
+                ms.themabezeichnung AS thema,
+                
+                CASE 
+                    WHEN NVL(tp_main.ANZEIGE_MIT_DOKUMENTENDATUM, 0) = 20 
+                         AND tv_main.DOKUMENTENDATUM IS NOT NULL 
+                    THEN COALESCE(tv_main.vorschrift_nummer, ms.vorschriftnummer) || '_' || 
+                         TO_CHAR(tv_main.DOKUMENTENDATUM, 'DD.MM.YYYY')
+                    ELSE COALESCE(tv_main.vorschrift_nummer, ms.vorschriftnummer) 
+                END AS r,
+
+                CASE 
+                    WHEN ms.ALTERNATIVE_VORSCHRIFTID IS NOT NULL AND tv.vorschrift_nummer IS NOT NULL THEN
+                        CASE 
+                            WHEN NVL(tp_alt.ANZEIGE_MIT_DOKUMENTENDATUM, 0) = 20 
+                                 AND tv.DOKUMENTENDATUM IS NOT NULL 
+                            THEN tv.vorschrift_nummer || '_' || TO_CHAR(tv.DOKUMENTENDATUM, 'DD.MM.YYYY')
+                            ELSE tv.vorschrift_nummer 
+                        END
+                    ELSE NULL
+                END AS alternative_r
+
+            FROM search_countries sc
+            LEFT OUTER JOIN T_MS_SUCHERGEBNISS ms ON (
+                ms.sucheid = sc.sucheid 
+                AND ms.landid = sc.landid
+                AND sc.landid IN (
+                    SELECT column_value 
+                    FROM table(apex_string.split_numbers(P_LANDID, ':'))
+                )
+            )
+            
+            LEFT OUTER JOIN t_vorschrift tv ON (tv.vorschriftid = ms.alternative_vorschriftid)
+            LEFT OUTER JOIN t_vorschrift tv_main ON (tv_main.vorschriftid = ms.vorschriftid)
+            LEFT OUTER JOIN t_publisher tp_alt ON (tv.publisherid = tp_alt.publisherid)
+            LEFT OUTER JOIN t_publisher tp_main ON (tv_main.publisherid = tp_main.publisherid)
+            LEFT OUTER JOIN T_MS_PARAMETER mp ON (mp.MS_PARAMETERID = ms.MS_PARAMETERID)
+            WHERE ms.vorschriftnummer IS NOT NULL
+            AND ms.MEILENSTEIN = p_milestone
+            AND mp.AUSGABE_DER_VORSCHRIFT_BEI_REPORT_BAUREIHE = 1
+            ORDER BY ms.themabezeichnung, r
+        ) LOOP
+            l_row_num := l_row_num + 1;
+            l_body_html_table := l_body_html_table || 
+                '<tr>' ||
+                '<td class="t-Report-cell" headers="THEMA" style="padding: 8px 12px; height: 32px; text-align: left;' ||
+                CASE 
+                    WHEN MOD(l_row_num, 2) = 1 THEN ' background-color: #E0E0E0;'
+                    ELSE ' background-color: #FFFFFF;'
+                END || '">' || 
+                NVL(i.thema, ' ') || 
+                '</td>' ||
+                '<td class="t-Report-cell" headers="VORSCHRIFT" style="padding: 8px 12px; height: 32px; text-align: left;' ||
+                CASE 
+                    WHEN MOD(l_row_num, 2) = 1 THEN ' background-color: #E0E0E0;'
+                    ELSE ' background-color: #FFFFFF;'
+                END || '">' || 
+                i.r || 
+                '</td>' ||
+                '<td class="t-Report-cell" headers="ALT_VORSCHRIFT" style="padding: 8px 12px; height: 32px; text-align: left;' ||
+                CASE 
+                    WHEN MOD(l_row_num, 2) = 1 THEN ' background-color: #E0E0E0;'
+                    ELSE ' background-color: #FFFFFF;'
+                END || '">' || 
+                NVL(i.alternative_r, '') || 
+                '</td></tr>';
+        END LOOP;
+        
+        RETURN l_body_html_table;
+        
+    ELSIF p_format = 'EXCEL' THEN
+        RETURN q'[
+            WITH search_countries AS (
+                SELECT 
+                    sucheid,
+                    to_number(COLUMN_VALUE) as landid
+                FROM t_suche_json,
+                TABLE(apex_string.split(
+                    json_value(suchdaten FORMAT JSON, '$[0].LAENDER'),
+                    ':'
+                ))
+                WHERE sucheid = ]' || p_search_id || q'[
+            )
+            SELECT DISTINCT
+                ms.landnummer||' - '||ms.landbezeichnung AS Landbezeichnung,
+                ms.themabezeichnung AS Themabezeichnung,
+                
+                CASE 
+                    WHEN NVL(tp_main.ANZEIGE_MIT_DOKUMENTENDATUM, 0) = 20 
+                         AND tv_main.DOKUMENTENDATUM IS NOT NULL 
+                    THEN COALESCE(tv_main.vorschrift_nummer, ms.vorschriftnummer) || '_' || 
+                         TO_CHAR(tv_main.DOKUMENTENDATUM, 'DD.MM.YYYY')
+                    ELSE COALESCE(tv_main.vorschrift_nummer, ms.vorschriftnummer) 
+                END AS Vorschriftennummer,
+
+                
+                CASE 
+                    WHEN ms.ALTERNATIVE_VORSCHRIFTID IS NOT NULL AND tv.vorschrift_nummer IS NOT NULL THEN
+                        CASE 
+                            WHEN NVL(tp_alt.ANZEIGE_MIT_DOKUMENTENDATUM, 0) = 20 
+                                 AND tv.DOKUMENTENDATUM IS NOT NULL 
+                            THEN tv.vorschrift_nummer || '_' || TO_CHAR(tv.DOKUMENTENDATUM, 'DD.MM.YYYY')
+                            ELSE tv.vorschrift_nummer 
+                        END
+                    ELSE NULL
+                END AS Alternative_Vorschriftennummer
+            FROM search_countries sc
+            LEFT OUTER JOIN T_MS_SUCHERGEBNISS ms ON (
+                ms.sucheid = sc.sucheid 
+                AND ms.landid = sc.landid
+                AND ms.meilenstein = ]' || p_milestone || q'[
+                AND ms.landid IN (
+                    SELECT TO_NUMBER(COLUMN_VALUE)
+                    FROM TABLE(apex_string.split(']' || P_LANDID || q'[', ':'))
+                )
+            )
+           
+            LEFT OUTER JOIN t_vorschrift tv ON (tv.vorschriftid = ms.alternative_vorschriftid)
+            LEFT OUTER JOIN t_vorschrift tv_main ON (tv_main.vorschriftid = ms.vorschriftid)
+            LEFT OUTER JOIN t_publisher tp_alt ON (tv.publisherid = tp_alt.publisherid)
+            LEFT OUTER JOIN t_publisher tp_main ON (tv_main.publisherid = tp_main.publisherid)
+            LEFT OUTER JOIN T_MS_PARAMETER mp ON (mp.MS_PARAMETERID = ms.MS_PARAMETERID)
+            WHERE mp.AUSGABE_DER_VORSCHRIFT_BEI_REPORT_BAUREIHE = 1
+            ORDER BY 
+                Landbezeichnung,
+                Themabezeichnung,
+                Vorschriftennummer]';
+    END IF;
+END;
+/
+======================================================
+"
+"-- Function: COUNTRY_VORSCHRIFT_CARD_DETAIL_18jul
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "COUNTRY_VORSCHRIFT_CARD_DETAIL_18jul" (
+    p_search_id number, 
+    p_milestone number, 
+    P_LANDID VARCHAR2,
+    p_format IN VARCHAR2 DEFAULT 'DISPLAY' 
+) RETURN CLOB
+AS
+    l_body_html_table CLOB;
+    l_row_num NUMBER := 0;
+BEGIN
+    IF p_format = 'DISPLAY' THEN
+        l_body_html_table := '';
+
+        FOR i IN (
+            WITH search_countries AS (
+                SELECT 
+                    sucheid,
+                    to_number(COLUMN_VALUE) as landid
+                FROM t_suche_json,
+                TABLE(apex_string.split(
+                    json_value(suchdaten FORMAT JSON, '$[0].LAENDER'),
+                    ':'
+                ))
+                WHERE sucheid = p_search_id
+            )
+            SELECT DISTINCT
+                ms.themabezeichnung AS thema,
+                ms.vorschriftnummer AS r,
+                nvl(tv.vorschrift_nummer, '') AS alternative_r
+
+            FROM search_countries sc
+            LEFT OUTER JOIN T_MS_SUCHERGEBNISS ms ON (
+                ms.sucheid = sc.sucheid 
+                AND ms.landid = sc.landid
+                AND sc.landid IN (
+                    SELECT column_value 
+                    FROM table(apex_string.split_numbers(P_LANDID, ':'))
+                )
+            )
+            LEFT OUTER JOIN t_vorschrift tv ON (tv.vorschriftid = ms.alternative_vorschriftid)
+            LEFT OUTER JOIN T_MS_PARAMETER mp ON (mp.MS_PARAMETERID = ms.MS_PARAMETERID)
+            WHERE vorschriftnummer IS NOT NULL 
+            AND ms.MEILENSTEIN = p_milestone
+            AND mp.AUSGABE_DER_VORSCHRIFT_BEI_REPORT_BAUREIHE = 1
+            ORDER BY ms.themabezeichnung, r
+        ) LOOP
+            l_row_num := l_row_num + 1;
+            l_body_html_table := l_body_html_table || 
+                '<tr>' ||
+                '<td class="t-Report-cell" headers="THEMA" style="padding: 8px 12px; height: 32px; text-align: left;' ||
+                CASE 
+                    WHEN MOD(l_row_num, 2) = 1 THEN ' background-color: #E0E0E0;'
+                    ELSE ' background-color: #FFFFFF;'
+                END || '">' || 
+                NVL(i.thema, ' ') || 
+                '</td>' ||
+                '<td class="t-Report-cell" headers="VORSCHRIFT" style="padding: 8px 12px; height: 32px; text-align: left;' ||
+                CASE 
+                    WHEN MOD(l_row_num, 2) = 1 THEN ' background-color: #E0E0E0;'
+                    ELSE ' background-color: #FFFFFF;'
+                END || '">' || 
+                i.r || 
+                '</td>' ||
+                '<td class="t-Report-cell" headers="ALT_VORSCHRIFT" style="padding: 8px 12px; height: 32px; text-align: left;' ||
+                CASE 
+                    WHEN MOD(l_row_num, 2) = 1 THEN ' background-color: #E0E0E0;'
+                    ELSE ' background-color: #FFFFFF;'
+                END || '">' || 
+                i.alternative_r || 
+                '</td></tr>';
+        END LOOP;
+
+        RETURN l_body_html_table;
+
+    ELSIF p_format = 'EXCEL' THEN
+        RETURN q'[
+            WITH search_countries AS (
+                SELECT 
+                    sucheid,
+                    to_number(COLUMN_VALUE) as landid
+                FROM t_suche_json,
+                TABLE(apex_string.split(
+                    json_value(suchdaten FORMAT JSON, '$[0].LAENDER'),
+                    ':'
+                ))
+                WHERE sucheid = ]' || p_search_id || q'[
+            )
+            SELECT DISTINCT
+                ms.landnummer||' - '||ms.landbezeichnung AS Landbezeichnung,
+                ms.themabezeichnung AS Themabezeichnung,
+                ms.vorschriftnummer as Vorschriftennummer,
+                nvl(tv.vorschrift_nummer, '') AS Alternative_Vorschriftennummer
+            FROM search_countries sc
+            LEFT OUTER JOIN T_MS_SUCHERGEBNISS ms ON (
+                ms.sucheid = sc.sucheid 
+                AND ms.landid = sc.landid
+                AND ms.meilenstein = ]' || p_milestone || q'[
+                AND ms.landid IN (
+                    SELECT TO_NUMBER(COLUMN_VALUE)
+                    FROM TABLE(apex_string.split(']' || P_LANDID || q'[', ':'))
+                )
+            )
+            LEFT OUTER JOIN t_vorschrift tv ON (tv.vorschriftid = ms.alternative_vorschriftid)
+            LEFT OUTER JOIN T_MS_PARAMETER mp ON (mp.MS_PARAMETERID = ms.MS_PARAMETERID)
+            WHERE mp.AUSGABE_DER_VORSCHRIFT_BEI_REPORT_BAUREIHE = 1
+            ORDER BY 
+                Landbezeichnung,
+                Themabezeichnung,
+                Vorschriftennummer]';
+    END IF;
+END;
+/
+======================================================
+"
+"-- Function: COUNTRY_VORSCHRIFT_CARD_DETAIL_4AUG
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "COUNTRY_VORSCHRIFT_CARD_DETAIL_4AUG" (
+    p_search_id number, 
+    p_milestone number, 
+    P_LANDID VARCHAR2,
+    p_format IN VARCHAR2 DEFAULT 'DISPLAY' 
+) RETURN CLOB
+AS
+    l_body_html_table CLOB;
+    l_row_num NUMBER := 0;
+BEGIN
+    IF p_format = 'DISPLAY' THEN
+        l_body_html_table := '';
+                        
+        FOR i IN (
+            WITH search_countries AS (
+                SELECT 
+                    sucheid,
+                    to_number(COLUMN_VALUE) as landid
+                FROM t_suche_json,
+                TABLE(apex_string.split(
+                    json_value(suchdaten FORMAT JSON, '$[0].LAENDER'),
+                    ':'
+                ))
+                WHERE sucheid = p_search_id
+            )
+            SELECT DISTINCT
+                ms.themabezeichnung AS thema,
+                -- ms.vorschriftnummer AS r,
+                CASE 
+                    WHEN p_alt.ANZEIGE_MIT_DOKUMENTENDATUM = 20 
+                         AND tv.DOKUMENTENDATUM IS NOT NULL 
+                    THEN tv.vorschrift_nummer || '_' || TO_CHAR(tv.DOKUMENTENDATUM, 'DD.MM.YYYY')
+                    ELSE nvl(tv.vorschrift_nummer, ms.vorschriftnummer) 
+                END AS r,
+
+                nvl(tv.vorschrift_nummer, '') AS alternative_r
+
+            FROM search_countries sc
+            LEFT OUTER JOIN T_MS_SUCHERGEBNISS ms ON (
+                ms.sucheid = sc.sucheid 
+                AND ms.landid = sc.landid
+                AND sc.landid IN (
+                    SELECT column_value 
+                    FROM table(apex_string.split_numbers(P_LANDID, ':'))
+                )
+            )
+            LEFT OUTER JOIN t_vorschrift tv ON (tv.vorschriftid = ms.alternative_vorschriftid)
+            LEFT OUTER JOIN t_publisher p_alt ON (tv.publisherid = p_alt.publisherid)
+            LEFT OUTER JOIN T_MS_PARAMETER mp ON (mp.MS_PARAMETERID = ms.MS_PARAMETERID)
+            WHERE ms.vorschriftnummer IS NOT NULL
+            AND ms.MEILENSTEIN = p_milestone
+            AND mp.AUSGABE_DER_VORSCHRIFT_BEI_REPORT_BAUREIHE = 1
+            ORDER BY ms.themabezeichnung, r
+        ) LOOP
+            l_row_num := l_row_num + 1;
+            l_body_html_table := l_body_html_table || 
+                '<tr>' ||
+                '<td class="t-Report-cell" headers="THEMA" style="padding: 8px 12px; height: 32px; text-align: left;' ||
+                CASE 
+                    WHEN MOD(l_row_num, 2) = 1 THEN ' background-color: #E0E0E0;'
+                    ELSE ' background-color: #FFFFFF;'
+                END || '">' || 
+                NVL(i.thema, ' ') || 
+                '</td>' ||
+                '<td class="t-Report-cell" headers="VORSCHRIFT" style="padding: 8px 12px; height: 32px; text-align: left;' ||
+                CASE 
+                    WHEN MOD(l_row_num, 2) = 1 THEN ' background-color: #E0E0E0;'
+                    ELSE ' background-color: #FFFFFF;'
+                END || '">' || 
+                i.r || 
+                '</td>' ||
+                '<td class="t-Report-cell" headers="ALT_VORSCHRIFT" style="padding: 8px 12px; height: 32px; text-align: left;' ||
+                CASE 
+                    WHEN MOD(l_row_num, 2) = 1 THEN ' background-color: #E0E0E0;'
+                    ELSE ' background-color: #FFFFFF;'
+                END || '">' || 
+                i.alternative_r || 
+                '</td></tr>';
+        END LOOP;
+        
+        RETURN l_body_html_table;
+        
+    ELSIF p_format = 'EXCEL' THEN
+        RETURN q'[
+            WITH search_countries AS (
+                SELECT 
+                    sucheid,
+                    to_number(COLUMN_VALUE) as landid
+                FROM t_suche_json,
+                TABLE(apex_string.split(
+                    json_value(suchdaten FORMAT JSON, '$[0].LAENDER'),
+                    ':'
+                ))
+                WHERE sucheid = ]' || p_search_id || q'[
+            )
+            SELECT DISTINCT
+                ms.landnummer||' - '||ms.landbezeichnung AS Landbezeichnung,
+                ms.themabezeichnung AS Themabezeichnung,
+                -- ms.vorschriftnummer as Vorschriftennummer,
+                CASE 
+                    WHEN tp.ANZEIGE_MIT_DOKUMENTENDATUM = 20 
+                         AND tv.DOKUMENTENDATUM IS NOT NULL 
+                    THEN tv.vorschrift_nummer || '_' || TO_CHAR(tv.DOKUMENTENDATUM, 'DD.MM.YYYY')
+                    ELSE nvl(tv.vorschrift_nummer, ms.vorschriftnummer) 
+                END AS Vorschriftennummer,
+
+                nvl(tv.vorschrift_nummer, '') AS Alternative_Vorschriftennummer
+            FROM search_countries sc
+            LEFT OUTER JOIN T_MS_SUCHERGEBNISS ms ON (
+                ms.sucheid = sc.sucheid 
+                AND ms.landid = sc.landid
+                AND ms.meilenstein = ]' || p_milestone || q'[
+                AND ms.landid IN (
+                    SELECT TO_NUMBER(COLUMN_VALUE)
+                    FROM TABLE(apex_string.split(']' || P_LANDID || q'[', ':'))
+                )
+            )
+            LEFT OUTER JOIN t_vorschrift tv ON (tv.vorschriftid = ms.alternative_vorschriftid)
+            LEFT OUTER JOIN t_publisher tp ON (tv.publisherid = tp.publisherid)
+            LEFT OUTER JOIN T_MS_PARAMETER mp ON (mp.MS_PARAMETERID = ms.MS_PARAMETERID)
+            WHERE mp.AUSGABE_DER_VORSCHRIFT_BEI_REPORT_BAUREIHE = 1
+            ORDER BY 
+                Landbezeichnung,
+                Themabezeichnung,
+                Vorschriftennummer]';
+    END IF;
+END;
+/
+======================================================
+"
+"-- Function: CUSTOM_PAGE_SENTRY
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "CUSTOM_PAGE_SENTRY" 
+return boolean
+as
+--
+-- Page sentry using built-in session verification logic and CGI Environment variable
+-- as the holder of the username.
+    l_current_sid number;
+    l_tam_userid  varchar2(255) := upper(owa_util.get_cgi_env('HTTP_IV_USER'));
+begin
+
+
+--LOGDEBUG('Start, l_tam_user_id = ' || l_tam_userid);
+    l_current_sid := wwv_flow_custom_auth_std.get_session_id_from_cookie;
+--LOGDEBUG('l_current_sid = ' || l_current_sid);
+
+    if wwv_flow_custom_auth_std.is_session_valid then
+--LOGDEBUG(' session is valid ');
+        wwv_flow.g_instance := l_current_sid;
+        if l_tam_userid = wwv_flow_custom_auth_std.get_username then
+--LOGDEBUG(' call wwv_flow_custom_auth.define_user_session ');
+
+            wwv_flow_custom_auth.define_user_session(
+                p_user=>l_tam_userid,
+                p_session_id=>l_current_sid);
+            return true;
+        else -- username mismatch. Unset the session cookie and redirect back here to take other branch
+--LOGDEBUG(' call wwv_flow_custom_auth_std.logout ');
+
+
+
+   -- change by wolfma: APEX 5 not support old API
+       /*
+            wwv_flow_custom_auth_std.logout(
+                p_this_flow=>v('APP_ID'),
+                p_next_flow_page_sess=>v('APP_ID')||':'||nvl(v('APP_PAGE_ID'),0)||':'||l_current_sid);
+          */
+            apex_authentication.logout(l_current_sid, v('APP_ID'));
+
+
+            wwv_flow.g_unrecoverable_error := true; -- tell htmldb engine to quit
+            return false;
+        end if;
+    else -- application session cookie not valid; we need a new htmldb session
+--LOGDEBUG(' no valid session ');
+        wwv_flow_custom_auth.define_user_session(
+            p_user=>l_tam_userid,
+            p_session_id=>wwv_flow_custom_auth.get_next_session_id);
+        wwv_flow.g_unrecoverable_error := true; -- tell htmldb engine to quit
+        --
+        if owa_util.get_cgi_env('REQUEST_METHOD') = 'GET' then
+--LOGDEBUG(' GET method => call wwv_flow_custom_auth.remember_deep_link ');
+
+            wwv_flow_custom_auth.remember_deep_link(p_url=>'f?'||wwv_flow_utilities.url_decode2(owa_util.get_cgi_env('QUERY_STRING')));
+        else
+--LOGDEBUG(' call wwv_flow_custom_auth.remember_deep_link ');
+            wwv_flow_custom_auth.remember_deep_link(p_url=>'f?p='||
+                to_char(wwv_flow.g_flow_id)||':'||
+                to_char(nvl(wwv_flow.g_flow_step_id,0))||':'||
+                to_char(wwv_flow.g_instance));
+        end if;
+        --
+
+--LOGDEBUG(' call wwv_flow_custom_auth_std.post_login ');
+--LOGDEBUG(' p_flow_page = '||wwv_flow.g_flow_id||':'||nvl(wwv_flow.g_flow_step_id,0));
+        wwv_flow_custom_auth_std.post_login( -- register session in htmldb sessions table, set cookie, redirect back
+            p_uname     => l_tam_userid,
+            p_flow_page => wwv_flow.g_flow_id||':'||nvl(wwv_flow.g_flow_step_id,0));
+--LOGDEBUG(' End of custom_page_sentry');
+
+        return false;
+
+    end if;
+
+end custom_page_sentry;
+/
+======================================================
+"
+"-- Function: DATE_HAS_CHANGED
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "DATE_HAS_CHANGED" (pinVal_1 IN DATE,
+                                              pinVal_2 IN DATE)
+  RETURN CHAR
+IS
+BEGIN
+  IF (pinVal_1 IS NULL AND pinVal_2 IS NOT NULL) OR
+     (pinVal_1 IS NOT NULL AND pinVal_2 IS NULL) OR
+     pinVal_1 <> pinVal_2
+  THEN
+    RETURN 'Y';
+  ELSE
+    RETURN 'N';
+  END IF;
+END DATE_HAS_CHANGED;
+/
+======================================================
+"
+"-- Function: FADDLAENDERTOVORSCHRIFTEN
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "FADDLAENDERTOVORSCHRIFTEN" (avorschriftids varchar2, alaenderids varchar2) return boolean
+as
+  resu boolean :=true;
+  --v_id number :=0;
+  begin
+   UPDATE  t_vorschrift_ref_land set geloescht=0
+    where vorschriftID in  (select column_value
+                            from table(apex_string.split_numbers(avorschriftids, ':')) )
+    and geloescht =1
+    and landid  in (select column_value  from table(apex_string.split_numbers(alaenderids, ':')));
+
+     FOR  cur_v in (select column_value v_id from table(apex_string.split_numbers(avorschriftids, ':')) )
+     LOOP
+        MERGE into t_vorschrift_ref_land dest
+       USING ( select cur_v.v_id as vorschriftID, 
+              y.column_value as landid from table (apex_string.split_numbers(alaenderids, ':')) y) src
+       on (src.vorschriftID = dest.vorschriftID 
+           and src.landid = dest.landid)
+      WHEN NOT MATCHED THEN
+       insert (vorschriftID, landid, geloescht)
+       values (src.vorschriftID, src.landid, 0);
+    end LOOP;
+ return resu;
+ end;
+/
+======================================================
+"
+"-- Function: FADDTHEMENTOVORSCHRIFTEN
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "FADDTHEMENTOVORSCHRIFTEN" (avorschriftids varchar2, aThemenids varchar2) return boolean
+as
+  resu boolean :=true;
+  --v_id number :=0;
+  begin
+   UPDATE  T_VORSCHRIFT_REF_THEMA SET geloescht=0
+    where vorschriftID in  (select column_value
+                            from table(apex_string.split_numbers(avorschriftids, ':')) )
+    and geloescht =1
+    and themaid  in (select column_value  from table(apex_string.split_numbers(aThemenids, ':')));
+
+     FOR  cur_v in (select column_value v_id from table(apex_string.split_numbers(avorschriftids, ':')) )
+     LOOP
+        MERGE INTO T_VORSCHRIFT_REF_THEMA dest
+       USING ( select cur_v.v_id as vorschriftID, 
+              y.column_value as THEMAID from table (apex_string.split_numbers(aThemenids, ':')) y) src
+       on (src.vorschriftID = dest.vorschriftID 
+           and src.THEMAID = dest.THEMAID)
+      WHEN NOT MATCHED THEN
+       insert (  vorschriftID,    THEMAID, geloescht)
+       values (src.vorschriftID, src.THEMAID, 0);
+    end LOOP;
+ return resu;
+ end;
+/
+======================================================
+"
+"-- Function: FBLOBTABLE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "FBLOBTABLE" (pZip IN blob) RETURN t_blob_table AS
+    l_tab  t_blob_table := t_blob_table();
+    l_files apex_zip.t_files;  
+    l_unzipped_file blob;
+BEGIN
+
+    l_files := apex_zip.get_files ( p_zipped_blob => pZip );
+
+    for i in 1 .. 10 loop
+
+        l_unzipped_file := apex_zip.get_file_content (
+            p_zipped_blob => pZip,
+            p_file_name   => l_files(i)
+        );    
+
+        l_tab.extend(1);
+        l_tab(i) := l_unzipped_file;
+    end loop;
+
+   return l_tab;
+END;
+/
+======================================================
+"
+"-- Function: FBLOBTOCLOB
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "FBLOBTOCLOB" (aBlob in blob) RETURN clob AS 
+      l_clob         clob;
+      l_dest_offsset integer := 1;
+      l_src_offsset  integer := 1;
+      l_lang_context integer := dbms_lob.default_lang_ctx;
+      l_warning      integer;
+
+   begin
+
+      if aBlob is null then
+         return null;
+      end if;
+
+      dbms_lob.createTemporary(lob_loc => l_clob
+                              ,cache   => false);
+
+      dbms_lob.converttoclob(dest_lob     => l_clob
+                            ,src_blob     => aBlob
+                            ,amount       => dbms_lob.lobmaxsize
+                            ,dest_offset  => l_dest_offsset
+                            ,src_offset   => l_src_offsset
+                            ,blob_csid    => dbms_lob.default_csid
+                            ,lang_context => l_lang_context
+                            ,warning      => l_warning);
+
+      return l_clob;
+
+   end FBLOBTOCLOB;
+/
+======================================================
+"
+"-- Function: FCHECKDIFFERENCE_TO_GETEX_RELATIONS
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "FCHECKDIFFERENCE_TO_GETEX_RELATIONS" (avorschriftid IN NUMBER) RETURN NUMBER
+  AS
+        l_tar_vorschriftid number := 0;
+        l_target_key varchar2(50);
+
+        l_relationtype varchar2(50);
+        l_beziehung_artid number := 0;
+        l_min_date_all_vehicles date;
+        l_min_date_new_types date;
+        l_type_all_new varchar2(32);
+        lst_rel_type varchar2(250);
+        l_count number := 0;
+        l_homolog_serie number :=0;
+        --
+        l_getex_v_key  varchar2(64); 
+  BEGIN
+     -- für alle  verknüpfungen in Getex  vergleich existenz in Regindex 
+    FOR cur in ( select distinct vr.vorschriftid, vr.targetid, vr.relationtype relationtype,
+                        --vr.SC_TYPE,  vr.SC_VEHICLETYPE, --vr.SC_TOPICID, vr.SC_DATE,
+                        tv.vorschriftid as tar_vorschriftid
+                     FROM V_GETEX_VORSCHRIFT_RELATION vr
+                     join t_vorschrift tv on (tv.regindexid = vr.targetid)
+                     where vr.vorschriftid = avorschriftid  --436 
+                      and vr.relationtype not in ('CONSOLIDATES', 'IS_CONSOLIDATED_IN', 'SUCCESSOR', 
+                      'EQUIVALENT_TO', 'EQUIVALENT_TO_MULTI', 'CHANGES', 'DEMANDS', 'DEMANDS_MULTI') --
+                     order by tv.vorschriftid, vr.relationtype
+    )
+    LOOP
+        l_tar_vorschriftid := cur.tar_vorschriftid;
+        l_target_key := cur.targetid;
+        l_relationtype := cur.relationtype;
+        -- vergleiche für die Verknüfungen, die keine Datums angaben haben
+        if( l_relationtype = 'IS_CHANGED_BY' OR l_relationtype = 'PREDECESSOR' or l_relationtype = 'LINKED'
+            OR l_relationtype = 'SEEN_AS_EQUIVALENT_BY' OR l_relationtype = 'IS_SEEN_EQUIVALENT_BY_MULTI') then
+            -- check if the same exists in Regindex
+            select count(*) --avorschriftid as vorgaenger_vorschriftID,   --l_tar_vorschriftid  as nachfolger_vorschriftid
+            into l_count
+              from T_VORSCHRIFT_REF_VORSCHRIFT 
+              where vorgaenger_vorschriftID = avorschriftid 
+              and nachfolger_vorschriftid = l_tar_vorschriftid
+              and beziehung_art =  decode(l_relationtype ,'IS_CHANGED_BY', 30, 'PREDECESSOR', 10, 
+                   'SEEN_AS_EQUIVALENT_BY', 102,  'IS_SEEN_EQUIVALENT_BY_MULTI', 120, 'LINKED', 60,  0);
+            if (l_count = 0) then
+                   return 1;  -- keine verknüpfungen dieser art in regindex vorhanden
+            elsif (l_relationtype = 'IS_SEEN_EQUIVALENT_BY_MULTI' OR l_relationtype = 'SEEN_AS_EQUIVALENT_BY'  ) then
+                select count(*) into l_count 
+                from T_VORSCHRIFT_REF_VORSCHRIFT 
+                where vorgaenger_vorschriftID = avorschriftid 
+                and nachfolger_vorschriftid = l_tar_vorschriftid
+                and beziehung_art = 120;
+                if (l_count = 0) then
+                   return 120;       -- 120 not in Regindex
+                elsif (l_relationtype = 'IS_SEEN_EQUIVALENT_BY_MULTI') then
+                    select HOMOLOGATION_SERIE into l_homolog_serie
+                    from T_VORSCHRIFT_REF_VORSCHRIFT 
+                    where vorgaenger_vorschriftID = avorschriftid 
+                    and nachfolger_vorschriftid = l_tar_vorschriftid
+                    and beziehung_art = 120;
+                    if (l_homolog_serie is null or l_homolog_serie !=10) then
+                        return 121; -- homolog_serie !=10 in regindex   (not _multi)
+                    end if;
+                end if;
+            elsif (l_relationtype = 'IS_CHANGED_BY'   ) then
+                select count(*) into l_count 
+                from T_VORSCHRIFT_REF_VORSCHRIFT 
+                where vorgaenger_vorschriftID = avorschriftid 
+                and nachfolger_vorschriftid = l_tar_vorschriftid
+                and beziehung_art = 30;
+                if (l_count = 0) then
+                   return 30;       -- 30 not in Reg
+                end if;
+            elsif (l_relationtype = 'PREDECESSOR'   ) then
+                select count(*) into l_count 
+                from T_VORSCHRIFT_REF_VORSCHRIFT 
+                where vorgaenger_vorschriftID = avorschriftid 
+                and nachfolger_vorschriftid = l_tar_vorschriftid
+                and beziehung_art = 10;
+                if (l_count = 0) then
+                   return 10;       --beziehung_artid 10 not in Regindex
+                end if;
+            elsif (l_relationtype = 'LINKED'   ) then
+                select count(*) into l_count 
+                from T_VORSCHRIFT_REF_VORSCHRIFT 
+                where vorgaenger_vorschriftID = avorschriftid 
+                and nachfolger_vorschriftid = l_tar_vorschriftid
+                and beziehung_art = 60;
+                if (l_count = 0) then
+                   return 60;       --beziehung_artid 60 not in Regindex
+                end if;
+            end if;
+
+        end if;
+
+        -- vergleiche für die Verknüfungen mit Datums angaben **********
+        -- vergleich mit  is DEMANDED_BY
+        if( l_relationtype = 'IS_DEMANDED_BY_MULTI' or l_relationtype = 'IS_DEMANDED_BY') then
+          -- gibt es diese Verknüpfung in Regindex ---
+            select count(*) into l_count 
+            from T_VORSCHRIFT_REF_VORSCHRIFT 
+            where vorgaenger_vorschriftID = avorschriftid 
+            and nachfolger_vorschriftid = l_tar_vorschriftid
+            and beziehung_art = 40;
+            if (l_count = 0) then
+                return 40;       -- beziehung_artid 40 not in Regindex
+            else
+                if (l_relationtype = 'IS_DEMANDED_BY_MULTI') then
+                    select HOMOLOGATION_SERIE into l_homolog_serie
+                    from T_VORSCHRIFT_REF_VORSCHRIFT 
+                    where vorgaenger_vorschriftID = avorschriftid 
+                    and nachfolger_vorschriftid = l_tar_vorschriftid
+                    and beziehung_art = 40;
+                    if (l_homolog_serie is null or l_homolog_serie != 10) then
+                        return 41; -- homolog_serie !=10 in regindex  for beziehung_artid 40 (not _multi)
+                    end if; -- fütr multi
+                end if;
+             -- vergleiche Datum  für  typen
+                   -- hole datum von Getex
+               if(0 = pck_ri_getex.fgetRelationDates_Getex( avorschriftid , l_target_key, l_relationtype ,
+                                               l_min_date_all_vehicles, l_min_date_new_types )
+                 ) then
+                 -- Mindestens ein datum ist nicht null
+                 -- vergleich mit datum in regindex. 
+
+                    select count(*)  into l_count
+                    from T_VORSCHRIFT_REF_VORSCHRIFT 
+                    where vorgaenger_vorschriftID = avorschriftid  
+                    and nachfolger_vorschriftid = l_tar_vorschriftid 
+                    and beziehung_art = 40
+                    and ( ( datum_alle_typen is null and l_min_date_all_vehicles is not null
+                           OR datum_alle_typen is not null and l_min_date_all_vehicles is null
+                           OR (datum_alle_typen is not null and l_min_date_all_vehicles is not null 
+                               and to_char(datum_alle_typen, 'dd.mm.yyyy') != to_char(l_min_date_all_vehicles, 'dd.mm.yyyy') )
+                           )
+                        OR
+                           ( datum_neue_typen is null and l_min_date_new_types is not null
+                            OR datum_neue_typen is not null and l_min_date_new_types is null
+                            OR (datum_neue_typen is not null and l_min_date_new_types is not null 
+                                and to_char(datum_neue_typen, 'dd.mm.yyyy') != to_char(l_min_date_new_types, 'dd.mm.yyyy') )
+                           )
+                    );
+                    if(l_count >0 ) then
+                        return  42;   -- datums verstimmung
+                    end if;
+
+                end if;
+
+             -- l_min_date_all_vehicles date; -- l_min_date_new_types date; -- l_type_all_new varchar2(32);       
+            end if;
+
+        end if;
+
+    END LOOP;
+
+    -- Reverse check: für alle Verknüpfungen in Regindex vergleich Existenz in Getex  
+    FOR curs in ( select distinct vrv.vorgaenger_vorschriftid, vrv.nachfolger_vorschriftid, vrv.beziehung_art, 
+                     datum_alle_typen, datum_neue_typen, homologation_serie
+                 FROM T_VORSCHRIFT_REF_VORSCHRIFT vrv
+                 where vrv.vorgaenger_vorschriftid = avorschriftid
+                 and vrv.beziehung_art in (10, 30, 40, 60, 120)
+                 order by vrv.nachfolger_vorschriftid, vrv.beziehung_art
+    )
+    LOOP 
+
+        l_tar_vorschriftid := curs.nachfolger_vorschriftid;
+
+        l_beziehung_artid := curs.beziehung_art;
+        l_homolog_serie := curs.homologation_serie;    
+        l_min_date_all_vehicles := curs.datum_alle_typen;
+        l_min_date_new_types := curs.datum_neue_typen;
+
+        select regindexid  into l_target_key 
+        from T_VORSCHRIFT where VORSCHRIFTID =  curs.nachfolger_vorschriftid;
+
+        if(l_beziehung_artid in (10, 30,  60, 120) )  then
+                -- check if the same exists in Regindex
+                 select count(*) into l_count
+                FROM MV_GETEX_VORSCHRIFT_RELATION vr
+                where vr.vorschriftid = avorschriftid
+                and targetid = l_target_key
+                and l_beziehung_artid = 
+                     decode(vr.relationtype ,'IS_CHANGED_BY', 30, 'PREDECESSOR', 10, 
+                       'SEEN_AS_EQUIVALENT_BY', 102,  'IS_SEEN_EQUIVALENT_BY_MULTI', 120, 'LINKED', 60,
+                       'IS_DEMANDED_BY_MULTI', 40, 'IS_DEMANDED_BY', 40, 0);
+
+                if (l_count = 0) then
+                    return 2001;  -- entsprechende Verknüpfung in GETEX nicht vorhanden
+                end if;
+
+                -- Wenn Verknüpfung vorhanden , dann
+                 -- ein Vergleich der Unterschiede in Werten ist nicht notwendig, 
+                -- weil es in vorherigen LOOP durchgeführt wurde.
+        end if;
+
+    END LOOP;
+
+    --***************** Erweiterung   ********************** --
+
+    -- 3: wenn Vorschrift in einigen relations IN Getex als  Nachfolger returns 300.
+    FOR cur_r in ( select distinct vr.v_id, vr.vorschriftid, vr.targetid as targetid, vr.relationtype relationtype,
+                        --vr.SC_TYPE,  vr.SC_VEHICLETYPE, vr.SC_TOPICID, vr.SC_DATE,
+                        tv.vorschriftid as tar_vorschriftid
+                     FROM MV_GETEX_VORSCHRIFT_RELATION vr
+                     join t_vorschrift tv on (tv.regindexid = vr.targetid)
+                     where vr.vorschriftid =  1109 --26240 --436 --avorschriftid  --436 
+                      and vr.relationtype  in ('CONSOLIDATES', 'IS_CONSOLIDATED_IN', 'SUCCESSOR', 
+                      'EQUIVALENT_TO', 'EQUIVALENT_TO_MULTI', 'CHANGES', 'DEMANDS', 'DEMANDS_MULTI') --
+                     order by tv.vorschriftid, vr.relationtype
+        )
+    LOOP
+            l_getex_v_key := cur_r.v_id;
+            l_target_key := cur_r.targetid;
+            l_tar_vorschriftid := cur_r.tar_vorschriftid;
+            l_relationtype := cur_r.relationtype;
+        -- v_id                     vorschriftid    targetid                              Tar_vorschriftid
+         -- 650c3dd380925e68c5cad396	1109	       650c3cff80925e68c5cad376   	CHANGES	 436
+         -- select * from t_vorschrift_ref_vorschrift where nachfolger_vorschriftID = 1109
+            if( l_relationtype = 'CHANGES' OR l_relationtype = 'SUCCESSOR' 
+                OR l_relationtype = 'EQUIVALENT_TO' ) then
+
+               select count(*) --avorschriftid as vorgaenger_vorschriftID,   --l_tar_vorschriftid  as nachfolger_vorschriftid
+                into l_count
+                from T_VORSCHRIFT_REF_VORSCHRIFT 
+               where vorgaenger_vorschriftID = avorschriftid 
+               and nachfolger_vorschriftid = l_tar_vorschriftid
+               and beziehung_art =  decode(l_relationtype ,'CHANGES', 30, 'SUCCESSOR', 10, 'EQUIVALENT_TO', 102,  0);
+               if (l_count = 0) then
+                   return 3001;  
+               end if;  
+
+            elsif (l_relationtype = 'EQUIVALENT_TO_MULTI') then  
+                 select count(*) --avorschriftid as vorgaenger_vorschriftID,   --l_tar_vorschriftid  as nachfolger_vorschriftid
+                    into l_count
+                    from T_VORSCHRIFT_REF_VORSCHRIFT 
+                   where vorgaenger_vorschriftID = avorschriftid 
+                   and nachfolger_vorschriftid = l_tar_vorschriftid
+                   and beziehung_art = 102 and homologation_serie is not null and homologation_serie = 10;
+                   if (l_count = 0) then
+                       return 3002;   -- nicht vorhanden oder Homologation  falsch
+                   end if;  
+
+
+            elsif (l_relationtype = 'LINKED'   ) then
+                select count(*) into l_count 
+                from T_VORSCHRIFT_REF_VORSCHRIFT 
+                where vorgaenger_vorschriftID = avorschriftid 
+                and nachfolger_vorschriftid = l_tar_vorschriftid
+                and beziehung_art = 60;
+                if (l_count = 0) then
+                   return 61;       --beziehung_artid 60 not in Regindex
+                end if;
+            end if;
+        -- vergleiche für die Verknüfungen mit Datums angaben **********
+        -- vergleich mit   DEMANDEDS
+        if( l_relationtype = 'DEMANDS_MULTI' or l_relationtype = 'DEMANDS') then
+          -- gibt es diese Verknüpfung in Regindex ---
+            select count(*) into l_count 
+            from T_VORSCHRIFT_REF_VORSCHRIFT 
+            where vorgaenger_vorschriftID = avorschriftid 
+            and nachfolger_vorschriftid = l_tar_vorschriftid
+            and beziehung_art = 40;
+            if (l_count = 0) then
+                return 41;       -- beziehung_artid 40 not in Regindex
+            else
+                if (l_relationtype = 'DEMANDS_MULTI') then
+                    select HOMOLOGATION_SERIE into l_homolog_serie
+                    from T_VORSCHRIFT_REF_VORSCHRIFT 
+                    where vorgaenger_vorschriftID = avorschriftid 
+                    and nachfolger_vorschriftid = l_tar_vorschriftid
+                    and beziehung_art = 40;
+                    if (l_homolog_serie is null or l_homolog_serie != 10) then
+                        return 42; -- homolog_serie !=10 in regindex  for beziehung_artid 40 (not _multi)
+                    end if; -- fütr multi
+                end if;
+            end if;
+            -- check datumsangaben!!
+
+        end if;
+
+      END LOOP;
+
+    -- 4:  Reverse check: für alle Verknüpfungen mit --S  in Regindex,  vergleich Existenz in Getex  
+    FOR curs in ( select distinct vrv.vorgaenger_vorschriftid, vrv.nachfolger_vorschriftid, vrv.beziehung_art, 
+                     datum_alle_typen, datum_neue_typen, homologation_serie
+                 FROM T_VORSCHRIFT_REF_VORSCHRIFT vrv
+                 where vrv.nachfolger_vorschriftid = avorschriftid
+                 and vrv.beziehung_art in (10, 30, 40, 60, 120)
+                 order by vrv.nachfolger_vorschriftid, vrv.beziehung_art
+    )
+    LOOP 
+
+        l_tar_vorschriftid := curs.vorgaenger_vorschriftid;
+
+        l_beziehung_artid := curs.beziehung_art;
+        l_homolog_serie := curs.homologation_serie;    
+        l_min_date_all_vehicles := curs.datum_alle_typen;
+        l_min_date_new_types := curs.datum_neue_typen;
+
+        select regindexid  into l_target_key 
+        from T_VORSCHRIFT where VORSCHRIFTID =  curs.vorgaenger_vorschriftid;  
+
+        if(l_beziehung_artid in (10, 30,  60, 120) )  then
+          -- check if the same exists in Regindex
+             select count(*) into l_count
+            FROM MV_GETEX_VORSCHRIFT_RELATION vr
+            where vr.vorschriftid = avorschriftid
+            and targetid = l_target_key
+            and l_beziehung_artid = 
+                 decode(vr.relationtype ,'CHANGES', 30, 'SUCCESSOR', 10, 
+                   'EQUIVALENT_TO', 102,  'EQUIVALENT_TO_MULTI', 120, 'LINKED', 60,
+                   'DEMANDS_MULTI', 40, 'DEMANDS', 40, 0);
+
+            if (l_count = 0) then
+                return 3005;  -- entsprechende Verknüpfung in GETEX nicht vorhanden
+            end if;
+
+        end if;
+
+    END LOOP;     
+
+
+
+    return 0;
+  END fCheckDifference_to_Getex_relations;
+/
+======================================================
+"
+"-- Function: FCHECKDIFFGETEXVORSCHRIFTEINSATZDATEN
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "FCHECKDIFFGETEXVORSCHRIFTEINSATZDATEN" (aregindexid IN varchar2, avorschriftid IN number) RETURN NUMBER
+AS
+   l_ret number:=0;
+    l_einsatzdat_Typids varchar2(200);
+    l_neue_einsatzdat_Typids varchar2(200);
+    l_alte_einsatzdat_Typ varchar2(200);
+  l_sc_datum date;
+  l_diff_ed number  :=0;
+
+  BEGIN
+   --select  * from T_einsatzdatum_typ;
+ -- alle sc_typeid over all thema for getex Vorschrift
+   with e_l as ( select 
+    decode (sc_type, 'New Types', 1010, 'All vehicles', 1011 , 'New Types FBU', 1022, 'All vehicles FBU', 1023,
+    'New Types CKD', 1020, 'All vehicles CKD', 1021, 'Phase In Start', 1030, 'Phase In End', 1031, 1011) as  ed_typeid
+    from V_GETEX_THEMA_SCENARIO where sc_themaid is not null and sc_type is not null
+    and v_id =   aregindexid -- '652e8a5e4880f53d523f5abf'
+   )
+   select listagg( distinct e_l.ed_typeid, ':' )  into l_einsatzdat_Typids
+     from e_l;
+
+    select listagg(EINSATZDATUM_TYPID, ':') into l_alte_einsatzdat_Typ
+      from T_VORSCHRIFT_REF_EINSATZDATUM_TYP where vorschriftid = avorschriftid;
+
+    select listagg(column_value, ':' )   into l_neue_einsatzdat_Typids
+      from table (apex_string.split_numbers(l_einsatzdat_Typids, ':'))
+    where column_value not in (select column_value from table (apex_string.split_numbers(l_alte_einsatzdat_Typ, ':')) );
+
+     if (l_neue_einsatzdat_Typids is not null) then
+        return 1;
+     end if;
+
+     -- einsatzdatum
+     select min(sc_datum) into l_sc_datum from V_GETEX_THEMA_SCENARIO
+      where sc_type ='PCV' and v_id = aregindexid;
+      if (l_sc_datum is null ) then
+      -- select min datum über alle typen
+          select min(sc_datum) into l_sc_datum from V_GETEX_THEMA_SCENARIO
+          where  v_id = aregindexid;
+      end if;
+    -- check getex
+     select count(*) into l_diff_ed 
+       from T_VORSCHRIFT_REF_EINSATZDATUM_TYP   --set einsatzdatum = l_sc_datum 
+      where vorschriftid = avorschriftid 
+        and ( ( einsatzdatum_typid not in ( select column_value from table( apex_string.split_numbers(l_einsatzdat_Typids, ':')) ) 
+                and einsatzdatum_typid not in (1000, 1041)
+              )
+              OR
+              ( einsatzdatum_typid in ( select column_value from table( apex_string.split_numbers(l_einsatzdat_Typids, ':')) )
+                and (
+                (l_sc_datum is null and einsatzdatum is not null) or (l_sc_datum is not null and einsatzdatum is null)
+                  or einsatzdatum != l_sc_datum
+                )
+              )
+        );
+
+     if (l_diff_ed >0) then
+        return 2;
+     end if;
+    -- reverse check
+    select count(column_value) into l_diff_ed from table ( apex_string.split_numbers(l_einsatzdat_Typids, ':')) 
+     where  column_value not in (select EINSATZDATUM_TYPID from T_VORSCHRIFT_REF_EINSATZDATUM_TYP where vorschriftid = avorschriftid);
+
+    if (l_diff_ed >0) then
+        return 3;
+     end if;
+    --select count(*) into l_diff_ed from T_VORSCHRIFT_REF_EINSATZDATUM_TYP where vorschriftid = avorschriftid and einsatzdatum > l_sc_datum;
+
+   -- if (l_diff_ed >0) then
+  --      return 1;
+  --   end if;
+   return l_ret;
+ END;
+/
+======================================================
+"
+"-- Function: FCREATEMAILLINK
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "FCREATEMAILLINK" (aRevKontrollID NUMBER) RETURN VARCHAR2 IS
+    lMailLink      VARCHAR2(4000 CHAR);
+    cSubject       CONSTANT VARCHAR2(2000 CHAR) := 'Bitte prüfen Sie Ihre Regulierungsverantwortlichkeiten / Please check your regulatory responsibilities';
+    lBody_DE       VARCHAR2(2000 CHAR);
+    lBody_EN       VARCHAR2(2000 CHAR);
+    lBody          VARCHAR2(4000 CHAR);
+    lVerantwortlicherID t_rev_kontrolle.verantwortlicherid%TYPE;
+    lWertHash      t_rev_kontrolle.wert_hash%TYPE;
+    lEmail         t_verantwortlicher.email%TYPE;
+    lVorname       t_verantwortlicher.vorname%TYPE;
+    lNachname      t_verantwortlicher.nachname%TYPE;
+    lLink          VARCHAR2(1000 CHAR);
+BEGIN
+    -- Fetch data with single row check
+    SELECT k.verantwortlicherid, k.wert_hash, v.email, v.vorname, v.nachname
+    INTO lVerantwortlicherID, lWertHash, lEmail, lVorname, lNachname
+    FROM t_rev_kontrolle k
+    JOIN t_verantwortlicher v ON k.verantwortlicherid = v.verantwortlicherid
+    WHERE k.rev_kontrolle_id = aRevKontrollID;
+    IF lEmail IS NULL THEN
+        RAISE_APPLICATION_ERROR(-20001, 'No email found for responsible person.');
+    END IF;
+    -- Generate URL once
+    lLink := fCreateRevControlUrl(lVerantwortlicherID, lWertHash);
+    -- German text with CRLF line breaks
+    lBody_DE := 'Sehr geehrte/r ' || lVorname || ' ' || lNachname || ',' || chr(13) || chr(10) || chr(13) || chr(10) ||
+        'Im Prozess XYZ ist festgelegt, dass quartalsweise die Richtigkeit der Daten vom Regulierungsverantwortlichen bestätigt werden muss.' || chr(13) || chr(10) || chr(13) || chr(10) ||
+        'Bitte bestätigen Sie, dass Sie im System ET-B Regulation Index für eine oder mehrere fahrzeugtechnische Vorschriften als Regulierungsverantwortlicher (REV) genannt sind.' || chr(13) || chr(10) || 
+        'Klicken Sie bitte auf den Link, um zu einer Maske weitergeleitet zu werden, in der Sie sehen können, für welche Vorschriften Sie als REV eingetragen sind.' || chr(13) || chr(10) || chr(13) || chr(10) ||
+        'Hilfestellungen zum System finden Sie direkt in der Maske über die ? Icons!' || chr(13) || chr(10) || chr(13) || chr(10) ||
+        '1. Bitte klicken Sie den Link um zu Ihrer individuellen Seite zu kommen' || chr(13) || chr(10) ||
+        '2. Bitte markieren Sie über die Checkbox alle Vorschriften welche Sie bestätigen oder ablehnen wollen' || chr(13) || chr(10) ||
+        '3. Bitte klicken Sie auf "Approve", wenn Sie weiterhin als REV für die genannten Vorschriften verantwortlich sind' || chr(13) || chr(10) ||
+        '4. Falls Sie nicht mehr für die Vorschriften als REV verantwortlich sind, klicken Sie bitte auf "Reject" und falls Sie den neuen Regulierungsverantwortlichen kennen, dann teilen Sie uns diesen im System bitte mit' || chr(13) || chr(10) || chr(13) || chr(10) ||
+        'Link: ' || lLink || chr(13) || chr(10) || chr(13) || chr(10) ||
+        'Vielen Dank für Ihre Unterstützung.';
+    -- English text with CRLF line breaks
+    lBody_EN := 'Dear ' || lVorname || ' ' || lNachname || ',' || chr(13) || chr(10) || chr(13) || chr(10) ||
+        'In process XYZ, it is stipulated that the accuracy of the data must be confirmed quarterly by the regulatory officer.' || chr(13) || chr(10) || chr(13) || chr(10) ||
+        'Please confirm that you are listed as a Regulierungsverantwortlicher (REV) for one or more vehicle technical regulations in the ET-B Regulation Index system.' || chr(13) || chr(10) ||
+        'Click on the link to be redirected to a form where you can see which regulations you are listed as REV for.' || chr(13) || chr(10) || chr(13) || chr(10) ||
+        'Help for the system can be found directly in the form via the ? icons!' || chr(13) || chr(10) || chr(13) || chr(10) ||
+        '1. Please click the link to go to your individual page' || chr(13) || chr(10) ||
+        '2. Please check the boxes for all regulations you want to confirm or reject' || chr(13) || chr(10) ||
+        '3. Please click "Approve" if you continue to be responsible as REV for the listed regulations' || chr(13) || chr(10) ||
+        '4. If you are no longer responsible as REV for the regulations, please click "Reject" and if you know the new regulatory officer, please inform us in the system' || chr(13) || chr(10) || chr(13) || chr(10) ||
+        'Link: ' || lLink || chr(13) || chr(10) || chr(13) || chr(10) ||
+        'Thank you for your support.';
+    -- Combine bodies with separator
+    lBody := lBody_DE || chr(13) || chr(10) || chr(13) || chr(10) || '---------------' || chr(13) || chr(10) || chr(13) || chr(10) || lBody_EN;
+    IF LENGTH(lBody) > 4000 THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Email body exceeds maximum length.');
+    END IF;
+    -- Build mailto link
+    lMailLink := 'mailto:' || lEmail || 
+                '?subject=' || UTL_URL.ESCAPE(cSubject, TRUE, 'UTF-8') || 
+                '&body=' || UTL_URL.ESCAPE(lBody, TRUE, 'UTF-8');
+    RETURN lMailLink;
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20003, 'No control record found for ID: ' || aRevKontrollID);
+    WHEN TOO_MANY_ROWS THEN
+        RAISE_APPLICATION_ERROR(-20004, 'Multiple records found for ID: ' || aRevKontrollID);
+END fCreateMailLink;
+/
+======================================================
+"
+"-- Function: FGETCOMMONVKOUSERIDS
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "FGETCOMMONVKOUSERIDS" (avorschriftenids varchar2)    
+  return  varchar2 is
+  testTable StrTable;
+  l_cnt     pls_integer;
+  l_user_ids varchar2(5000);
+  l_prev_user_ids varchar2(5000);
+  l_v_co number :=0;
+  ii number :=0;
+BEGIN
+  testTable := StrTable();
+   select count(*) into l_v_co 
+   from  (select column_value from table (apex_string.split_numbers(avorschriftenids, ':'))  where column_value is not null );
+  --add values
+   testTable.extend(l_v_co);
+   for cur in (select column_value from table (apex_string.split_numbers(avorschriftenids, ':'))  where column_value is not null
+   ) loop
+   ii := ii+1;
+    testTable(ii) := cur.column_value;
+   end loop;
+
+
+  for ind in 1 .. l_v_co loop
+    if( ind =1) then
+      with cte as( select  distinct  bezeichnung as d,  benutzerid r, vorschriftid
+                    FROM V_VORSCHRIFT_VKO )
+      select listagg(r, ':') within group (order by r) into l_user_ids 
+      from cte  where vorschriftid =  testTable(ind); 
+    else
+       with cte as( select  distinct  bezeichnung as d,  benutzerid r, vorschriftid
+                    FROM V_VORSCHRIFT_VKO )
+      select listagg(r, ':') within group (order by r) into l_user_ids 
+      from cte  where vorschriftid =  testTable(ind) and r in 
+      ( select column_value from table (apex_string.split_numbers(l_prev_user_ids, ':')) ); 
+    end if;
+
+     l_prev_user_ids := l_user_ids;
+    dbms_output.put_line( l_user_ids );
+    if( l_user_ids is null) then
+      exit;
+    end if;
+  end loop;
+   return l_user_ids;
+  end;
+/
+======================================================
+"
+"-- Function: FGETRELATIONDATES_GETEX
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "FGETRELATIONDATES_GETEX" (avorschriftid in number, atarget_key IN VARCHAR2, 
+                                        arelationtype IN VARCHAR2,           
+                            adate_all_vehicles OUT date, adate_new_types OUT date  ) return number
+  AS
+    l_ret number :=0;
+    l_count number :=0;
+    l_type_all_new varchar2(32);
+  BEGIN
+    SELECT count(*) into l_count
+    FROM V_GETEX_VORSCHRIFT_RELATION
+    WHERE vorschriftid = avorschriftid   -- vorgänger
+    and TARGETID = atarget_key
+    and relationtype = arelationtype
+    and (SC_TYPE ='All Vehicles' )
+    and SC_VEHICLETYPE = 'PCV';
+
+    if(l_count > 0) then
+        SELECT SC_TYPE, min(SC_DATE) into l_type_all_new, adate_all_vehicles
+        FROM V_GETEX_VORSCHRIFT_RELATION
+        WHERE vorschriftid = avorschriftid   -- vorgänger
+        and TARGETID = atarget_key
+        and relationtype = arelationtype
+        and (SC_TYPE ='All Vehicles' )
+        and SC_VEHICLETYPE = 'PCV'
+        group by SC_TYPE;
+    end if;
+
+    if(adate_all_vehicles is null) then
+        SELECT count(*) into l_count
+        FROM V_GETEX_VORSCHRIFT_RELATION
+        WHERE vorschriftid = avorschriftid   -- vorgänger
+        and TARGETID = atarget_key
+        and relationtype = arelationtype
+        and (SC_TYPE ='All Vehicles' )
+        and SC_VEHICLETYPE = 'INDEPENDENT';
+
+        if(l_count > 0) then        
+            SELECT SC_TYPE, min(SC_DATE) into l_type_all_new, adate_all_vehicles
+            FROM V_GETEX_VORSCHRIFT_RELATION
+            WHERE vorschriftid = avorschriftid   -- vorgänger
+            and TARGETID = atarget_key
+            and relationtype = arelationtype  --'IS_DEMANDED_BY_MULTI'
+            and (SC_TYPE ='All Vehicles' )
+            and SC_VEHICLETYPE = 'INDEPENDENT'
+            group by SC_TYPE;
+        end if;
+    end if;
+    -- new types
+    SELECT count(*) into l_count
+    FROM V_GETEX_VORSCHRIFT_RELATION
+    WHERE vorschriftid = avorschriftid   -- vorgänger
+    and TARGETID = atarget_key
+    and relationtype = arelationtype
+    and (SC_TYPE = 'New Types' )
+    and SC_VEHICLETYPE = 'PCV';
+
+    if(l_count > 0) then
+        SELECT SC_TYPE, min(SC_DATE) into l_type_all_new, adate_new_types
+        FROM V_GETEX_VORSCHRIFT_RELATION
+        WHERE vorschriftid = avorschriftid   -- vorgänger
+        and TARGETID = atarget_key
+        and relationtype =  arelationtype
+        and (SC_TYPE = 'New Types')
+        and SC_VEHICLETYPE = 'PCV'
+        group by SC_TYPE;       --and targetid = l_tar_vorschriftid 
+    end if;
+
+
+    if(adate_new_types is null) then
+        SELECT count(*) into l_count
+        FROM V_GETEX_VORSCHRIFT_RELATION
+        WHERE vorschriftid = avorschriftid   -- vorgänger
+        and TARGETID = atarget_key
+        and relationtype = arelationtype
+        and (SC_TYPE = 'New Types' )
+        and SC_VEHICLETYPE = 'INDEPENDENT';
+        if(l_count > 0) then
+            SELECT SC_TYPE, min(SC_DATE) into l_type_all_new, adate_new_types
+            FROM V_GETEX_VORSCHRIFT_RELATION
+            WHERE vorschriftid = avorschriftid   -- vorgänger
+            and TARGETID = atarget_key
+            and relationtype =  arelationtype
+            and (SC_TYPE = 'New Types')
+            and SC_VEHICLETYPE = 'INDEPENDENT'
+            group by SC_TYPE;
+        end if;
+    end if;
+
+    if (adate_new_types is null and adate_all_vehicles is null) then
+        RETURN 1; -- keine daten
+    end if;
+
+     RETURN 0;
+  END fgetRelationDates_Getex;
+/
+======================================================
+"
+"-- Function: FISEINSATZDATUM_TYPCHANGING
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "FISEINSATZDATUM_TYPCHANGING" (avorschriftid in number, aEinsatzdatumTypid in number, aEinsatzdatum in varchar2) return number
+ is
+    l_co number :=0;
+    l_co_previous number :=0;
+   l_typid number :=0;
+   l_datum date;
+
+ BEGIN
+  -- asure --
+   if (aEinsatzdatumTypid =1000 or aEinsatzdatumTypid =1041 or aEinsatzdatumTypid =1060 or aEinsatzdatumTypid =1063 ) then
+     return 0;
+   end if;
+   -- check one typ that is updating 
+    select count(distinct Einsatzdatum_TypID) into l_co_previous
+    from T_VORSCHRIFT_REF_EINSATZDATUM_TYP
+   WHERE VORSCHRIFTid = avorschriftid
+    and Einsatzdatum_TypID not in (1000, 1041, 1060, 1063)
+    and Einsatzdatum_TypID = aEinsatzdatumTypid;
+
+  if (0 = l_co_previous) then 
+       return 1;  -- Differenz : Einsatzdaten do not exist in  Db for this typ and Vorschrift
+  end if;
+   -- check datum --
+   select distinct Einsatzdatum_TypID, einsatzdatum into l_typid, l_datum
+    from T_VORSCHRIFT_REF_EINSATZDATUM_TYP
+   WHERE VORSCHRIFTid = avorschriftid
+    and Einsatzdatum_TypID not in (1000, 1041, 1060, 1063)
+    and Einsatzdatum_TypID =  aEinsatzdatumTypid;
+
+    if( to_char(l_datum, 'dd.mm.yyyy') != aEinsatzdatum) then
+        return 2;
+    end if;
+    return 0;
+ END fIsEinsatzdatum_TypChanging;
+/
+======================================================
+"
+"-- Function: FTODATE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "FTODATE" (apar varchar2) return date as
+     lSearchdate date;
+     lpos number :=0;
+   begin
+    lpos :=instr(substr(apar, 1,10), '-');
+    dbms_output.put_line(lpos);
+    if (lpos >0) then
+      select to_date(substr(apar, 1,10), 'yyyy-mm-dd') into lSearchdate from dual;
+    else
+      select to_date(substr(apar, 1,10), 'dd.mm.yyyy') into lSearchdate from dual;
+    end if;
+      dbms_output.put_line(lSearchdate);
+      return lSearchdate;
+   exception when others then
+      dbms_output.put_line(lSearchdate);
+
+   end;
+/
+======================================================
+"
+"-- Function: ISINREDAKTIONSTEAM
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "ISINREDAKTIONSTEAM" ( auserid number)
+ return number as
+ l_co number :=0;
+  begin
+    select count(benutzerid) into l_co from t_benutzer 
+     where benutzerid = auserid 
+       and GID in ('7B70CF1BCFCDA79C', '2DC19358859CC4CC', '2F0830D92AA94C87', '992503A1D45D1DF4', 'C633D4ECE491D4A9', '7AB61614AB1CD30C');
+    return (l_co);
+ end;
+/
+======================================================
+"
+"-- Function: PAGE_461_EXCEL_EXPORT
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "PAGE_461_EXCEL_EXPORT" (
+    p_search_id number, 
+    p_milestone number, 
+    p_landids VARCHAR2,
+    p_card_num NUMBER,
+    p_publisher_filter VARCHAR2 DEFAULT NULL,
+    p_benutzerid NUMBER
+) RETURN CLOB
+AS
+BEGIN
+    RETURN q'[
+        WITH cte_lrsa AS (
+            SELECT vrt.vorschriftid,
+                   LISTAGG(l.lrsa_nummer || ' - ' || l.bezeichnung, ', ') 
+                   WITHIN GROUP (ORDER BY l.bezeichnung ASC) AS lrsa
+            FROM t_vorschrift_ref_thema vrt
+            JOIN T_THEMA_REF_LRSA ref ON (vrt.themaid = ref.themaid)
+            JOIN T_LRSA l ON (l.LRSA_ID = ref.LRSAID)
+            WHERE vrt.geloescht = 0
+            GROUP BY vrt.vorschriftid
+        ),
+        cte_homologationseigenschaften AS (   
+            SELECT vrt.vorschriftid, 
+                   REPLACE(
+                       LISTAGG(e.EIGENSCHAFT_KENNUNG || '-' || et.kuerzel || '-' || e.eigenschaft, ', ') 
+                       WITHIN GROUP (ORDER BY e.eigenschaft), 
+                       ', ', 
+                       chr(10)
+                   ) AS homologationseigenschaften
+            FROM t_vorschrift_ref_thema vrt
+            JOIN carmah2_admin.t_eigenschaft_ref_regindexthemen err ON (vrt.themaid = err.regindex_themen_id)
+            JOIN carmah2_admin.t_eigenschaft e ON (err.eigenschaft_id = e.eigenschaft_id)
+            JOIN carmah2_admin.t_eigenschaft_typ et ON (e.eigenschaft_typ_id = et.eigenschaft_typ_id)
+            WHERE vrt.geloescht = 0
+            GROUP BY vrt.vorschriftid
+        ),
+        cte_regelnummer_kritikalitaet AS (
+            SELECT 
+                ms.sucheid,
+                ms.meilenstein,
+                ms.landid,
+                CASE 
+                    WHEN ms.ALTERNATIVE_VORSCHRIFTID IS NOT NULL THEN ms.ALTERNATIVE_VORSCHRIFTID
+                    ELSE ms.VORSCHRIFTID
+                END as specific_vorschrift_id,
+                LISTAGG(DISTINCT TO_CHAR(ms.regelnummer), '; ') 
+                WITHIN GROUP (ORDER BY ms.regelnummer) AS regelnummer_list,
+                LISTAGG(DISTINCT 
+                    CASE 
+                        WHEN mat.KRITIKALITAET IS NOT NULL THEN TO_CHAR(mat.KRITIKALITAET)
+                        ELSE NULL 
+                    END, '; ') 
+                WITHIN GROUP (ORDER BY mat.KRITIKALITAET) AS kritikalitaet_von_regelnummer,
+                LISTAGG(DISTINCT 
+                    CASE 
+                        WHEN mat.AUSGABE_TEXT IS NOT NULL THEN mat.AUSGABE_TEXT
+                        ELSE NULL 
+                    END, chr(10)) 
+                WITHIN GROUP (ORDER BY mat.AUSGABE_TEXT) AS ausgabe_text_von_regelnummer
+            FROM T_MS_SUCHERGEBNISS ms
+            LEFT JOIN T_MS_PARAMETER p ON ms.regelnummer = p.nummer
+            LEFT JOIN T_MS_PARAMETER_REF_AUSGABE pra ON p.MS_PARAMETERID = pra.MS_PARAMETERID
+            LEFT JOIN T_MS_AUSGABE_TEXT mat ON pra.MS_AUSGABE_TEXTID = mat.MS_AUSGABE_TEXTID
+            GROUP BY ms.sucheid, ms.meilenstein, ms.landid,
+                CASE 
+                    WHEN ms.ALTERNATIVE_VORSCHRIFTID IS NOT NULL THEN ms.ALTERNATIVE_VORSCHRIFTID
+                    ELSE ms.VORSCHRIFTID
+                END
+        )
+        SELECT
+            split.CARD_NUMBER AS "Card Number",
+            CASE 
+                WHEN ms.ALTERNATIVE_VORSCHRIFTID IS NOT NULL THEN ms.ALTERNATIVE_VORSCHRIFTID
+                ELSE ms.VORSCHRIFTID
+            END as "Specific Reg Id",
+            LISTAGG(DISTINCT ms.landnummer, '; ') WITHIN GROUP (ORDER BY ms.landnummer) AS "B Nummer Liste",
+            LISTAGG(DISTINCT ms.landbezeichnung, '; ') WITHIN GROUP (ORDER BY ms.landnummer) AS "Land Namen Liste",
+            ms.themabezeichnung AS "Themabezeichnung",
+            CASE 
+                WHEN NVL(tp_main.ANZEIGE_MIT_DOKUMENTENDATUM, 0) = 20 
+                     AND tv_main.DOKUMENTENDATUM IS NOT NULL 
+                THEN COALESCE(tv_main.vorschrift_nummer, ms.vorschriftnummer) || '_' || 
+                     TO_CHAR(tv_main.DOKUMENTENDATUM, 'DD.MM.YYYY')
+                ELSE COALESCE(tv_main.vorschrift_nummer, ms.vorschriftnummer) 
+            END AS "Vorschriftennummer",
+            CASE 
+                WHEN ms.ALTERNATIVE_VORSCHRIFTID IS NOT NULL AND tv.vorschrift_nummer IS NOT NULL THEN
+                    CASE 
+                        WHEN NVL(tp_alt.ANZEIGE_MIT_DOKUMENTENDATUM, 0) = 20 
+                             AND tv.DOKUMENTENDATUM IS NOT NULL 
+                        THEN tv.vorschrift_nummer || '_' || TO_CHAR(tv.DOKUMENTENDATUM, 'DD.MM.YYYY')
+                        ELSE tv.vorschrift_nummer 
+                    END
+                ELSE NULL
+            END AS "Alternative Vorschriftennummer",
+            NVL(tv.publisher, tv_main.publisher) AS "Publisher",
+            NVL(lrsa_main.lrsa, lrsa_alt.lrsa) AS "LRSA",
+            NVL(homo_main.homologationseigenschaften, homo_alt.homologationseigenschaften) AS "Homologationseigenschaft",
+            regel_krit.regelnummer_list AS "Regelnummer",
+            regel_krit.kritikalitaet_von_regelnummer AS "Kritikalitaet Von Regelnummer",
+            regel_krit.ausgabe_text_von_regelnummer AS "Ausgabe Text Von Regelnummer",
+            CASE WHEN tv_main.rxswin = 10 THEN 'Ja' ELSE 'Nein' END AS "potentiell SUMS-Relevant",
+            CASE 
+                WHEN MAX(ms.MANUELLER_EINTRAG) = 10 THEN 'Manueller Eintrag'
+                ELSE 'Automatischer Eintrag'
+            END AS "Eintrag Typ",
+            bew.ET_KOMMENTAR AS "ET Kommentar",
+            CASE 
+                WHEN bew.ET_VERWENDUNG = 'nicht bewertet' THEN 'nicht bewertet'
+                WHEN bew.ET_VERWENDUNG = 'ja' THEN 'ja'
+                WHEN bew.ET_VERWENDUNG = 'nein' THEN 'nein'
+                ELSE 'nicht bewertet'
+            END AS "ET Verwendung",
+            bew.ET_VORSCHLAG_VORSCHRIFT AS "ET Vorschlag Vorschrift",
+            bew.FB_KOMMENTAR AS "FB Kommentar",
+            CASE 
+                WHEN bew.FB_VERWENDUNG = 'nicht bewertet' THEN 'nicht bewertet'
+                WHEN bew.FB_VERWENDUNG = 'ja' THEN 'ja'
+                WHEN bew.FB_VERWENDUNG = 'nein' THEN 'nein'
+                ELSE 'nicht bewertet'
+            END AS "FB Verwendung",
+            bew.FB_VORSCHLAG_VORSCHRIFT AS "FB Vorschlag Vorschrift"
+        FROM T_MS_SUCHERGEBNISS ms
+        LEFT OUTER JOIN t_vorschrift tv ON (tv.vorschriftid = ms.alternative_vorschriftid)
+        LEFT OUTER JOIN t_vorschrift tv_main ON (tv_main.vorschriftid = ms.vorschriftid)
+        LEFT OUTER JOIN t_publisher tp_alt ON (tv.publisherid = tp_alt.publisherid)
+        LEFT OUTER JOIN t_publisher tp_main ON (tv_main.publisherid = tp_main.publisherid)
+        LEFT OUTER JOIN T_MS_SUCHE_SPLIT split ON (
+            split.SUCHEID = ms.sucheid 
+            AND split.MEILENSTEIN = ms.meilenstein 
+            AND split.LANDID = ms.landid
+        )
+        LEFT OUTER JOIN cte_lrsa lrsa_main ON (lrsa_main.vorschriftid = ms.vorschriftid)
+        LEFT OUTER JOIN cte_lrsa lrsa_alt ON (lrsa_alt.vorschriftid = ms.alternative_vorschriftid)
+        LEFT OUTER JOIN cte_homologationseigenschaften homo_main ON (homo_main.vorschriftid = ms.vorschriftid)
+        LEFT OUTER JOIN cte_homologationseigenschaften homo_alt ON (homo_alt.vorschriftid = ms.alternative_vorschriftid)
+        LEFT OUTER JOIN cte_regelnummer_kritikalitaet regel_krit ON (
+            regel_krit.sucheid = ms.sucheid 
+            AND regel_krit.meilenstein = ms.meilenstein
+            AND regel_krit.landid = ms.landid
+            AND regel_krit.specific_vorschrift_id = CASE 
+                WHEN ms.ALTERNATIVE_VORSCHRIFTID IS NOT NULL THEN ms.ALTERNATIVE_VORSCHRIFTID
+                ELSE ms.VORSCHRIFTID
+            END
+        )
+        LEFT OUTER JOIN T_MS_BEWERTUNG bew ON (
+            bew.SUCHEID = ms.sucheid 
+            AND bew.MEILENSTEIN = ms.meilenstein
+            AND bew.CARD_NUMBER = split.CARD_NUMBER
+            AND bew.VORSCHRIFTID = CASE 
+                WHEN ms.ALTERNATIVE_VORSCHRIFTID IS NOT NULL THEN ms.ALTERNATIVE_VORSCHRIFTID
+                ELSE ms.VORSCHRIFTID
+            END
+            AND bew.BENUTZERID = ]' || p_benutzerid || q'[
+        )
+        WHERE ms.sucheid = ]' || p_search_id || q'[
+        AND ms.meilenstein = ]' || p_milestone || q'[
+        AND ms.landid IN (
+            SELECT TO_NUMBER(TRIM(column_value))
+            FROM TABLE(apex_string.split(']' || p_landids || q'[', ';'))
+        )
+        AND ms.vorschriftnummer IS NOT NULL]' ||
+        CASE 
+            WHEN p_publisher_filter IS NOT NULL THEN 
+                q'[
+        AND NVL(tv.publisher, tv_main.publisher) IN (
+            SELECT TRIM(column_value) 
+            FROM TABLE(apex_string.split(']' || p_publisher_filter || q'[', ':'))
+        )]'
+            ELSE ''
+        END || q'[
+        AND split.CARD_NUMBER = ]' || p_card_num || q'[
+        GROUP BY 
+            split.CARD_NUMBER,
+            split.BENUTZERID,
+            ms.ALTERNATIVE_VORSCHRIFTID,
+            ms.VORSCHRIFTID,
+            ms.themabezeichnung,
+            ms.vorschriftnummer,
+            tv.vorschrift_nummer,
+            tv_main.vorschrift_nummer,
+            tv.publisher,
+            tv_main.publisher,
+            tv_main.rxswin,
+            ms.sucheid,
+            ms.meilenstein,
+            tp_alt.ANZEIGE_MIT_DOKUMENTENDATUM,
+            tp_main.ANZEIGE_MIT_DOKUMENTENDATUM,
+            tv.DOKUMENTENDATUM,
+            tv_main.DOKUMENTENDATUM,
+            lrsa_main.lrsa,
+            lrsa_alt.lrsa,
+            homo_main.homologationseigenschaften,
+            homo_alt.homologationseigenschaften,
+            regel_krit.regelnummer_list,
+            regel_krit.kritikalitaet_von_regelnummer,
+            regel_krit.ausgabe_text_von_regelnummer,
+            bew.ET_VERWENDUNG,
+            bew.ET_VORSCHLAG_VORSCHRIFT,
+            bew.ET_KOMMENTAR,
+            bew.FB_VERWENDUNG,
+            bew.FB_VORSCHLAG_VORSCHRIFT,
+            bew.FB_KOMMENTAR
+        ORDER BY 
+            MAX(ms.MANUELLER_EINTRAG) DESC,
+            "B Nummer Liste",
+            "Themabezeichnung",
+            "Vorschriftennummer"]';
+END;
+/
+======================================================
+"
+"-- Function: ROW_COUNT
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "ROW_COUNT" (tab_name VARCHAR2) RETURN NUMBER
+AS LANGUAGE JAVA
+NAME 'RowCounter.rowCount(java.lang.String) return int';
+/
+======================================================
+"
+"-- Function: SRASYNC
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "SRASYNC" (aRole in varchar2, aRoleID in number) RETURN VARCHAR2
+SQL_MACRO
+AS 
+BEGIN RETURN q'!        select s.sra_benutzerid, s.nachname, s.vorname, s.abteilung, s.gid, s.email, s.telefon, b.benutzerid
+        from T_SRA_Benutzer s
+        left outer join t_benutzer b on (s.gid = b.gid)
+        where sra_group = aRole 
+        and s.gid not in (
+            select gid
+            from T_Benutzer b 
+            join T_Benutzer_ref_Rolle brr on (b.Benutzerid = brr.Benutzerid and rolleid = aRoleID)
+        )!';
+END;
+/
+======================================================
+"
+"-- Function: SRASYNC2
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "SRASYNC2" (aRole in varchar2, aRoleID in number) RETURN VARCHAR2
+sql_macro
+as
+begin return q'!
+select brr.benutzerid, benutzer_ref_rolleid, b.gid, b.nachname, b.vorname, b.abteilung, b.status
+from t_benutzer_ref_rolle brr
+join t_benutzer b on (brr.benutzerid = b.benutzerid)
+where brr.rolleid = aRoleID and gid not in (
+    select gid from t_sra_benutzer where sra_group = aRole
+)!';
+end;
+/
+======================================================
+"
+"-- Function: SRASYNC3
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "SRASYNC3" (aRole in varchar2) return varchar2
+sql_macro
+as
+begin
+    /* VKO/VEX/FBEX, die im VKO-VEX-Register sind, aber nicht in den SRA-Gruppen */
+    return q'!
+        with cte1 as (
+            select distinct ebarb.benutzerid, b.gid, 'VKO' as rolle, 1000 as rolleid
+            from t_et_b_ak_ref_benutzer ebarb
+            join t_benutzer b on (ebarb.benutzerid = b.benutzerid)
+
+            union all
+
+            select distinct ebartb.benutzerid, b.gid, case rolleid when 1002 then 'VEX' when 1006 then 'FBEX' end as rolle, rolleid
+            from t_et_b_ak_ref_thema_benutzer ebartb
+            join t_benutzer b on (ebartb.benutzerid = b.benutzerid)
+            where b.gid is not null
+        )    
+        select b.*
+        from cte1
+        join t_benutzer b on (cte1.benutzerid = b.benutzerid)
+        where rolle = aRole and cte1.gid not in (select gid from t_sra_benutzer where sra_group = aRole)
+        !';
+end;
+/
+======================================================
+"
+"-- Function: TEST_APEX_REST_CREDENTIALS
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE FUNCTION "TEST_APEX_REST_CREDENTIALS" (username IN STRING, pwd IN STRING)
+return NUMBER
+is
+--
+-- APEX Rest Credentials pruefen
+    l_test_name varchar2(255) := 'XX';
+    l_test_pwd  varchar2(255) := 'XX';
+begin
+    -- User Großgeschrieben und Hash Passwort überprüfen
+    -- Erst mal gegen Konstanten
+    -- SELECT standard_hash('APEX_PWD','SHA256') INTO l_test_pwd FROM DUAL;
+    if ( upper(username) = l_test_name AND pwd = l_test_pwd ) then
+        return 1;
+/*
+    else
+        DBMS_OUTPUT.put_line('FEHLER PWD:[' || pwd || '] T:[' || l_test_pwd || ']');
+*/
+    end if;
+    return 0;
+end;
+/
+======================================================
+"
