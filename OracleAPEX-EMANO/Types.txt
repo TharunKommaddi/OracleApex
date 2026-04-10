@@ -1,0 +1,352 @@
+"-- Type: ID_ROW
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "ID_ROW" as object (
+    reg_id VARCHAR2(64),
+    rev_regindexid NUMBER);
+/
+
+======================================================
+"
+"-- Type: T_BLOB_TABLE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_BLOB_TABLE" 
+AS TABLE OF blob;
+/
+
+======================================================
+"
+"-- Type: T_COCKPIT
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_COCKPIT" force AS OBJECT 
+( 
+    thema_bezeichnung varchar2(2000),
+    thema_sortorder number,
+    thema_nummer varchar2(2000),
+    themaid number,
+    b_nummer varchar2(2000),
+    landid number,
+    thema_leaf number,
+    thema_level number,
+    thema_parent_themaid number,
+    vorschriftid number,
+    anz_vorschriften_in_land number,
+    sort_in_land number,
+    land_sortorder number,
+    mav_vorschriften_in_thema number,
+    vorschrift_bezeichnung varchar2(2000),
+    vorschrift_nummer varchar2(2000),
+    nachfolgerid number,
+    nf_nummer varchar2(2000),
+    nf_datumsangaben t_einsatzdatum_table,
+    rr_vorschriftid number,
+    rr_vorschrift_nummer varchar2(2000),
+    besonderheiten varchar2(500)
+);
+/
+
+======================================================
+"
+"-- Type: T_COCKPIT_TABLE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_COCKPIT_TABLE" as table of t_cockpit;
+
+/
+
+======================================================
+"
+"-- Type: T_EINSATZDATUM
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_EINSATZDATUM" force AS OBJECT 
+( 
+    einsatzdatum_typid number,
+    einsatzdatum_typ varchar2(2000),
+    einsatzdatum_kurztext varchar2(2000),
+    einsatzdatum date,
+    einsatzdatum_text varchar2(2000),
+    herkunft_vorschriftid number,
+    herkunft_vorschriffnummer varchar2(2000)
+)
+
+/
+
+======================================================
+"
+"-- Type: T_EINSATZDATUM2
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_EINSATZDATUM2" force AS OBJECT 
+( 
+    einsatzdatum_typid number,
+    einsatzdatum_typ varchar2(2000),
+    einsatzdatum_kurztext varchar2(2000),
+    einsatzdatum date,
+    einsatzdatum_text varchar2(2000),
+    spaltenindex number
+)
+/
+
+======================================================
+"
+"-- Type: T_EINSATZDATUM2_TABLE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_EINSATZDATUM2_TABLE" as table of t_einsatzdatum2;
+/
+
+======================================================
+"
+"-- Type: T_EINSATZDATUM_TABLE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_EINSATZDATUM_TABLE" as table of t_einsatzdatum
+
+/
+
+======================================================
+"
+"-- Type: T_ID_ROW
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_ID_ROW" as object (
+        reg_id VARCHAR2(64),
+        reg_displayUrl VARCHAR2(512),
+        rev_regindexid NUMBER);
+/
+
+======================================================
+"
+"-- Type: T_ID_TBL
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_ID_TBL" as table of T_id_row;
+/
+
+======================================================
+"
+"-- Type: T_LDAP_COL
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_LDAP_COL" 
+as object (
+  GID                   VARCHAR2(255),
+  SURNAME               VARCHAR2(255),
+  GIVENNAME             VARCHAR2(255),
+  SUBDEPARTMENT         VARCHAR2(255),
+  MAIL                  VARCHAR2(4000),
+  PHONE                 VARCHAR2(255),
+  COSTCENTER            VARCHAR2(255),
+  EN                    VARCHAR2(255)
+ )
+
+/
+
+======================================================
+"
+"-- Type: T_LDAP_TABLE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_LDAP_TABLE" 
+as table of t_ldap_col;
+
+/
+
+======================================================
+"
+"-- Type: T_LISTOFIDS_TABLE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_LISTOFIDS_TABLE" AS TABLE OF NUMBER;
+/
+
+======================================================
+"
+"-- Type: T_REGULATION_ROW
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_REGULATION_ROW" AS OBJECT (
+    checkbox                    NUMBER,
+    row_edit_link              VARCHAR2(4000),
+    card_number                NUMBER,
+    specific_reg_id            NUMBER,
+    vorschriftid               NUMBER,
+    alternative_vorschriftid   VARCHAR2(4000),
+    edit_action                VARCHAR2(4000),
+    delete_action              VARCHAR2(4000),
+    manueller_eintrag          VARCHAR2(4000),
+    b_nummer_liste             VARCHAR2(4000),
+    landids                    VARCHAR2(4000),
+    land_namen_liste           VARCHAR2(4000),
+    themabezeichnung           VARCHAR2(4000),
+    vorschriftennummer         VARCHAR2(4000),
+    alternative_vorschriftennummer VARCHAR2(4000),
+    publisher                  VARCHAR2(4000),
+    search_id_hidden           NUMBER,
+    milestone_hidden           NUMBER,
+    landids_hidden             VARCHAR2(4000),
+    rxswin_relevant            VARCHAR2(4000),
+    lrsa                       VARCHAR2(4000),
+    homologationseigenschaft   VARCHAR2(4000),
+    nachfolger_vorschrift      VARCHAR2(4000),
+    kritikalitaet_von_regelnummer VARCHAR2(4000),
+    ausgabe_text_von_regelnummer VARCHAR2(4000),
+    et_verwendung              VARCHAR2(4000),
+    et_vorschlag_vorschrift    VARCHAR2(4000),
+    et_kommentar               VARCHAR2(4000),
+    "Kritikalität (M-1)"       VARCHAR2(4000),
+    "ET Verwendung (M-1)"      VARCHAR2(4000),
+    "ET Kommentar (M-1)"       VARCHAR2(4000),
+    "Änderung zu M-1"          VARCHAR2(4000),
+    "Kritikalität (Vorherige Suche)"    VARCHAR2(4000),
+    "ET Verwendung (Vorherige Suche)"   VARCHAR2(4000),
+    "ET Kommentar (Vorherige Suche)"    VARCHAR2(4000),
+    "Änderung zu Vorheriger Suche"      VARCHAR2(4000),
+    "Massenupdate Status"      VARCHAR2(4000)
+)
+/
+
+======================================================
+"
+"-- Type: T_REGULATION_TABLE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_REGULATION_TABLE" AS TABLE OF t_regulation_row
+/
+
+======================================================
+"
+"-- Type: T_SUCHE_ERGEBNIS
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_SUCHE_ERGEBNIS" force AS OBJECT 
+( 
+
+    Vorschriftid number,
+    in_kraft date,
+    neue_Typen date,
+    alle_Fahrzeuge date,
+    landid number,
+    themaid number,
+    regelnummer number,
+    risiko number,
+    equivalentid number,
+    LEAD_VKO_BENUTZERID number
+    
+);
+/
+
+======================================================
+"
+"-- Type: T_SUCHE_ERGEBNIS_LISTE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_SUCHE_ERGEBNIS_LISTE" as table of T_SUCHE_ERGEBNIS
+
+/
+
+======================================================
+"
+"-- Type: T_SUCHE_ERGEBNIS_MASKE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_SUCHE_ERGEBNIS_MASKE" force AS OBJECT 
+( 
+
+    Vorschriftid number,
+     regelnummer number,
+     RISIKO number,
+      supplement_vor_in_kraft number,
+       sop_nach_in_kraft number,
+         alle_fzg_vor_sop number,
+        neue_typen_vor_sop number,
+         alle_fzg_vor_eop number
+    
+);
+/
+
+======================================================
+"
+"-- Type: T_SUCHE_ERGEBNIS_MASKE_LISTE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_SUCHE_ERGEBNIS_MASKE_LISTE" as table of T_SUCHE_ERGEBNIS_Maske;
+
+/
+
+======================================================
+"
+"-- Type: T_TYPE_BITMASK_H_OBJECT
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_TYPE_BITMASK_H_OBJECT" AS OBJECT(
+       h_Vorschriftid number, 
+       Letzte_aenderung_Datum DATE , --VARCHAR2(50), 
+       GETEX_VERGLEICH_BITMASKE NUMBER 
+      );
+/
+
+======================================================
+"
+"-- Type: T_TYPE_BITMASK_H_TABLE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_TYPE_BITMASK_H_TABLE" IS TABLE OF t_type_bitmask_h_object;
+/
+
+======================================================
+"
+"-- Type: T_TYPE_SUCHE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_TYPE_SUCHE" force AS OBJECT 
+( 
+    datum_meilenstein date,
+    datum_sop date,
+    datum_eop date,
+    liste_laender varchar2(2000),
+    liste_themen varchar2(2000),
+    suchtyp number,
+    meilenstein number   
+);
+/
+
+======================================================
+"
+"-- Type: T_TYPE_SUCHE2
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_TYPE_SUCHE2" force AS OBJECT 
+( 
+    datum_meilenstein date,
+    datum_sop date,
+    datum_eop date,
+    liste_laender varchar2(2000),
+    liste_themen varchar2(2000),
+    suchtyp number,
+    meilenstein number,
+    ckd_fbu_mode number
+)
+/
+
+======================================================
+"
+"-- Type: T_TYPE_SUCHLISTE
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_TYPE_SUCHLISTE" as table of t_type_suche;
+/
+
+======================================================
+"
+"-- Type: T_TYPE_SUCHLISTE2
+======================================================
+
+  CREATE OR REPLACE EDITIONABLE TYPE "T_TYPE_SUCHLISTE2" as table of t_type_suche2;
+/
+
+======================================================
+"
