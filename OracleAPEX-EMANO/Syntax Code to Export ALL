@@ -1,0 +1,159 @@
+-- =====================================================
+-- ORACLE DATABASE COMPLETE DDL EXPORT SCRIPT
+-- Run Step 1 first, then each Step separately
+-- =====================================================
+
+-- =====================================================
+-- STEP 1: SET FORMATTING (Run this first always!)
+-- =====================================================
+BEGIN
+  DBMS_METADATA.SET_TRANSFORM_PARAM(
+    DBMS_METADATA.SESSION_TRANSFORM, 'SQLTERMINATOR', TRUE
+  );
+  DBMS_METADATA.SET_TRANSFORM_PARAM(
+    DBMS_METADATA.SESSION_TRANSFORM, 'PRETTY', TRUE
+  );
+END;
+
+-- =====================================================
+-- STEP 2: EXPORT TABLES
+-- =====================================================
+SELECT '-- Table: ' || table_name || CHR(10) ||
+       '======================================================' || CHR(10) ||
+       DBMS_METADATA.GET_DDL('TABLE', table_name) || CHR(10) ||
+       '======================================================' || CHR(10)
+FROM user_tables
+WHERE table_name NOT LIKE 'DR$%'
+  AND table_name NOT LIKE 'BIN$%'
+ORDER BY table_name;
+
+-- =====================================================
+-- STEP 3: EXPORT VIEWS
+-- =====================================================
+SELECT '-- View: ' || view_name || CHR(10) ||
+       '======================================================' || CHR(10) ||
+       DBMS_METADATA.GET_DDL('VIEW', view_name) || CHR(10) ||
+       '======================================================' || CHR(10)
+FROM user_views
+ORDER BY view_name;
+
+-- =====================================================
+-- STEP 4: EXPORT INDEXES
+-- =====================================================
+SELECT '-- Index: ' || index_name || CHR(10) ||
+       '======================================================' || CHR(10) ||
+       DBMS_METADATA.GET_DDL('INDEX', index_name) || CHR(10) ||
+       '======================================================' || CHR(10)
+FROM user_indexes
+WHERE index_name NOT LIKE 'SYS_%'
+  AND index_name NOT LIKE 'BIN$%'
+ORDER BY index_name;
+
+-- =====================================================
+-- STEP 5: EXPORT SEQUENCES
+-- =====================================================
+SELECT '-- Sequence: ' || sequence_name || CHR(10) ||
+       '======================================================' || CHR(10) ||
+       DBMS_METADATA.GET_DDL('SEQUENCE', sequence_name) || CHR(10) ||
+       '======================================================' || CHR(10)
+FROM user_sequences
+ORDER BY sequence_name;
+
+-- =====================================================
+-- STEP 6: EXPORT TYPES
+-- =====================================================
+SELECT '-- Type: ' || object_name || CHR(10) ||
+       '======================================================' || CHR(10) ||
+       DBMS_METADATA.GET_DDL('TYPE', object_name) || CHR(10) ||
+       '======================================================' || CHR(10)
+FROM user_objects
+WHERE object_type = 'TYPE'
+  AND object_name NOT LIKE 'SYS_%'
+ORDER BY object_name;
+
+-- =====================================================
+-- STEP 7: EXPORT PACKAGES (Spec + Body Together)
+-- =====================================================
+SELECT '-- Package: ' || object_name || CHR(10) ||
+       '======================================================' || CHR(10) ||
+       DBMS_METADATA.GET_DDL('PACKAGE', object_name) || CHR(10) ||
+       '------------------------------------------------------' || CHR(10) ||
+       '-- Package Body: ' || object_name || CHR(10) ||
+       '------------------------------------------------------' || CHR(10) ||
+       DBMS_METADATA.GET_DDL('PACKAGE_BODY', object_name) || CHR(10) ||
+       '======================================================' || CHR(10)
+FROM user_objects
+WHERE object_type = 'PACKAGE'
+ORDER BY object_name;
+
+-- =====================================================
+-- STEP 8: EXPORT PROCEDURES
+-- =====================================================
+SELECT '-- Procedure: ' || object_name || CHR(10) ||
+       '======================================================' || CHR(10) ||
+       DBMS_METADATA.GET_DDL('PROCEDURE', object_name) || CHR(10) ||
+       '======================================================' || CHR(10)
+FROM user_objects
+WHERE object_type = 'PROCEDURE'
+ORDER BY object_name;
+
+-- =====================================================
+-- STEP 9: EXPORT FUNCTIONS
+-- =====================================================
+SELECT '-- Function: ' || object_name || CHR(10) ||
+       '======================================================' || CHR(10) ||
+       DBMS_METADATA.GET_DDL('FUNCTION', object_name) || CHR(10) ||
+       '======================================================' || CHR(10)
+FROM user_objects
+WHERE object_type = 'FUNCTION'
+ORDER BY object_name;
+
+-- =====================================================
+-- STEP 10: EXPORT TRIGGERS
+-- =====================================================
+SELECT '-- Trigger: ' || trigger_name || CHR(10) ||
+       '======================================================' || CHR(10) ||
+       DBMS_METADATA.GET_DDL('TRIGGER', trigger_name) || CHR(10) ||
+       '======================================================' || CHR(10)
+FROM user_triggers
+ORDER BY trigger_name;
+
+-- =====================================================
+-- STEP 11: EXPORT DATABASE LINKS
+-- =====================================================
+SELECT '-- Database Link: ' || db_link || CHR(10) ||
+       '======================================================' || CHR(10) ||
+       DBMS_METADATA.GET_DDL('DB_LINK', db_link) || CHR(10) ||
+       '======================================================' || CHR(10)
+FROM user_db_links
+ORDER BY db_link;
+
+-- =====================================================
+-- STEP 12: EXPORT MATERIALIZED VIEWS
+-- =====================================================
+SELECT '-- Materialized View: ' || mview_name || CHR(10) ||
+       '======================================================' || CHR(10) ||
+       DBMS_METADATA.GET_DDL('MATERIALIZED_VIEW', mview_name) || CHR(10) ||
+       '======================================================' || CHR(10)
+FROM user_mviews
+ORDER BY mview_name;
+
+-- =====================================================
+-- STEP 13: EXPORT SYNONYMS
+-- =====================================================
+SELECT '-- Synonym: ' || synonym_name || CHR(10) ||
+       '======================================================' || CHR(10) ||
+       DBMS_METADATA.GET_DDL('SYNONYM', synonym_name) || CHR(10) ||
+       '======================================================' || CHR(10)
+FROM user_synonyms
+ORDER BY synonym_name;
+
+-- =====================================================
+-- STEP 14: EXPORT SODA COLLECTIONS
+-- =====================================================
+SELECT '-- SODA Collection: ' || collection_name || CHR(10) ||
+       '======================================================' || CHR(10) ||
+       'METADATA: ' || CHR(10) || metadata || CHR(10) ||
+       '======================================================' || CHR(10)
+FROM user_soda_collections
+ORDER BY collection_name;
