@@ -21,7 +21,7 @@ jobs:
           secure: true
           username: ${{ secrets.EMAIL_USERNAME }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "⚠️ Weekly APEX Backup Reminder - App 200"
+          subject: "Weekly APEX Backup Reminder - App 200"
           to: tharunkommaddi@gmail.com
           from: APEX Backup Bot <tharunkommaddi@gmail.com>
           content_type: text/html
@@ -31,18 +31,21 @@ jobs:
             <head>
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
             </head>
             <body style="margin:0;padding:0;background-color:#f4f4f4;font-family:Arial,sans-serif;">
 
-              <!-- Header -->
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center" style="padding:30px 0;">
+
+                    <!-- Header -->
                     <table width="600" cellpadding="0" cellspacing="0" style="background:#1a1a2e;border-radius:12px 12px 0 0;">
                       <tr>
                         <td align="center" style="padding:30px;">
-                          <h1 style="color:#ffffff;margin:0;font-size:28px;">🗄️ APEX Backup Bot</h1>
-                          <p style="color:#a0a0c0;margin:8px 0 0 0;font-size:14px;">Oracle APEX App 200 — Weekly Backup Reminder</p>
+                          <i class="fa-solid fa-database" style="color:#4a90d9;font-size:40px;"></i>
+                          <h1 style="color:#ffffff;margin:10px 0 0 0;font-size:26px;">APEX Backup Bot</h1>
+                          <p style="color:#a0a0c0;margin:8px 0 0 0;font-size:13px;">Oracle APEX App 200 — Weekly Backup Reminder</p>
                         </td>
                       </tr>
                     </table>
@@ -51,7 +54,10 @@ jobs:
                     <table width="600" cellpadding="0" cellspacing="0" style="background:#e74c3c;">
                       <tr>
                         <td align="center" style="padding:12px;">
-                          <p style="color:#ffffff;margin:0;font-size:14px;font-weight:bold;">⚠️ ACTION REQUIRED — Please backup your APEX app today!</p>
+                          <p style="color:#ffffff;margin:0;font-size:14px;font-weight:bold;">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            ACTION REQUIRED — Please backup your APEX app today!
+                          </p>
                         </td>
                       </tr>
                     </table>
@@ -62,9 +68,12 @@ jobs:
                         <td style="padding:30px;">
 
                           <!-- Greeting -->
-                          <p style="color:#333333;font-size:16px;margin:0 0 20px 0;">Hi <strong>Tharun</strong> 👋</p>
-                          <p style="color:#555555;font-size:14px;line-height:1.6;margin:0 0 25px 0;">
-                            This is your <strong>weekly automated reminder</strong> to backup your Oracle APEX Application 200. 
+                          <p style="color:#333;font-size:16px;margin:0 0 10px 0;">
+                            <i class="fa-solid fa-hand-wave" style="color:#f39c12;"></i>
+                            Hi <strong>Tharun</strong>
+                          </p>
+                          <p style="color:#555;font-size:14px;line-height:1.6;margin:0 0 25px 0;">
+                            This is your <strong>weekly automated reminder</strong> to backup your Oracle APEX Application 200.
                             Regular backups protect your work from accidental loss!
                           </p>
 
@@ -72,35 +81,51 @@ jobs:
                           <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9ff;border:1px solid #e0e0ff;border-radius:8px;margin-bottom:25px;">
                             <tr>
                               <td style="padding:20px;">
-                                <p style="margin:0 0 12px 0;color:#1a1a2e;font-size:15px;font-weight:bold;">📊 App Details</p>
+                                <p style="margin:0 0 12px 0;color:#1a1a2e;font-size:15px;font-weight:bold;">
+                                  <i class="fa-solid fa-chart-bar" style="color:#4a90d9;"></i>
+                                  App Details
+                                </p>
                                 <table width="100%">
                                   <tr>
-                                    <td style="color:#666;font-size:13px;padding:4px 0;">App ID</td>
-                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:4px 0;">200 — TharunKommaddi</td>
+                                    <td style="color:#666;font-size:13px;padding:5px 0;">
+                                      <i class="fa-solid fa-hashtag" style="color:#999;width:16px;"></i> App ID
+                                    </td>
+                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:5px 0;">200 — TharunKommaddi</td>
                                   </tr>
                                   <tr>
-                                    <td style="color:#666;font-size:13px;padding:4px 0;">Pages</td>
-                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:4px 0;">228 Pages</td>
+                                    <td style="color:#666;font-size:13px;padding:5px 0;">
+                                      <i class="fa-solid fa-file-code" style="color:#999;width:16px;"></i> Pages
+                                    </td>
+                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:5px 0;">228 Pages</td>
                                   </tr>
                                   <tr>
-                                    <td style="color:#666;font-size:13px;padding:4px 0;">Version</td>
-                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:4px 0;">APEX 24.2.16</td>
+                                    <td style="color:#666;font-size:13px;padding:5px 0;">
+                                      <i class="fa-solid fa-code-branch" style="color:#999;width:16px;"></i> Version
+                                    </td>
+                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:5px 0;">APEX 24.2.16</td>
                                   </tr>
                                   <tr>
-                                    <td style="color:#666;font-size:13px;padding:4px 0;">Export Size</td>
-                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:4px 0;">~49 MB</td>
+                                    <td style="color:#666;font-size:13px;padding:5px 0;">
+                                      <i class="fa-solid fa-weight-hanging" style="color:#999;width:16px;"></i> Export Size
+                                    </td>
+                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:5px 0;">~49 MB</td>
                                   </tr>
                                   <tr>
-                                    <td style="color:#666;font-size:13px;padding:4px 0;">Environment</td>
-                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:4px 0;">Oracle Cloud (Frankfurt)</td>
+                                    <td style="color:#666;font-size:13px;padding:5px 0;">
+                                      <i class="fa-solid fa-cloud" style="color:#999;width:16px;"></i> Environment
+                                    </td>
+                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:5px 0;">Oracle Cloud (Frankfurt)</td>
                                   </tr>
                                 </table>
                               </td>
                             </tr>
                           </table>
 
-                          <!-- Steps -->
-                          <p style="color:#1a1a2e;font-size:15px;font-weight:bold;margin:0 0 15px 0;">📋 Backup Steps</p>
+                          <!-- Steps Title -->
+                          <p style="color:#1a1a2e;font-size:15px;font-weight:bold;margin:0 0 15px 0;">
+                            <i class="fa-solid fa-list-check" style="color:#4a90d9;"></i>
+                            Backup Steps
+                          </p>
 
                           <!-- Step 1 -->
                           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
@@ -109,8 +134,11 @@ jobs:
                                 <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">1</div>
                               </td>
                               <td valign="top" style="padding-left:10px;">
-                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Open APEX Builder</p>
-                                <a href="https://gd1895d7a91019d-h5vz0428ux25xs1n.adb.eu-frankfurt-1.oraclecloudapps.com/ords/f?p=4500" style="color:#4a90d9;font-size:12px;">Click here to open APEX Builder →</a>
+                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">
+                                  <i class="fa-solid fa-arrow-up-right-from-square" style="color:#4a90d9;"></i>
+                                  Open APEX Builder
+                                </p>
+                                <a href="https://gd1895d7a91019d-h5vz0428ux25xs1n.adb.eu-frankfurt-1.oraclecloudapps.com/ords/f?p=4500" style="color:#4a90d9;font-size:12px;">Click here to open APEX Builder</a>
                               </td>
                             </tr>
                           </table>
@@ -122,7 +150,10 @@ jobs:
                                 <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">2</div>
                               </td>
                               <td valign="top" style="padding-left:10px;">
-                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Click on App 200</p>
+                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">
+                                  <i class="fa-solid fa-mobile-screen" style="color:#4a90d9;"></i>
+                                  Click on App 200
+                                </p>
                                 <p style="margin:4px 0 0 0;color:#666;font-size:12px;">TharunKommaddi — Oracle APEX Interview Prep</p>
                               </td>
                             </tr>
@@ -135,7 +166,10 @@ jobs:
                                 <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">3</div>
                               </td>
                               <td valign="top" style="padding-left:10px;">
-                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Export / Import → Export</p>
+                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">
+                                  <i class="fa-solid fa-file-export" style="color:#4a90d9;"></i>
+                                  Export / Import → Export
+                                </p>
                                 <p style="margin:4px 0 0 0;color:#666;font-size:12px;">Keep all default settings and click Export</p>
                               </td>
                             </tr>
@@ -148,8 +182,11 @@ jobs:
                                 <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">4</div>
                               </td>
                               <td valign="top" style="padding-left:10px;">
-                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Download f200.sql</p>
-                                <p style="margin:4px 0 0 0;color:#666;font-size:12px;">File size approximately 49MB</p>
+                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">
+                                  <i class="fa-solid fa-download" style="color:#4a90d9;"></i>
+                                  Download f200.sql
+                                </p>
+                                <p style="margin:4px 0 0 0;color:#666;font-size:12px;">File size approximately 49 MB</p>
                               </td>
                             </tr>
                           </table>
@@ -161,8 +198,11 @@ jobs:
                                 <div style="background:#27ae60;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">5</div>
                               </td>
                               <td valign="top" style="padding-left:10px;">
-                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Upload to GitHub Repo</p>
-                                <a href="https://github.com/TharunKommaddi/OracleApex/tree/main/BackUp-App200" style="color:#4a90d9;font-size:12px;">Click here to open GitHub Backup Folder →</a>
+                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">
+                                  <i class="fa-brands fa-github" style="color:#333;"></i>
+                                  Upload to GitHub Repo
+                                </p>
+                                <a href="https://github.com/TharunKommaddi/OracleApex/tree/main/BackUp-App200" style="color:#4a90d9;font-size:12px;">Click here to open GitHub Backup Folder</a>
                               </td>
                             </tr>
                           </table>
@@ -170,25 +210,26 @@ jobs:
                           <!-- CTA Buttons -->
                           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:25px;">
                             <tr>
-                              <td align="center" style="padding:5px;">
+                              <td align="center">
                                 <a href="https://gd1895d7a91019d-h5vz0428ux25xs1n.adb.eu-frankfurt-1.oraclecloudapps.com/ords/f?p=4500"
-                                   style="background:#1a1a2e;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:bold;display:inline-block;margin:5px;">
-                                  🚀 Open APEX Builder
+                                   style="background:#1a1a2e;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:bold;display:inline-block;margin:5px;">
+                                  <i class="fa-solid fa-rocket"></i> Open APEX Builder
                                 </a>
                                 <a href="https://github.com/TharunKommaddi/OracleApex/tree/main/BackUp-App200"
-                                   style="background:#27ae60;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:bold;display:inline-block;margin:5px;">
-                                  📁 Open GitHub Folder
+                                   style="background:#27ae60;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:bold;display:inline-block;margin:5px;">
+                                  <i class="fa-brands fa-github"></i> Open GitHub Folder
                                 </a>
                               </td>
                             </tr>
                           </table>
 
-                          <!-- Tip -->
+                          <!-- Tip Box -->
                           <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff9e6;border-left:4px solid #f39c12;border-radius:4px;">
                             <tr>
                               <td style="padding:15px;">
                                 <p style="margin:0;color:#856404;font-size:13px;">
-                                  💡 <strong>Pro Tip:</strong> Name your backup folder with today's date like
+                                  <i class="fa-solid fa-lightbulb" style="color:#f39c12;"></i>
+                                  <strong>Pro Tip:</strong> Name your backup folder with today's date like
                                   <code>app_200/20260531_080000/f200.sql</code> to keep backups organized!
                                 </p>
                               </td>
@@ -204,10 +245,12 @@ jobs:
                       <tr>
                         <td align="center" style="padding:20px;">
                           <p style="color:#a0a0c0;font-size:12px;margin:0;">
-                            This email is sent automatically every Monday at 8AM UTC
+                            <i class="fa-solid fa-clock" style="color:#a0a0c0;"></i>
+                            Sent automatically every Monday at 8AM UTC
                           </p>
                           <p style="color:#a0a0c0;font-size:12px;margin:8px 0 0 0;">
-                            🤖 APEX Backup Bot — TharunKommaddi/OracleApex
+                            <i class="fa-brands fa-github" style="color:#a0a0c0;"></i>
+                            APEX Backup Bot — TharunKommaddi/OracleApex
                           </p>
                         </td>
                       </tr>
