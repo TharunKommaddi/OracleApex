@@ -161,4 +161,61 @@ jobs:
                                 <div style="background:#27ae60;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">5</div>
                               </td>
                               <td valign="top" style="padding-left:10px;">
-                                <p style="margin:0;color:#333;font-size:14p
+                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Upload to GitHub Repo</p>
+                                <a href="https://github.com/TharunKommaddi/OracleApex/tree/main/BackUp-App200" style="color:#4a90d9;font-size:12px;">Click here to open GitHub Backup Folder →</a>
+                              </td>
+                            </tr>
+                          </table>
+
+                          <!-- CTA Buttons -->
+                          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:25px;">
+                            <tr>
+                              <td align="center" style="padding:5px;">
+                                <a href="https://gd1895d7a91019d-h5vz0428ux25xs1n.adb.eu-frankfurt-1.oraclecloudapps.com/ords/f?p=4500"
+                                   style="background:#1a1a2e;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:bold;display:inline-block;margin:5px;">
+                                  🚀 Open APEX Builder
+                                </a>
+                                <a href="https://github.com/TharunKommaddi/OracleApex/tree/main/BackUp-App200"
+                                   style="background:#27ae60;color:#ffffff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:bold;display:inline-block;margin:5px;">
+                                  📁 Open GitHub Folder
+                                </a>
+                              </td>
+                            </tr>
+                          </table>
+
+                          <!-- Tip -->
+                          <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff9e6;border-left:4px solid #f39c12;border-radius:4px;">
+                            <tr>
+                              <td style="padding:15px;">
+                                <p style="margin:0;color:#856404;font-size:13px;">
+                                  💡 <strong>Pro Tip:</strong> Name your backup folder with today's date like
+                                  <code>app_200/20260531_080000/f200.sql</code> to keep backups organized!
+                                </p>
+                              </td>
+                            </tr>
+                          </table>
+
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Footer -->
+                    <table width="600" cellpadding="0" cellspacing="0" style="background:#1a1a2e;border-radius:0 0 12px 12px;">
+                      <tr>
+                        <td align="center" style="padding:20px;">
+                          <p style="color:#a0a0c0;font-size:12px;margin:0;">
+                            This email is sent automatically every Monday at 8AM UTC
+                          </p>
+                          <p style="color:#a0a0c0;font-size:12px;margin:8px 0 0 0;">
+                            🤖 APEX Backup Bot — TharunKommaddi/OracleApex
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+
+                  </td>
+                </tr>
+              </table>
+
+            </body>
+            </html>
