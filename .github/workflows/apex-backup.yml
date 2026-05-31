@@ -1,0 +1,43 @@
+name: APEX App Backup
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Every night at 2AM UTC
+  workflow_dispatch:       # Also allow manual trigger
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install SQLcl
+        run: |
+          wget -q https://download.oracle.com/otn_software/java/sqldeveloper/sqlcl-latest.zip
+          unzip -q sqlcl-latest.zip
+          chmod +x sqlcl/bin/sql
+
+      - name: Export APEX App 200
+        env:
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_SERVICE: ${{ secrets.DB_SERVICE }}
+        run: |
+          mkdir -p BackUp-App200/app_200/$(date +%Y%m%d_%H%M%S)
+          BACKUP_DIR="BackUp-App200/app_200/$(date +%Y%m%d_%H%M%S)"
+          
+          ./sqlcl/bin/sql -nohistory ${DB_USERNAME}/${DB_PASSWORD}@${DB_HOST}/${DB_SERVICE} <<EOF
+          apex export -applicationid 200 -dir ${BACKUP_DIR} -expOriginalIds
+          exit
+          EOF
+
+      - name: Commit and Push backup
+        run: |
+          git config --global user.name "APEX Backup Bot"
+          git config --global user.email "backup@tharunkommaddi.com"
+          git add BackUp-App200/
+          git diff --staged --quiet || git commit -m "Auto backup App 200 - $(date +%Y%m%d_%H%M%S)"
+          git push
