@@ -2,8 +2,11 @@ name: APEX App Backup
 
 on:
   schedule:
-    - cron: '0 2 * * *'  # Every night at 2AM UTC
-  workflow_dispatch:       # Also allow manual trigger
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   backup:
@@ -13,11 +16,19 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
       - name: Install SQLcl
         run: |
           wget -q https://download.oracle.com/otn_software/java/sqldeveloper/sqlcl-latest.zip
           unzip -q sqlcl-latest.zip
           chmod +x sqlcl/bin/sql
+          echo "SQLcl installed!"
+          ./sqlcl/bin/sql -version
 
       - name: Export APEX App 200
         env:
@@ -26,15 +37,21 @@ jobs:
           DB_HOST: ${{ secrets.DB_HOST }}
           DB_SERVICE: ${{ secrets.DB_SERVICE }}
         run: |
-          mkdir -p BackUp-App200/app_200/$(date +%Y%m%d_%H%M%S)
           BACKUP_DIR="BackUp-App200/app_200/$(date +%Y%m%d_%H%M%S)"
-          
-          ./sqlcl/bin/sql -nohistory ${DB_USERNAME}/${DB_PASSWORD}@${DB_HOST}/${DB_SERVICE} <<EOF
-          apex export -applicationid 200 -dir ${BACKUP_DIR} -expOriginalIds
+          mkdir -p "$BACKUP_DIR"
+          echo "Backing up to: $BACKUP_DIR"
+
+          ./sqlcl/bin/sql -nohistory \
+            "${DB_USERNAME}/${DB_PASSWORD}@${DB_HOST}:1522/${DB_SERVICE}" \
+            <<EOF
+          apex export -applicationid 200 -dir ${GITHUB_WORKSPACE}/${BACKUP_DIR}
           exit
           EOF
 
-      - name: Commit and Push backup
+          echo "Export done!"
+          ls -la "$BACKUP_DIR"
+
+      - name: Commit and Push
         run: |
           git config --global user.name "APEX Backup Bot"
           git config --global user.email "backup@tharunkommaddi.com"
