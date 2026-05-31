@@ -2,8 +2,8 @@ name: Weekly Backup Reminder
 
 on:
   schedule:
-    - cron: '0 8 * * 1'  # Every Monday 8AM UTC
-  workflow_dispatch:       # Manual trigger too
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -24,24 +24,141 @@ jobs:
           subject: "⚠️ Weekly APEX Backup Reminder - App 200"
           to: tharunkommaddi@gmail.com
           from: APEX Backup Bot <tharunkommaddi@gmail.com>
+          content_type: text/html
           body: |
-            Hi Tharun!
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin:0;padding:0;background-color:#f4f4f4;font-family:Arial,sans-serif;">
 
-            This is your weekly reminder to backup Oracle APEX App 200.
+              <!-- Header -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding:30px 0;">
+                    <table width="600" cellpadding="0" cellspacing="0" style="background:#1a1a2e;border-radius:12px 12px 0 0;">
+                      <tr>
+                        <td align="center" style="padding:30px;">
+                          <h1 style="color:#ffffff;margin:0;font-size:28px;">🗄️ APEX Backup Bot</h1>
+                          <p style="color:#a0a0c0;margin:8px 0 0 0;font-size:14px;">Oracle APEX App 200 — Weekly Backup Reminder</p>
+                        </td>
+                      </tr>
+                    </table>
 
-            Steps to backup:
-            1. Go to APEX Builder
-               https://gd1895d7a91019d-h5vz0428ux25xs1n.adb.eu-frankfurt-1.oraclecloudapps.com/ords/f?p=4500
+                    <!-- Alert Banner -->
+                    <table width="600" cellpadding="0" cellspacing="0" style="background:#e74c3c;">
+                      <tr>
+                        <td align="center" style="padding:12px;">
+                          <p style="color:#ffffff;margin:0;font-size:14px;font-weight:bold;">⚠️ ACTION REQUIRED — Please backup your APEX app today!</p>
+                        </td>
+                      </tr>
+                    </table>
 
-            2. Click on App 200
+                    <!-- Main Content -->
+                    <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;">
+                      <tr>
+                        <td style="padding:30px;">
 
-            3. Click Export / Import → Export
+                          <!-- Greeting -->
+                          <p style="color:#333333;font-size:16px;margin:0 0 20px 0;">Hi <strong>Tharun</strong> 👋</p>
+                          <p style="color:#555555;font-size:14px;line-height:1.6;margin:0 0 25px 0;">
+                            This is your <strong>weekly automated reminder</strong> to backup your Oracle APEX Application 200. 
+                            Regular backups protect your work from accidental loss!
+                          </p>
 
-            4. Download f200.sql
+                          <!-- App Info Card -->
+                          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9ff;border:1px solid #e0e0ff;border-radius:8px;margin-bottom:25px;">
+                            <tr>
+                              <td style="padding:20px;">
+                                <p style="margin:0 0 12px 0;color:#1a1a2e;font-size:15px;font-weight:bold;">📊 App Details</p>
+                                <table width="100%">
+                                  <tr>
+                                    <td style="color:#666;font-size:13px;padding:4px 0;">App ID</td>
+                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:4px 0;">200 — TharunKommaddi</td>
+                                  </tr>
+                                  <tr>
+                                    <td style="color:#666;font-size:13px;padding:4px 0;">Pages</td>
+                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:4px 0;">228 Pages</td>
+                                  </tr>
+                                  <tr>
+                                    <td style="color:#666;font-size:13px;padding:4px 0;">Version</td>
+                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:4px 0;">APEX 24.2.16</td>
+                                  </tr>
+                                  <tr>
+                                    <td style="color:#666;font-size:13px;padding:4px 0;">Export Size</td>
+                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:4px 0;">~49 MB</td>
+                                  </tr>
+                                  <tr>
+                                    <td style="color:#666;font-size:13px;padding:4px 0;">Environment</td>
+                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:4px 0;">Oracle Cloud (Frankfurt)</td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
 
-            5. Upload to GitHub repo
-               https://github.com/TharunKommaddi/OracleApex/tree/main/BackUp-App200
+                          <!-- Steps -->
+                          <p style="color:#1a1a2e;font-size:15px;font-weight:bold;margin:0 0 15px 0;">📋 Backup Steps</p>
 
-            Stay consistent with backups! 💪
+                          <!-- Step 1 -->
+                          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
+                            <tr>
+                              <td width="36" valign="top">
+                                <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">1</div>
+                              </td>
+                              <td valign="top" style="padding-left:10px;">
+                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Open APEX Builder</p>
+                                <a href="https://gd1895d7a91019d-h5vz0428ux25xs1n.adb.eu-frankfurt-1.oraclecloudapps.com/ords/f?p=4500" style="color:#4a90d9;font-size:12px;">Click here to open APEX Builder →</a>
+                              </td>
+                            </tr>
+                          </table>
 
-            - APEX Backup Bot
+                          <!-- Step 2 -->
+                          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
+                            <tr>
+                              <td width="36" valign="top">
+                                <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">2</div>
+                              </td>
+                              <td valign="top" style="padding-left:10px;">
+                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Click on App 200</p>
+                                <p style="margin:4px 0 0 0;color:#666;font-size:12px;">TharunKommaddi — Oracle APEX Interview Prep</p>
+                              </td>
+                            </tr>
+                          </table>
+
+                          <!-- Step 3 -->
+                          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
+                            <tr>
+                              <td width="36" valign="top">
+                                <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">3</div>
+                              </td>
+                              <td valign="top" style="padding-left:10px;">
+                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Export / Import → Export</p>
+                                <p style="margin:4px 0 0 0;color:#666;font-size:12px;">Keep all default settings and click Export</p>
+                              </td>
+                            </tr>
+                          </table>
+
+                          <!-- Step 4 -->
+                          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
+                            <tr>
+                              <td width="36" valign="top">
+                                <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">4</div>
+                              </td>
+                              <td valign="top" style="padding-left:10px;">
+                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Download f200.sql</p>
+                                <p style="margin:4px 0 0 0;color:#666;font-size:12px;">File size approximately 49MB</p>
+                              </td>
+                            </tr>
+                          </table>
+
+                          <!-- Step 5 -->
+                          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:25px;">
+                            <tr>
+                              <td width="36" valign="top">
+                                <div style="background:#27ae60;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">5</div>
+                              </td>
+                              <td valign="top" style="padding-left:10px;">
+                                <p style="margin:0;color:#333;font-size:14p
