@@ -1,0 +1,47 @@
+name: Weekly Backup Reminder
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Every Monday 8AM UTC
+  workflow_dispatch:       # Manual trigger too
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  reminder:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Backup Reminder Email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "⚠️ Weekly APEX Backup Reminder - App 200"
+          to: tharunkommaddi@gmail.com
+          from: APEX Backup Bot <tharunkommaddi@gmail.com>
+          body: |
+            Hi Tharun!
+
+            This is your weekly reminder to backup Oracle APEX App 200.
+
+            Steps to backup:
+            1. Go to APEX Builder
+               https://gd1895d7a91019d-h5vz0428ux25xs1n.adb.eu-frankfurt-1.oraclecloudapps.com/ords/f?p=4500
+
+            2. Click on App 200
+
+            3. Click Export / Import → Export
+
+            4. Download f200.sql
+
+            5. Upload to GitHub repo
+               https://github.com/TharunKommaddi/OracleApex/tree/main/BackUp-App200
+
+            Stay consistent with backups! 💪
+
+            - APEX Backup Bot
