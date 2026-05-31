@@ -1,201 +1,183 @@
-body: |
+name: Weekly Backup Reminder
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  reminder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Backup Reminder Email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Weekly APEX Backup Reminder - App 200"
+          to: tharunkommaddi@gmail.com
+          from: APEX Backup Bot <tharunkommaddi@gmail.com>
+          content_type: text/html
+          body: >
             <!DOCTYPE html>
             <html>
-            <head>
-              <meta charset="UTF-8">
-            </head>
+            <head><meta charset="UTF-8"></head>
             <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;">
               <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center" style="padding:30px 0;">
+                <tr><td align="center" style="padding:30px 0;">
 
-                    <!-- Header -->
-                    <table width="600" cellpadding="0" cellspacing="0" style="background:#1a1a2e;border-radius:12px 12px 0 0;">
-                      <tr>
-                        <td align="center" style="padding:30px;">
-                          <img src="https://img.shields.io/badge/APEX-Backup_Bot-4a90d9?style=for-the-badge&logo=oracle&logoColor=white" alt="APEX Backup Bot"/>
-                          <h1 style="color:#ffffff;margin:15px 0 0 0;font-size:24px;">APEX Backup Bot</h1>
-                          <p style="color:#a0a0c0;margin:8px 0 0 0;font-size:13px;">Oracle APEX App 200 — Weekly Backup Reminder</p>
-                        </td>
-                      </tr>
-                    </table>
+                  <table width="600" cellpadding="0" cellspacing="0" style="background:#1a1a2e;border-radius:12px 12px 0 0;">
+                    <tr><td align="center" style="padding:30px;">
+                      <h1 style="color:#ffffff;margin:0;font-size:24px;">APEX Backup Bot</h1>
+                      <p style="color:#a0a0c0;margin:8px 0 0 0;font-size:13px;">Oracle APEX App 200 - Weekly Backup Reminder</p>
+                    </td></tr>
+                  </table>
 
-                    <!-- Alert Banner -->
-                    <table width="600" cellpadding="0" cellspacing="0" style="background:#e74c3c;">
-                      <tr>
-                        <td align="center" style="padding:12px;">
-                          <p style="color:#ffffff;margin:0;font-size:14px;font-weight:bold;">
-                            &#9888; ACTION REQUIRED — Please backup your APEX app today!
+                  <table width="600" cellpadding="0" cellspacing="0" style="background:#e74c3c;">
+                    <tr><td align="center" style="padding:12px;">
+                      <p style="color:#ffffff;margin:0;font-size:14px;font-weight:bold;">ACTION REQUIRED - Please backup your APEX app today!</p>
+                    </td></tr>
+                  </table>
+
+                  <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;">
+                    <tr><td style="padding:30px;">
+
+                      <p style="color:#333;font-size:16px;margin:0 0 10px 0;">Hi <strong>Tharun</strong>,</p>
+                      <p style="color:#555;font-size:14px;line-height:1.6;margin:0 0 25px 0;">
+                        This is your <strong>weekly automated reminder</strong> to backup Oracle APEX App 200.
+                        Regular backups protect your work!
+                      </p>
+
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9ff;border:1px solid #e0e0ff;border-radius:8px;margin-bottom:25px;">
+                        <tr><td style="padding:20px;">
+                          <p style="margin:0 0 12px 0;color:#1a1a2e;font-size:15px;font-weight:bold;border-bottom:1px solid #e0e0ff;padding-bottom:10px;">App Details</p>
+                          <table width="100%">
+                            <tr>
+                              <td style="color:#666;font-size:13px;padding:5px 0;width:40%;">App ID</td>
+                              <td style="color:#333;font-size:13px;font-weight:bold;">200 - TharunKommaddi</td>
+                            </tr>
+                            <tr style="background:#f0f0ff;">
+                              <td style="color:#666;font-size:13px;padding:5px 8px;">Pages</td>
+                              <td style="color:#333;font-size:13px;font-weight:bold;">228 Pages</td>
+                            </tr>
+                            <tr>
+                              <td style="color:#666;font-size:13px;padding:5px 0;">Version</td>
+                              <td style="color:#333;font-size:13px;font-weight:bold;">APEX 24.2.16</td>
+                            </tr>
+                            <tr style="background:#f0f0ff;">
+                              <td style="color:#666;font-size:13px;padding:5px 8px;">Export Size</td>
+                              <td style="color:#333;font-size:13px;font-weight:bold;">~49 MB</td>
+                            </tr>
+                            <tr>
+                              <td style="color:#666;font-size:13px;padding:5px 0;">Environment</td>
+                              <td style="color:#333;font-size:13px;font-weight:bold;">Oracle Cloud (Frankfurt)</td>
+                            </tr>
+                          </table>
+                        </td></tr>
+                      </table>
+
+                      <p style="color:#1a1a2e;font-size:15px;font-weight:bold;margin:0 0 15px 0;border-bottom:2px solid #1a1a2e;padding-bottom:8px;">Backup Steps</p>
+
+                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;border-left:3px solid #4a90d9;">
+                        <tr>
+                          <td width="40" valign="middle" align="center">
+                            <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">1</div>
+                          </td>
+                          <td style="padding:8px 10px;background:#f8faff;">
+                            <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Open APEX Builder</p>
+                            <a href="https://gd1895d7a91019d-h5vz0428ux25xs1n.adb.eu-frankfurt-1.oraclecloudapps.com/ords/f?p=4500" style="color:#4a90d9;font-size:12px;text-decoration:none;">Click here to open APEX Builder</a>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;border-left:3px solid #4a90d9;">
+                        <tr>
+                          <td width="40" valign="middle" align="center">
+                            <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">2</div>
+                          </td>
+                          <td style="padding:8px 10px;background:#f8faff;">
+                            <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Click on App 200</p>
+                            <p style="margin:4px 0 0 0;color:#666;font-size:12px;">TharunKommaddi - Oracle APEX Interview Prep</p>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;border-left:3px solid #4a90d9;">
+                        <tr>
+                          <td width="40" valign="middle" align="center">
+                            <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">3</div>
+                          </td>
+                          <td style="padding:8px 10px;background:#f8faff;">
+                            <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Export / Import - Export</p>
+                            <p style="margin:4px 0 0 0;color:#666;font-size:12px;">Keep all default settings and click Export</p>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;border-left:3px solid #4a90d9;">
+                        <tr>
+                          <td width="40" valign="middle" align="center">
+                            <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">4</div>
+                          </td>
+                          <td style="padding:8px 10px;background:#f8faff;">
+                            <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Download f200.sql</p>
+                            <p style="margin:4px 0 0 0;color:#666;font-size:12px;">File size approximately 49 MB</p>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:25px;border-left:3px solid #27ae60;">
+                        <tr>
+                          <td width="40" valign="middle" align="center">
+                            <div style="background:#27ae60;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">5</div>
+                          </td>
+                          <td style="padding:8px 10px;background:#f0fff4;">
+                            <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Upload to GitHub Repo</p>
+                            <a href="https://github.com/TharunKommaddi/OracleApex/tree/main/BackUp-App200" style="color:#27ae60;font-size:12px;text-decoration:none;">Click here to open GitHub Backup Folder</a>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:25px;">
+                        <tr><td align="center">
+                          <a href="https://gd1895d7a91019d-h5vz0428ux25xs1n.adb.eu-frankfurt-1.oraclecloudapps.com/ords/f?p=4500"
+                             style="background:#1a1a2e;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:bold;display:inline-block;margin:5px;">
+                            Open APEX Builder
+                          </a>
+                          &nbsp;
+                          <a href="https://github.com/TharunKommaddi/OracleApex/tree/main/BackUp-App200"
+                             style="background:#27ae60;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:bold;display:inline-block;margin:5px;">
+                            Open GitHub Folder
+                          </a>
+                        </td></tr>
+                      </table>
+
+                      <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff9e6;border-left:4px solid #f39c12;border-radius:4px;">
+                        <tr><td style="padding:15px;">
+                          <p style="margin:0;color:#856404;font-size:13px;">
+                            <strong>Pro Tip:</strong> Name your backup folder with today's date like
+                            <code style="background:#f0e0a0;padding:2px 5px;border-radius:3px;">app_200/20260531_080000/f200.sql</code>
                           </p>
-                        </td>
-                      </tr>
-                    </table>
+                        </td></tr>
+                      </table>
 
-                    <!-- Main Content -->
-                    <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;">
-                      <tr>
-                        <td style="padding:30px;">
+                    </td></tr>
+                  </table>
 
-                          <!-- Greeting -->
-                          <p style="color:#333;font-size:16px;margin:0 0 10px 0;">Hi <strong>Tharun</strong>,</p>
-                          <p style="color:#555;font-size:14px;line-height:1.6;margin:0 0 25px 0;">
-                            This is your <strong>weekly automated reminder</strong> to backup your Oracle APEX Application 200.
-                            Regular backups protect your work from accidental loss!
-                          </p>
+                  <table width="600" cellpadding="0" cellspacing="0" style="background:#1a1a2e;border-radius:0 0 12px 12px;">
+                    <tr><td align="center" style="padding:20px;">
+                      <p style="color:#a0a0c0;font-size:12px;margin:0;">Sent automatically every Monday at 8AM UTC</p>
+                      <p style="color:#a0a0c0;font-size:12px;margin:8px 0 0 0;">APEX Backup Bot - TharunKommaddi/OracleApex</p>
+                    </td></tr>
+                  </table>
 
-                          <!-- App Info Card -->
-                          <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8f9ff;border:1px solid #e0e0ff;border-radius:8px;margin-bottom:25px;">
-                            <tr>
-                              <td style="padding:20px;">
-                                <p style="margin:0 0 12px 0;color:#1a1a2e;font-size:15px;font-weight:bold;border-bottom:1px solid #e0e0ff;padding-bottom:10px;">
-                                  &#128202; App Details
-                                </p>
-                                <table width="100%">
-                                  <tr>
-                                    <td style="color:#666;font-size:13px;padding:5px 0;width:40%;">App ID</td>
-                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:5px 0;">200 — TharunKommaddi</td>
-                                  </tr>
-                                  <tr style="background:#f0f0ff;">
-                                    <td style="color:#666;font-size:13px;padding:5px 8px;width:40%;">Pages</td>
-                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:5px 0;">228 Pages</td>
-                                  </tr>
-                                  <tr>
-                                    <td style="color:#666;font-size:13px;padding:5px 0;width:40%;">Version</td>
-                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:5px 0;">APEX 24.2.16</td>
-                                  </tr>
-                                  <tr style="background:#f0f0ff;">
-                                    <td style="color:#666;font-size:13px;padding:5px 8px;width:40%;">Export Size</td>
-                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:5px 0;">~49 MB</td>
-                                  </tr>
-                                  <tr>
-                                    <td style="color:#666;font-size:13px;padding:5px 0;width:40%;">Environment</td>
-                                    <td style="color:#333;font-size:13px;font-weight:bold;padding:5px 0;">Oracle Cloud (Frankfurt)</td>
-                                  </tr>
-                                </table>
-                              </td>
-                            </tr>
-                          </table>
-
-                          <!-- Steps Title -->
-                          <p style="color:#1a1a2e;font-size:15px;font-weight:bold;margin:0 0 15px 0;border-bottom:2px solid #1a1a2e;padding-bottom:8px;">
-                            &#9989; Backup Steps
-                          </p>
-
-                          <!-- Step 1 -->
-                          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;border-left:3px solid #4a90d9;padding-left:0;">
-                            <tr>
-                              <td width="40" valign="middle" align="center">
-                                <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">1</div>
-                              </td>
-                              <td valign="top" style="padding:8px 10px;background:#f8faff;">
-                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Open APEX Builder</p>
-                                <a href="https://gd1895d7a91019d-h5vz0428ux25xs1n.adb.eu-frankfurt-1.oraclecloudapps.com/ords/f?p=4500" style="color:#4a90d9;font-size:12px;text-decoration:none;">&#8594; Click here to open APEX Builder</a>
-                              </td>
-                            </tr>
-                          </table>
-
-                          <!-- Step 2 -->
-                          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;border-left:3px solid #4a90d9;">
-                            <tr>
-                              <td width="40" valign="middle" align="center">
-                                <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">2</div>
-                              </td>
-                              <td valign="top" style="padding:8px 10px;background:#f8faff;">
-                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Click on App 200</p>
-                                <p style="margin:4px 0 0 0;color:#666;font-size:12px;">TharunKommaddi — Oracle APEX Interview Prep</p>
-                              </td>
-                            </tr>
-                          </table>
-
-                          <!-- Step 3 -->
-                          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;border-left:3px solid #4a90d9;">
-                            <tr>
-                              <td width="40" valign="middle" align="center">
-                                <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">3</div>
-                              </td>
-                              <td valign="top" style="padding:8px 10px;background:#f8faff;">
-                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Export / Import &#8594; Export</p>
-                                <p style="margin:4px 0 0 0;color:#666;font-size:12px;">Keep all default settings and click Export</p>
-                              </td>
-                            </tr>
-                          </table>
-
-                          <!-- Step 4 -->
-                          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;border-left:3px solid #4a90d9;">
-                            <tr>
-                              <td width="40" valign="middle" align="center">
-                                <div style="background:#1a1a2e;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">4</div>
-                              </td>
-                              <td valign="top" style="padding:8px 10px;background:#f8faff;">
-                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Download f200.sql</p>
-                                <p style="margin:4px 0 0 0;color:#666;font-size:12px;">File size approximately 49 MB</p>
-                              </td>
-                            </tr>
-                          </table>
-
-                          <!-- Step 5 -->
-                          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:25px;border-left:3px solid #27ae60;">
-                            <tr>
-                              <td width="40" valign="middle" align="center">
-                                <div style="background:#27ae60;color:#fff;width:28px;height:28px;border-radius:50%;text-align:center;line-height:28px;font-size:13px;font-weight:bold;">5</div>
-                              </td>
-                              <td valign="top" style="padding:8px 10px;background:#f0fff4;">
-                                <p style="margin:0;color:#333;font-size:14px;font-weight:bold;">Upload to GitHub Repo</p>
-                                <a href="https://github.com/TharunKommaddi/OracleApex/tree/main/BackUp-App200" style="color:#27ae60;font-size:12px;text-decoration:none;">&#8594; Click here to open GitHub Backup Folder</a>
-                              </td>
-                            </tr>
-                          </table>
-
-                          <!-- CTA Buttons -->
-                          <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:25px;">
-                            <tr>
-                              <td align="center">
-                                <a href="https://gd1895d7a91019d-h5vz0428ux25xs1n.adb.eu-frankfurt-1.oraclecloudapps.com/ords/f?p=4500"
-                                   style="background:#1a1a2e;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:bold;display:inline-block;margin:5px;">
-                                  &#9654; Open APEX Builder
-                                </a>
-                                &nbsp;
-                                <a href="https://github.com/TharunKommaddi/OracleApex/tree/main/BackUp-App200"
-                                   style="background:#27ae60;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:bold;display:inline-block;margin:5px;">
-                                  &#128193; Open GitHub Folder
-                                </a>
-                              </td>
-                            </tr>
-                          </table>
-
-                          <!-- Tip Box -->
-                          <table width="100%" cellpadding="0" cellspacing="0" style="background:#fff9e6;border-left:4px solid #f39c12;border-radius:4px;">
-                            <tr>
-                              <td style="padding:15px;">
-                                <p style="margin:0;color:#856404;font-size:13px;">
-                                  <strong>&#128161; Pro Tip:</strong> Name your backup folder with today's date like
-                                  <code style="background:#f0e0a0;padding:2px 5px;border-radius:3px;">app_200/20260531_080000/f200.sql</code>
-                                  to keep backups organized!
-                                </p>
-                              </td>
-                            </tr>
-                          </table>
-
-                        </td>
-                      </tr>
-                    </table>
-
-                    <!-- Footer -->
-                    <table width="600" cellpadding="0" cellspacing="0" style="background:#1a1a2e;border-radius:0 0 12px 12px;">
-                      <tr>
-                        <td align="center" style="padding:20px;">
-                          <p style="color:#a0a0c0;font-size:12px;margin:0;">
-                            &#128336; Sent automatically every Monday at 8AM UTC
-                          </p>
-                          <p style="color:#a0a0c0;font-size:12px;margin:8px 0 0 0;">
-                            APEX Backup Bot — TharunKommaddi/OracleApex
-                          </p>
-                        </td>
-                      </tr>
-                    </table>
-
-                  </td>
-                </tr>
+                </td></tr>
               </table>
             </body>
             </html>
