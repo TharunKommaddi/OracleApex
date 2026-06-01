@@ -1,0 +1,6 @@
+--
+-- Index "CUSTOMERS_TEXT_FTX"
+--
+CREATE INDEX "WKSP_THARUN"."CUSTOMERS_TEXT_FTX" ON "WKSP_THARUN"."T_CUSTOMERS" ("NAME") 
+   INDEXTYPE IS "CTXSYS"."CONTEXT"  PARAMETERS ('section group CUSTOMERS_SG_PREF datastore CUSTOMERS_DS_PREF lexer CUSTOMERS_LX_PREF stoplist ctxsys.empty_stoplist memory 10M sync (on commit)')
+/
