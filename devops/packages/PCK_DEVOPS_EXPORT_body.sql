@@ -3,24 +3,25 @@
 --
 CREATE OR REPLACE EDITIONABLE PACKAGE BODY "WKSP_THARUN"."PCK_DEVOPS_EXPORT" AS
 
-  PROCEDURE EXPORT_ALL_TO_GITHUB IS
-    l_repo CLOB;
+  -- ============================================================
+  -- PRIVATE: Initialize Repo (used by all procedures)
+  -- ============================================================
+  FUNCTION GET_REPO RETURN CLOB IS
   BEGIN
-    -- Initialize repo
-    l_repo := DBMS_CLOUD_REPO.INIT_GITHUB_REPO(
+    RETURN DBMS_CLOUD_REPO.INIT_GITHUB_REPO(
       credential_name => 'GITHUB_CRED',
       repo_name       => 'OracleApex',
       owner           => 'TharunKommaddi'
     );
-    
-    DBMS_OUTPUT.PUT_LINE('========================================');
-    DBMS_OUTPUT.PUT_LINE('STARTING DEVOPS EXPORT TO GITHUB');
-    DBMS_OUTPUT.PUT_LINE('========================================');
+  END GET_REPO;
 
-    -- ============================================================
-    -- 1. TABLES
-    -- ============================================================
-    DBMS_OUTPUT.PUT_LINE('--- Exporting TABLES ---');
+  -- ============================================================
+  -- 1. TABLES
+  -- ============================================================
+  PROCEDURE EXPORT_TABLES IS
+    l_repo CLOB := GET_REPO();
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('=== Exporting TABLES ===');
     FOR rec IN (
       SELECT object_name 
       FROM user_objects 
@@ -38,17 +39,22 @@ CREATE OR REPLACE EDITIONABLE PACKAGE BODY "WKSP_THARUN"."PCK_DEVOPS_EXPORT" AS
           object_name => rec.object_name,
           file_path   => 'devops/tables/' || rec.object_name || '.sql'
         );
-        DBMS_OUTPUT.PUT_LINE('  ✓ TABLE: ' || rec.object_name);
+        DBMS_OUTPUT.PUT_LINE('  ✓ ' || rec.object_name);
       EXCEPTION
         WHEN OTHERS THEN
-          DBMS_OUTPUT.PUT_LINE('  ✗ TABLE FAILED: ' || rec.object_name || ' - ' || SQLERRM);
+          DBMS_OUTPUT.PUT_LINE('  ✗ ' || rec.object_name || ' - ' || SQLERRM);
       END;
     END LOOP;
+    DBMS_OUTPUT.PUT_LINE('=== TABLES DONE ===');
+  END EXPORT_TABLES;
 
-    -- ============================================================
-    -- 2. PACKAGES (SPEC + BODY together)
-    -- ============================================================
-    DBMS_OUTPUT.PUT_LINE('--- Exporting PACKAGES ---');
+  -- ============================================================
+  -- 2. PACKAGES
+  -- ============================================================
+  PROCEDURE EXPORT_PACKAGES IS
+    l_repo CLOB := GET_REPO();
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('=== Exporting PACKAGES ===');
     FOR rec IN (
       SELECT object_name 
       FROM user_objects 
@@ -62,10 +68,10 @@ CREATE OR REPLACE EDITIONABLE PACKAGE BODY "WKSP_THARUN"."PCK_DEVOPS_EXPORT" AS
           object_name => rec.object_name,
           file_path   => 'devops/packages/' || rec.object_name || '_spec.sql'
         );
-        DBMS_OUTPUT.PUT_LINE('  ✓ PACKAGE SPEC: ' || rec.object_name);
+        DBMS_OUTPUT.PUT_LINE('  ✓ SPEC: ' || rec.object_name);
       EXCEPTION
         WHEN OTHERS THEN
-          DBMS_OUTPUT.PUT_LINE('  ✗ PACKAGE SPEC FAILED: ' || rec.object_name || ' - ' || SQLERRM);
+          DBMS_OUTPUT.PUT_LINE('  ✗ SPEC FAILED: ' || rec.object_name || ' - ' || SQLERRM);
       END;
       BEGIN
         DBMS_CLOUD_REPO.EXPORT_OBJECT(
@@ -74,17 +80,22 @@ CREATE OR REPLACE EDITIONABLE PACKAGE BODY "WKSP_THARUN"."PCK_DEVOPS_EXPORT" AS
           object_name => rec.object_name,
           file_path   => 'devops/packages/' || rec.object_name || '_body.sql'
         );
-        DBMS_OUTPUT.PUT_LINE('  ✓ PACKAGE BODY: ' || rec.object_name);
+        DBMS_OUTPUT.PUT_LINE('  ✓ BODY: ' || rec.object_name);
       EXCEPTION
         WHEN OTHERS THEN
-          DBMS_OUTPUT.PUT_LINE('  ✗ PACKAGE BODY FAILED: ' || rec.object_name || ' - ' || SQLERRM);
+          DBMS_OUTPUT.PUT_LINE('  ✗ BODY FAILED: ' || rec.object_name || ' - ' || SQLERRM);
       END;
     END LOOP;
+    DBMS_OUTPUT.PUT_LINE('=== PACKAGES DONE ===');
+  END EXPORT_PACKAGES;
 
-    -- ============================================================
-    -- 3. PROCEDURES
-    -- ============================================================
-    DBMS_OUTPUT.PUT_LINE('--- Exporting PROCEDURES ---');
+  -- ============================================================
+  -- 3. PROCEDURES
+  -- ============================================================
+  PROCEDURE EXPORT_PROCEDURES IS
+    l_repo CLOB := GET_REPO();
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('=== Exporting PROCEDURES ===');
     FOR rec IN (
       SELECT object_name 
       FROM user_objects 
@@ -98,17 +109,22 @@ CREATE OR REPLACE EDITIONABLE PACKAGE BODY "WKSP_THARUN"."PCK_DEVOPS_EXPORT" AS
           object_name => rec.object_name,
           file_path   => 'devops/procedures/' || rec.object_name || '.sql'
         );
-        DBMS_OUTPUT.PUT_LINE('  ✓ PROCEDURE: ' || rec.object_name);
+        DBMS_OUTPUT.PUT_LINE('  ✓ ' || rec.object_name);
       EXCEPTION
         WHEN OTHERS THEN
-          DBMS_OUTPUT.PUT_LINE('  ✗ PROCEDURE FAILED: ' || rec.object_name || ' - ' || SQLERRM);
+          DBMS_OUTPUT.PUT_LINE('  ✗ ' || rec.object_name || ' - ' || SQLERRM);
       END;
     END LOOP;
+    DBMS_OUTPUT.PUT_LINE('=== PROCEDURES DONE ===');
+  END EXPORT_PROCEDURES;
 
-    -- ============================================================
-    -- 4. FUNCTIONS
-    -- ============================================================
-    DBMS_OUTPUT.PUT_LINE('--- Exporting FUNCTIONS ---');
+  -- ============================================================
+  -- 4. FUNCTIONS
+  -- ============================================================
+  PROCEDURE EXPORT_FUNCTIONS IS
+    l_repo CLOB := GET_REPO();
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('=== Exporting FUNCTIONS ===');
     FOR rec IN (
       SELECT object_name 
       FROM user_objects 
@@ -122,17 +138,22 @@ CREATE OR REPLACE EDITIONABLE PACKAGE BODY "WKSP_THARUN"."PCK_DEVOPS_EXPORT" AS
           object_name => rec.object_name,
           file_path   => 'devops/functions/' || rec.object_name || '.sql'
         );
-        DBMS_OUTPUT.PUT_LINE('  ✓ FUNCTION: ' || rec.object_name);
+        DBMS_OUTPUT.PUT_LINE('  ✓ ' || rec.object_name);
       EXCEPTION
         WHEN OTHERS THEN
-          DBMS_OUTPUT.PUT_LINE('  ✗ FUNCTION FAILED: ' || rec.object_name || ' - ' || SQLERRM);
+          DBMS_OUTPUT.PUT_LINE('  ✗ ' || rec.object_name || ' - ' || SQLERRM);
       END;
     END LOOP;
+    DBMS_OUTPUT.PUT_LINE('=== FUNCTIONS DONE ===');
+  END EXPORT_FUNCTIONS;
 
-    -- ============================================================
-    -- 5. VIEWS
-    -- ============================================================
-    DBMS_OUTPUT.PUT_LINE('--- Exporting VIEWS ---');
+  -- ============================================================
+  -- 5. VIEWS
+  -- ============================================================
+  PROCEDURE EXPORT_VIEWS IS
+    l_repo CLOB := GET_REPO();
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('=== Exporting VIEWS ===');
     FOR rec IN (
       SELECT object_name 
       FROM user_objects 
@@ -146,17 +167,22 @@ CREATE OR REPLACE EDITIONABLE PACKAGE BODY "WKSP_THARUN"."PCK_DEVOPS_EXPORT" AS
           object_name => rec.object_name,
           file_path   => 'devops/views/' || rec.object_name || '.sql'
         );
-        DBMS_OUTPUT.PUT_LINE('  ✓ VIEW: ' || rec.object_name);
+        DBMS_OUTPUT.PUT_LINE('  ✓ ' || rec.object_name);
       EXCEPTION
         WHEN OTHERS THEN
-          DBMS_OUTPUT.PUT_LINE('  ✗ VIEW FAILED: ' || rec.object_name || ' - ' || SQLERRM);
+          DBMS_OUTPUT.PUT_LINE('  ✗ ' || rec.object_name || ' - ' || SQLERRM);
       END;
     END LOOP;
+    DBMS_OUTPUT.PUT_LINE('=== VIEWS DONE ===');
+  END EXPORT_VIEWS;
 
-    -- ============================================================
-    -- 6. MATERIALIZED VIEWS
-    -- ============================================================
-    DBMS_OUTPUT.PUT_LINE('--- Exporting MATERIALIZED VIEWS ---');
+  -- ============================================================
+  -- 6. MATERIALIZED VIEWS
+  -- ============================================================
+  PROCEDURE EXPORT_MATERIALIZED_VIEWS IS
+    l_repo CLOB := GET_REPO();
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('=== Exporting MATERIALIZED VIEWS ===');
     FOR rec IN (
       SELECT object_name 
       FROM user_objects 
@@ -170,17 +196,22 @@ CREATE OR REPLACE EDITIONABLE PACKAGE BODY "WKSP_THARUN"."PCK_DEVOPS_EXPORT" AS
           object_name => rec.object_name,
           file_path   => 'devops/materialized_views/' || rec.object_name || '.sql'
         );
-        DBMS_OUTPUT.PUT_LINE('  ✓ MV: ' || rec.object_name);
+        DBMS_OUTPUT.PUT_LINE('  ✓ ' || rec.object_name);
       EXCEPTION
         WHEN OTHERS THEN
-          DBMS_OUTPUT.PUT_LINE('  ✗ MV FAILED: ' || rec.object_name || ' - ' || SQLERRM);
+          DBMS_OUTPUT.PUT_LINE('  ✗ ' || rec.object_name || ' - ' || SQLERRM);
       END;
     END LOOP;
+    DBMS_OUTPUT.PUT_LINE('=== MATERIALIZED VIEWS DONE ===');
+  END EXPORT_MATERIALIZED_VIEWS;
 
-    -- ============================================================
-    -- 7. TRIGGERS
-    -- ============================================================
-    DBMS_OUTPUT.PUT_LINE('--- Exporting TRIGGERS ---');
+  -- ============================================================
+  -- 7. TRIGGERS
+  -- ============================================================
+  PROCEDURE EXPORT_TRIGGERS IS
+    l_repo CLOB := GET_REPO();
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('=== Exporting TRIGGERS ===');
     FOR rec IN (
       SELECT object_name 
       FROM user_objects 
@@ -194,17 +225,22 @@ CREATE OR REPLACE EDITIONABLE PACKAGE BODY "WKSP_THARUN"."PCK_DEVOPS_EXPORT" AS
           object_name => rec.object_name,
           file_path   => 'devops/triggers/' || rec.object_name || '.sql'
         );
-        DBMS_OUTPUT.PUT_LINE('  ✓ TRIGGER: ' || rec.object_name);
+        DBMS_OUTPUT.PUT_LINE('  ✓ ' || rec.object_name);
       EXCEPTION
         WHEN OTHERS THEN
-          DBMS_OUTPUT.PUT_LINE('  ✗ TRIGGER FAILED: ' || rec.object_name || ' - ' || SQLERRM);
+          DBMS_OUTPUT.PUT_LINE('  ✗ ' || rec.object_name || ' - ' || SQLERRM);
       END;
     END LOOP;
+    DBMS_OUTPUT.PUT_LINE('=== TRIGGERS DONE ===');
+  END EXPORT_TRIGGERS;
 
-    -- ============================================================
-    -- 8. SEQUENCES (named only, skip ISEQ$$_)
-    -- ============================================================
-    DBMS_OUTPUT.PUT_LINE('--- Exporting SEQUENCES ---');
+  -- ============================================================
+  -- 8. SEQUENCES
+  -- ============================================================
+  PROCEDURE EXPORT_SEQUENCES IS
+    l_repo CLOB := GET_REPO();
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('=== Exporting SEQUENCES ===');
     FOR rec IN (
       SELECT object_name 
       FROM user_objects 
@@ -220,17 +256,22 @@ CREATE OR REPLACE EDITIONABLE PACKAGE BODY "WKSP_THARUN"."PCK_DEVOPS_EXPORT" AS
           object_name => rec.object_name,
           file_path   => 'devops/sequences/' || rec.object_name || '.sql'
         );
-        DBMS_OUTPUT.PUT_LINE('  ✓ SEQUENCE: ' || rec.object_name);
+        DBMS_OUTPUT.PUT_LINE('  ✓ ' || rec.object_name);
       EXCEPTION
         WHEN OTHERS THEN
-          DBMS_OUTPUT.PUT_LINE('  ✗ SEQUENCE FAILED: ' || rec.object_name || ' - ' || SQLERRM);
+          DBMS_OUTPUT.PUT_LINE('  ✗ ' || rec.object_name || ' - ' || SQLERRM);
       END;
     END LOOP;
+    DBMS_OUTPUT.PUT_LINE('=== SEQUENCES DONE ===');
+  END EXPORT_SEQUENCES;
 
-    -- ============================================================
-    -- 9. INDEXES (named only, skip SYS_ auto ones)
-    -- ============================================================
-    DBMS_OUTPUT.PUT_LINE('--- Exporting INDEXES ---');
+  -- ============================================================
+  -- 9. INDEXES
+  -- ============================================================
+  PROCEDURE EXPORT_INDEXES IS
+    l_repo CLOB := GET_REPO();
+  BEGIN
+    DBMS_OUTPUT.PUT_LINE('=== Exporting INDEXES ===');
     FOR rec IN (
       SELECT object_name 
       FROM user_objects 
@@ -247,22 +288,36 @@ CREATE OR REPLACE EDITIONABLE PACKAGE BODY "WKSP_THARUN"."PCK_DEVOPS_EXPORT" AS
           object_name => rec.object_name,
           file_path   => 'devops/indexes/' || rec.object_name || '.sql'
         );
-        DBMS_OUTPUT.PUT_LINE('  ✓ INDEX: ' || rec.object_name);
+        DBMS_OUTPUT.PUT_LINE('  ✓ ' || rec.object_name);
       EXCEPTION
         WHEN OTHERS THEN
-          DBMS_OUTPUT.PUT_LINE('  ✗ INDEX FAILED: ' || rec.object_name || ' - ' || SQLERRM);
+          DBMS_OUTPUT.PUT_LINE('  ✗ ' || rec.object_name || ' - ' || SQLERRM);
       END;
     END LOOP;
+    DBMS_OUTPUT.PUT_LINE('=== INDEXES DONE ===');
+  END EXPORT_INDEXES;
 
+  -- ============================================================
+  -- EXPORT ALL - Calls everything
+  -- ============================================================
+  PROCEDURE EXPORT_ALL IS
+  BEGIN
     DBMS_OUTPUT.PUT_LINE('========================================');
-    DBMS_OUTPUT.PUT_LINE('EXPORT COMPLETED SUCCESSFULLY!');
-    DBMS_OUTPUT.PUT_LINE('Check GitHub: TharunKommaddi/OracleApex/devops/');
+    DBMS_OUTPUT.PUT_LINE('STARTING FULL DEVOPS EXPORT TO GITHUB');
     DBMS_OUTPUT.PUT_LINE('========================================');
-
-  EXCEPTION
-    WHEN OTHERS THEN
-      DBMS_OUTPUT.PUT_LINE('FATAL ERROR: ' || SQLERRM);
-  END EXPORT_ALL_TO_GITHUB;
+    EXPORT_TABLES;
+    EXPORT_PACKAGES;
+    EXPORT_PROCEDURES;
+    EXPORT_FUNCTIONS;
+    EXPORT_VIEWS;
+    EXPORT_MATERIALIZED_VIEWS;
+    EXPORT_TRIGGERS;
+    EXPORT_SEQUENCES;
+    EXPORT_INDEXES;
+    DBMS_OUTPUT.PUT_LINE('========================================');
+    DBMS_OUTPUT.PUT_LINE('FULL EXPORT COMPLETED!');
+    DBMS_OUTPUT.PUT_LINE('========================================');
+  END EXPORT_ALL;
 
 END PCK_DEVOPS_EXPORT;
 /
